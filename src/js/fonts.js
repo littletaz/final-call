@@ -1,4 +1,4 @@
-import { asset } from './paths.js'
+import { tripAsset } from './data.js'
 
 /* ============================================================
    FONTS
@@ -46,7 +46,7 @@ function injectLocal(family, src, weight = '400', style = 'normal'){
   if(injected.has(key)) return
   injected.add(key)
 
-  const url = asset(src)
+  const url = tripAsset(src)
   const fmt = /\.woff2?$/.test(src) ? 'woff2'
             : /\.otf$/.test(src)    ? 'opentype'
             : 'truetype'

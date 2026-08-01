@@ -1,13 +1,13 @@
 {
-  "_readme": "Registry of available trips. The landing page will list these; the app loads ?trip=<id>.",
-  "defaultTripId": "japon-2026",
+  "_readme": "Registry of available trips. Each `file` lives in its own folder and every asset path inside it is relative to that folder — so adding a trip is dropping in one directory, and nothing can collide between trips.",
+  "defaultTripId": "japan-2026",
   "trips": [
     {
-      "id": "japon-2026",
+      "id": "japan-2026",
       "title": "Japon & Hong Kong",
-      "file": "trips/japon-2026.json",
-      "period": "24 Oct – 13 Nov 2026",
-      "cover": "assets/map/map-japon.png"
+      "file": "trips/japon-2026/trip.json",
+      "period": "29 Oct – 18 Nov 2026",
+      "cover": "trips/japon-2026/map.png"
     }
   ]
 }

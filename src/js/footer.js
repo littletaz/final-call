@@ -56,6 +56,21 @@ const PROVIDERS = {
   },
 }
 
+/* Shared with the sticky Final Call widget, so both link to exactly the same
+   search. Returns null when the itinerary has no dates to search with. */
+export function flightSearchUrl(itinerary){
+  const fs = TRIP.data?.cta?.flightSearch
+  if(!fs) return null
+  const legs = resolveLegs(fs, itinerary)
+  if(!legs.length) return null
+  const provider = PROVIDERS[fs.provider] || PROVIDERS.kayak
+  return provider.build({
+    legs,
+    passengers: fs.passengers ?? 1,
+    cabin: fs.cabin ?? 'economy',
+  })
+}
+
 /* `dateFrom` lets the data reference the itinerary instead of hardcoding dates,
    so the link follows whichever variant is selected. */
 function resolveLegs(search, itinerary){

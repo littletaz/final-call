@@ -67,10 +67,15 @@ body{
 /* Top-aligned at full width, its natural height. When #world is shorter than
    the image (map.cropBottom), the surplus is clipped off the bottom rather than
    the image being squashed to fit. */
-#basemap{
+#basemap,#basemap-alt{
   position:absolute;top:0;left:0;width:100%;height:auto;display:block;
   user-select:none;-webkit-user-drag:none;
 }
+/* stacked above the base and faded in, so switching itinerary artwork doesn't
+   flash through the background colour */
+#basemap-alt{opacity:0;transition:opacity .4s ease;pointer-events:none}
+#basemap-alt.is-shown{opacity:1}
+@media(prefers-reduced-motion:reduce){ #basemap-alt{transition:none} }
 
 /* open water under the map, where the dataviz sits */
 
@@ -81,7 +86,14 @@ body{
 #inset .poi{width:14%}
 
 /* ---------- sprites ---------- */
-.sprite{position:absolute;pointer-events:none}
+/* A sprite's width is its exported width as a fraction of the MAP's width.
+   --map-w is the map's rendered width, which is always min(100vw, artboard) —
+   so this stays proportional at any viewport size with no JS on resize.
+   --sprite-ratio is set once per file by MapView.sizeSprite(). */
+.sprite{
+  position:absolute;pointer-events:none;
+  width:calc(var(--map-w) * var(--sprite-ratio, .1));
+}
 .sprite img{display:block;width:100%;height:auto;-webkit-user-drag:none}
 
 /* Each cloud rides its own full-width track. Because a track is exactly
@@ -89,7 +101,13 @@ body{
    than the viewport, so the loop behaves identically at any screen size.
    Clouds start and finish fully off-stage, so the wrap is never seen. */
 /* clouds sit above the logo, and must never eat clicks meant for pins */
-#clouds{z-index:60;pointer-events:none}
+/* Clouds live on #stage, not #frame: weather crosses the whole viewport rather
+   than being trapped in the 1920px band the map is capped to. Their POSITION is
+   a percentage of the screen; their SIZE still tracks the map. */
+#clouds{
+  position:absolute;inset:0;z-index:60;
+  overflow:hidden;pointer-events:none;
+}
 #clouds *{pointer-events:none}
 .cloud-track{position:absolute;inset:0;animation:cloud-drift linear infinite}
 @keyframes cloud-drift{
@@ -171,81 +189,150 @@ body{
    A radiogroup: one marker slides along a track rather than a pseudo-element
    pinned to each option with hand-measured offsets. */
 /* ---- itinerary selector ----
-   Sits UNDER the paper texture (z-index 40 vs 70), so it's multiplied by it
-   like everything else in the hero. That rules out low-contrast tints — the
-   palette here is deliberately just white at a few opacities plus the seal red,
-   both of which survive a 40% multiply of light paper. */
+   Sits UNDER the paper texture (z-index 40 vs 70), so it's multiplied like the
+   rest of the hero. That rules out low-contrast tints: the palette is white,
+   the seal red, and an ink navy that reads as "off" against the sea. */
 #selector{
-  --sel-gutter:22px;          /* track to text */
-  --sel-dot:10px;
-  position:absolute;top:50vh;right:var(--grid-margin);z-index:40;
+  --sel-pad:20px;
+  --sel-track-col:30px;       /* room for the dashed rule and its dots */
+  /* Every dot, the rule, and the sliding marker are centred on this one axis.
+     Deriving them all from it is the only way they stay aligned when sizes change. */
+  --sel-line-x:9px;           /* centre of the dashed rule, from .sel-options left */
+  --sel-line-w:2px;
+  --sel-dot-w:9px;            /* inactive */
+  --sel-dot-h:14px;
+  --sel-marker-w:13px;        /* active */
+  --sel-marker-h:20px;
+  --sel-row:66px;             /* fixed row height — nothing may reflow on hover */
+  --sel-ink:#2E3C53;          /* the inactive navy from the design */
+
+  position:absolute;
+  top:70vh;right:var(--grid-margin);z-index:40;
   transform:translateY(-50%);
-}
-.sel-caption{
-  font-family:var(--sans);font-weight:500;font-size:9px;letter-spacing:.2em;
-  color:rgba(255,255,255,.5);
-  margin:0 0 14px var(--sel-gutter);
-  white-space:nowrap;
-}
-.sel-options{
-  position:relative;
-  display:flex;flex-direction:column;gap:4px;
-  padding-left:var(--sel-gutter);
+  /* 200px at 1920 and anything wider; shrinks proportionally below ~1010px */
+  width:19.8%;max-width:200px;
+  padding:calc(var(--sel-pad) + 16px) var(--sel-pad) var(--sel-pad);
 }
 
-/* the track owns the line, so the buttons don't have to know about it */
+/* The frame is a 9-slice, not a background image. That matters because the
+   corners are cut and the edges carry a pattern stroke: a background would
+   stretch both as the panel resizes. border-image keeps the corners at their
+   exported size and repeats the edges instead.
+
+   The artwork is a 2x export, so border-image-slice (in source pixels) is
+   double border-width (in CSS pixels). `round` rather than `stretch` so the
+   stroke pattern tiles whole repeats instead of being smeared. */
+.sel-panel{
+  position:absolute;inset:0;
+  border:8px solid transparent;
+  border-image:url('/shared/ui/panel.png') 17 round;
+  border-image-slice:17 fill;   /* `fill` keeps the textured centre */
+}
+
+/* Same technique for the tab. Its corners are narrower than they are tall, so
+   the slice is asymmetric: 25 top/bottom, 12 left/right. */
+.sel-tab{
+  position:absolute;top:0;left:50%;
+  transform:translate(-50%,-50%);
+  margin:0;
+  padding:10px 22px;
+  color:var(--ink);
+  font-family:var(--sans);font-weight:700;
+  font-size:11px;letter-spacing:.16em;white-space:nowrap;
+  border-style:solid;
+  border-width:12px 6px;
+  border-image:url('/shared/ui/tab.png') 25 12 round;
+  border-image-slice:25 12 fill;
+}
+
+.sel-options{position:relative;padding-left:var(--sel-track-col)}
+
+/* the dashed rule runs between the first and last dot, not the full height */
 .sel-track{
-  position:absolute;left:0;top:10px;bottom:10px;width:2px;
-  background-image:linear-gradient(rgba(255,255,255,.42) 55%, transparent 0);
-  background-size:2px 7px;    /* a dotted rule that doesn't rely on border-style */
+  position:absolute;
+  left:calc(var(--sel-line-x) - var(--sel-line-w) / 2);
+  top:calc(var(--sel-row) / 2);
+  bottom:calc(var(--sel-row) / 2);
+  width:var(--sel-line-w);
+  background-image:linear-gradient(rgba(255,255,255,.85) 55%, transparent 0);
+  background-size:var(--sel-line-w) 9px;
   pointer-events:none;
 }
 .sel-marker{
   position:absolute;left:50%;top:0;
-  width:var(--sel-dot);height:var(--sel-dot);border-radius:50%;
+  width:var(--sel-marker-w);height:var(--sel-marker-h);
+  border-radius:calc(var(--sel-marker-w) / 2);
   background:var(--seal);
-  margin-left:calc(var(--sel-dot) / -2);
-  margin-top:calc(var(--sel-dot) / -2);
+  /* centred on the rule horizontally, and on its own row vertically — the JS
+     only supplies the row offset via translateY */
+  margin-left:calc(var(--sel-marker-w) / -2);
+  margin-top:calc(var(--sel-marker-h) / -2);
   transition:transform .38s cubic-bezier(.4,1.3,.5,1);
-  /* masks the dotted line behind it — must follow the trip's own sea colour,
-     not a hardcoded one, or it shows as a patch on a differently-coloured map */
-  box-shadow:0 0 0 4px var(--sea);
 }
 
+/* Fixed-height rows in a grid: the number and label keep their columns, and the
+   date has its own row that's always reserved. Hovering can never reflow. */
 #selector button{
-  position:relative;background:none;border:0;cursor:pointer;
-  font-family:inherit;text-align:left;color:rgba(255,255,255,.5);
-  display:flex;flex-direction:column;gap:1px;
-  padding:7px 12px 7px 0;      /* a real hit area, not just the glyphs */
-  border-radius:4px;
-  transition:color .22s, transform .22s;
+  position:relative;
+  display:grid;
+  grid-template-columns:auto auto 1fr;
+  grid-template-rows:1fr auto;
+  align-items:center;
+  column-gap:11px;
+  height:var(--sel-row);
+  padding:0;background:none;border:0;cursor:pointer;
+  font-family:inherit;text-align:left;
+  color:var(--sel-ink);
+  transition:color .22s;
 }
-#selector button:hover{color:rgba(255,255,255,.85);transform:translateX(2px)}
-#selector button:focus-visible{
-  outline:2px solid var(--seal);outline-offset:3px;color:#fff;
-}
+#selector button:focus-visible{outline:2px solid var(--seal);outline-offset:4px}
 #selector button[aria-checked="true"]{color:#fff}
 
-.sel-days{display:flex;align-items:baseline;gap:7px}
-.sel-days .num{
-  font-family:var(--display);font-size:34px;line-height:.88;
+/* the inactive dots sit on the track; the active one is the sliding marker */
+.sel-dot{
+  grid-row:1;grid-column:1;
+  position:absolute;top:50%;
+  /* the button starts at --sel-track-col, so back out to the shared axis */
+  left:calc(var(--sel-line-x) - var(--sel-dot-w) / 2 - var(--sel-track-col));
+  width:var(--sel-dot-w);height:var(--sel-dot-h);
+  border-radius:calc(var(--sel-dot-w) / 2);
+  background:var(--sel-ink);
+  transform:translateY(-50%);
+  transition:opacity .2s, background .2s;
+}
+#selector button[aria-checked="true"] .sel-dot{opacity:0}
+
+.sel-num{
+  grid-row:1;grid-column:1;
+  font-family:var(--display);
+  font-size:38px;line-height:.9;
   transition:font-size .22s;
 }
-#selector button[aria-checked="true"] .sel-days .num{font-size:40px}
-.sel-days .lbl{font-size:9px;letter-spacing:.18em;opacity:.75}
-
-.sel-period{
-  font-size:10.5px;letter-spacing:.03em;
-  font-variant-numeric:tabular-nums;
-  opacity:0;max-height:0;overflow:hidden;
-  transition:opacity .22s, max-height .22s;
+.sel-lbl{
+  grid-row:1;grid-column:2;
+  font-family:var(--sans);font-weight:700;
+  font-size:15px;letter-spacing:.04em;
 }
-/* the dates only matter for the length you're actually looking at */
+
+/* Out of flow entirely — reserving space in the grid would still shift the
+   number vertically as it appeared. */
+.sel-period{
+  position:absolute;left:0;bottom:6px;
+  font-family:var(--sans);font-weight:500;
+  font-size:10.5px;letter-spacing:.04em;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+  opacity:0;transition:opacity .2s;
+  pointer-events:none;
+}
 #selector button[aria-checked="true"] .sel-period,
-#selector button:hover .sel-period{opacity:.85;max-height:20px}
+#selector button:hover .sel-period{opacity:.75}
+
+#selector button:hover:not([aria-checked="true"]){color:rgba(255,255,255,.6)}
+#selector button:hover:not([aria-checked="true"]) .sel-dot{background:rgba(255,255,255,.6)}
 
 @media(prefers-reduced-motion:reduce){
-  .sel-marker,.sel-days .num,.sel-period,#selector button{transition:none}
+  .sel-marker,.sel-num,.sel-period,.sel-dot,#selector button{transition:none}
 }
 
 /* Dataviz on grid columns 3–6, one item per column. It now sits INSIDE the map
@@ -275,188 +362,172 @@ body{
    ============================================================ */
 #cards{position:relative;background:var(--sea)}
 
-/* sits above every card so it stays reachable while they stack */
-/* `fixed`, not `sticky`: a sticky element still occupies space in normal flow,
-   which showed up as a blue gap between the map and the first card. */
-#to-map{
-  position:fixed;top:14px;left:0;right:0;z-index:500;
-  display:flex;justify-content:center;
-  pointer-events:none;
-}
-#to-map button{
-  pointer-events:auto;cursor:pointer;
-  background:var(--seal);color:#fff;border:0;border-radius:999px;
-  font-family:var(--sans);font-weight:500;font-size:10px;letter-spacing:.14em;
-  padding:11px 20px;box-shadow:0 4px 16px rgba(0,0,0,.28);
-  opacity:0;transform:translateY(-12px);
-  transition:opacity .3s,transform .3s;
-}
-#to-map.is-visible button{opacity:1;transform:translateY(0)}
 .card{
   position:sticky;top:0;min-height:100vh;
   background:var(--card-bg);color:var(--card-fg);
   border-radius:26px 26px 0 0;
   box-shadow:0 -14px 40px rgba(0,0,0,.22);
-  padding:0 var(--grid-margin);overflow:hidden;
-  display:flex;align-items:center;
-}
-/* Card content sits on the same 8-column grid as the hero, so the text
-   edge lines up with the logo above it. Areas: head + body on columns 1-4,
-   media on 6-8, stays across 1-6, foot full width. */
-.card-inner{
-  width:100%;
-  display:grid;
-  grid-template-columns:repeat(8,1fr);
-  column-gap:var(--grid-gutter-in);
-  align-items:start;
-}
-/* the whole content block is a fixed height so every card reads the same
-   regardless of how many activities or hotels it carries */
-.card-inner{
-  height:740px;
-  grid-template-rows:auto minmax(0,1fr) auto auto;
-}
-.c-head { grid-column:1 / span 4; grid-row:1 }
-.c-body { grid-column:1 / span 4; grid-row:2; min-height:0; overflow:hidden }
-.c-media{ grid-column:6 / span 3; grid-row:1 / span 2; height:100%; align-self:stretch }
-.c-stays{ grid-column:1 / -1;     grid-row:3; margin-top:22px }
-.c-foot {
-  grid-column:1 / -1; grid-row:4;
-  display:flex;justify-content:space-between;align-items:center;
-  margin-top:16px;padding-top:12px;border-top:1px solid var(--hairline);
-  font-size:10px;letter-spacing:.12em;color:var(--ph-fg);
+  padding:9vh 0 6vh;
+  overflow:hidden;                /* clips the watermark and the rail's bleed */
 }
 
-.card .eyebrow{
-  font-size:10.5px;letter-spacing:.16em;color:var(--seal);margin-bottom:14px;
+/* the stop number, oversized and set behind everything. Deliberately clipped
+   by the card's left edge rather than sitting neatly inside it. */
+.card-index{
+  position:absolute;
+  left:-2.5%;top:-4%;
+  font-family:var(--display);
+  font-size:min(46vh,420px);
+  line-height:.8;
+  color:#EDEDED;
+  pointer-events:none;user-select:none;
+  z-index:0;
 }
-/* nights + dates are the two facts people scan for, so they get their own
-   line at display size rather than sitting inside the eyebrow */
-.c-meta{
-  display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
-  margin:16px 0 4px;
+
+.card-inner{
+  position:relative;z-index:1;
+  padding-left:var(--grid-margin);
 }
-.badge{
-  font-family:var(--sans);font-weight:600;
-  font-size:15px;letter-spacing:.06em;
-  color:var(--seal);border:1px solid var(--seal);
-  padding:5px 12px;border-radius:4px;white-space:nowrap;
+
+/* ---- head ---- */
+.c-head{
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:end;
+  column-gap:4%;
+  padding-right:var(--grid-margin);
+  margin-bottom:6vh;
 }
-.badge.is-spur{border-style:dashed;border-color:#9A9A92;color:#9A9A92}
-.meta-dates{
-  font-family:var(--sans);font-weight:500;
-  font-size:16px;letter-spacing:.02em;color:#44443E;
-  font-variant-numeric:tabular-nums;
+.c-sub{
+  grid-column:1;grid-row:1;
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  margin-bottom:14px;
 }
+.chip{
+  width:30px;height:30px;flex:none;
+  border:1px solid var(--seal);color:var(--seal);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;border-radius:4px;
+}
+.chip-caption{color:#55554E;font-size:14.5px}
 
 .card h2{
-  font-family:var(--sans);font-size:clamp(34px,4.4vw,60px);font-weight:600;
-  letter-spacing:-.025em;line-height:1.04;margin-bottom:10px;
+  grid-column:1;grid-row:2;
+  font-family:var(--sans);font-weight:500;
+  font-size:clamp(48px,7vw,116px);
+  letter-spacing:-.035em;line-height:.95;
+  margin:0;
 }
-.card h2 .jp{font-size:.42em;color:var(--ph-fg);margin-left:.4em}
-.card .subtitle{
-  font-family:var(--sans);font-weight:400;font-size:clamp(14px,1.35vw,18px);
-  color:var(--muted);margin-bottom:20px;letter-spacing:.01em;
-}
-.card .rule{width:96px;height:2px;background:var(--seal);margin:18px 0 22px}
-.card .intro{max-width:50ch;line-height:1.72;font-size:15.5px;color:#33332E;margin-bottom:24px}
+.card h2 .jp{font-size:.3em;color:var(--ph-fg);margin-left:.35em;font-weight:400}
 
-.chips{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:30px}
-.chip{
-  width:28px;height:28px;border:1px solid var(--seal);color:var(--seal);
-  display:flex;align-items:center;justify-content:center;font-size:14px;border-radius:3px;
+/* right-aligned duration: dates small above, nights large */
+.c-when{
+  grid-column:2;grid-row:2;
+  display:flex;flex-direction:column;align-items:flex-end;
+  text-align:right;padding-bottom:.6em;
 }
-.chip-caption{color:var(--muted);font-size:13px;margin-left:6px}
+.when-dates{font-size:14px;color:var(--muted);margin-bottom:2px;font-variant-numeric:tabular-nums}
+.when-nights{
+  font-family:var(--sans);font-weight:600;
+  font-size:clamp(22px,2.4vw,38px);letter-spacing:-.02em;line-height:1;
+  white-space:nowrap;
+}
+.when-nights.is-spur{color:var(--muted);font-weight:500}
 
-.slot-label{font-size:9px;letter-spacing:.16em;color:#B0B0A8;margin:0 0 12px}
-
-.todo{list-style:none;display:flex;flex-direction:column;gap:9px}
-.todo li{position:relative;padding-left:18px;font-size:14.5px;color:#44443E;line-height:1.5}
-.todo li::before{
-  content:"";position:absolute;left:0;top:.62em;
-  width:8px;height:1.5px;background:var(--seal);
+/* ---- things to do: a horizontal rail ---- */
+.c-rail{
+  /* bleeds past the right margin so it reads as continuing off-frame */
+  overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  margin-bottom:9vh;
 }
-.act{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.act-title{flex:1 1 auto}
-.act-price{
-  font-family:var(--sans);font-weight:600;font-size:10.5px;letter-spacing:.04em;
-  font-variant-numeric:tabular-nums;
-  color:var(--seal);white-space:nowrap;
+.c-rail::-webkit-scrollbar{display:none}
+.acts{
+  display:flex;gap:1.6%;
+  padding-right:var(--grid-margin);
+  width:max-content;
 }
-.act-price.is-free{color:#8A8A82}
-
-/* hover card: image slot + the practical note */
-.act-tip{
-  position:absolute;left:18px;bottom:calc(100% + 8px);z-index:80;
-  width:230px;background:#fff;border:1px solid var(--hairline);border-radius:8px;
-  box-shadow:0 10px 30px rgba(0,0,0,.16);padding:8px;
-  opacity:0;visibility:hidden;transform:translateY(6px);
-  transition:opacity .18s,transform .18s,visibility .18s;
+.act{
+  flex:0 0 auto;
+  width:clamp(240px, 23vw, 420px);
+  scroll-snap-align:start;
 }
-.act:hover .act-tip{opacity:1;visibility:visible;transform:translateY(0)}
-.act-tip img{width:100%;border-radius:5px;display:block;margin-bottom:7px}
-.act-tip-ph{
+.act-media{
+  aspect-ratio:16/9;border-radius:3px;overflow:hidden;
+  background:repeating-linear-gradient(45deg,var(--ph-a),var(--ph-a) 10px,var(--ph-b) 10px,var(--ph-b) 20px);
   display:flex;align-items:center;justify-content:center;
-  height:96px;border-radius:5px;margin-bottom:7px;
-  background:repeating-linear-gradient(45deg,var(--ph-a),var(--ph-a) 8px,var(--ph-b) 8px,var(--ph-b) 16px);
-  color:var(--ph-fg);font-size:9px;letter-spacing:.14em;
+  color:var(--ph-fg);font-size:10px;letter-spacing:.16em;
+  margin-bottom:14px;
 }
-.act-tip-note{display:block;font-size:12px;line-height:1.5;color:#55554E}
-
-.hero-slot{
-  border:2px dashed #CFCFC6;border-radius:10px;height:100%;min-height:0;
-  background:repeating-linear-gradient(45deg,var(--ph-a),var(--ph-a) 9px,var(--ph-b) 9px,var(--ph-b) 18px);
-  display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;
-  color:var(--ph-fg);font-size:10px;letter-spacing:.14em;
+.act-media img{width:100%;height:100%;object-fit:cover;display:block}
+.act-meta{
+  display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+}
+.act-title{
+  font-family:var(--sans);font-weight:500;font-size:15px;
+  line-height:1.35;margin:0;color:#22221E;
+}
+.act-price{
+  font-family:var(--sans);font-weight:600;font-size:14px;
+  color:var(--seal);white-space:nowrap;font-variant-numeric:tabular-nums;
+}
+.act-price.is-free{color:var(--muted)}
+.act-note{
+  margin-top:6px;font-size:12.5px;line-height:1.5;color:var(--muted);
 }
 
-.c-stays{border-top:1px solid var(--hairline);padding-top:16px}
-.hotels{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+/* ---- where we sleep ---- */
+.stays-title{
+  font-family:var(--sans);font-weight:500;
+  font-size:clamp(30px,4.2vw,68px);
+  letter-spacing:-.03em;line-height:1;
+  margin:0 0 3vh;
+}
+.hotels{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
+  padding-right:var(--grid-margin);
+}
 .hotel{
-  position:relative;
-  border:1px solid #E4E4DC;border-radius:8px;padding:14px;background:#FCFCFA;
+  display:grid;grid-template-columns:1fr auto;align-items:center;gap:14px;
+  border:1px solid #E4E4DC;border-radius:12px;
+  padding:16px 16px 16px 20px;background:#fff;
   text-decoration:none;color:inherit;
 }
-.hotel .tier,.hotel .name,.hotel .base,.hotel .amount{display:block}
-
-/* only the ones with a bookingUrl behave like links */
-.hotel.is-link{
-  cursor:pointer;
-  transition:border-color .2s,box-shadow .2s,transform .2s;
+.hotel-text{display:flex;flex-direction:column;min-width:0}
+.hotel .tier{
+  font-family:var(--sans);font-weight:600;font-size:12px;
+  color:var(--seal);margin-bottom:4px;
 }
-.hotel.is-link:hover,
-.hotel.is-link:focus-visible{
+.hotel .name{
+  font-family:var(--sans);font-weight:500;font-size:clamp(16px,1.5vw,22px);
+  letter-spacing:-.015em;line-height:1.2;color:#111;margin-bottom:6px;
+  overflow-wrap:anywhere;
+}
+.hotel .base{font-size:11px;color:var(--ph-fg);margin-bottom:4px;letter-spacing:.04em}
+.hotel .amount{
+  font-family:var(--sans);font-weight:400;font-size:14.5px;color:#44443E;
+  font-variant-numeric:tabular-nums;
+}
+.hotel .per-night{font-size:11px;color:var(--ph-fg)}
+.hotel-media{
+  width:clamp(72px,7vw,124px);aspect-ratio:4/3;border-radius:7px;flex:none;
+  background:repeating-linear-gradient(45deg,var(--ph-a),var(--ph-a) 8px,var(--ph-b) 8px,var(--ph-b) 16px);
+  overflow:hidden;
+}
+.hotel-media img{width:100%;height:100%;object-fit:cover;display:block}
+
+.hotel.is-link{transition:border-color .2s,box-shadow .2s,transform .2s}
+.hotel.is-link:hover,.hotel.is-link:focus-visible{
   border-color:var(--seal);
-  box-shadow:0 6px 18px rgba(0,0,0,.09);
-  transform:translateY(-2px);
-  outline:none;
+  box-shadow:0 8px 22px rgba(0,0,0,.08);
+  transform:translateY(-2px);outline:none;
 }
 .hotel.is-link:hover .name{text-decoration:underline;text-underline-offset:2px}
-.hotel .go{
-  position:absolute;top:12px;right:13px;
-  font-size:13px;line-height:1;color:#C9C9C0;
-  transition:color .2s,transform .2s;
-}
-.hotel.is-link:hover .go{color:var(--seal);transform:translate(1px,-1px)}
-.hotel .tier{font-size:8.5px;letter-spacing:.14em;color:var(--seal);margin-bottom:5px}
-.hotel .name{font-size:13px;line-height:1.35;margin-bottom:7px;color:#22221E;padding-right:18px}
-.hotel .base{font-size:9.5px;color:#B0B0A8;margin-bottom:10px;letter-spacing:.06em}
 
-/* prices stay in the sans — the hand-lettered face is hard to read as numerals */
-.hotel .amount{
-  font-family:var(--sans);font-weight:600;font-size:16px;color:#111;line-height:1.2;
-  font-variant-numeric:tabular-nums;margin-top:auto;
-}
-/* push the price to the bottom so the three cards align on it */
-.hotel{display:flex;flex-direction:column}
-.hotel .per-night{font-weight:400;font-size:11px;color:#A0A098;letter-spacing:.02em}
-.no-stay{color:var(--ph-fg);font-style:italic;font-size:13px}
+.no-stay{color:var(--ph-fg);font-style:italic;font-size:14px}
 
-
-
-/* ============================================================
-   FOOTER — budget, comfort slider, closing CTA
-   ============================================================ */
 #footer{
   position:relative;z-index:600;   /* above the sticky card stack */
   background:var(--ink);color:#fff;
@@ -564,41 +635,206 @@ body{
 .f-cta-note a{color:rgba(255,255,255,.8)}
 
 @media(max-width:860px){
-  #footer{padding:9vh 0 7vh}
-  .f-inner{grid-template-columns:1fr;padding-inline:6%}
-  .f-head,.f-tiers,.f-rows,.f-total,.f-cta{grid-column:1 / -1}
-  .f-tiers{margin-top:5vh}
-  .f-rows{margin-top:5vh}
-  .f-total{margin-top:4vh;text-align:left}
-  .f-row{grid-template-columns:96px 1fr auto;gap:10px}
-  .f-cat{font-size:12px}
-  .f-amt{font-size:11.5px}
-  .f-cta{margin-top:7vh;padding-top:5vh}
-  .f-tick{font-size:7.5px}
+  /* ---- hero: the map gets the room the dataviz used to take ----
+     The dataviz is dropped entirely (four numbers can't earn their space on a
+     phone), the map is scaled up 20%, and the crop is disabled in map.js so the
+     full artwork shows. The selector takes the freed strip as one compact row. */
+  #logo{width:38%;left:6%;top:3%}
+
+  /* The map runs 20% wider than the frame, bleeding evenly off both edges so it
+     stays centred. #stage clips it (overflow:hidden) and body has overflow-x
+     hidden, so nothing here can produce a horizontal scrollbar.
+     Anything positioned as a % of #world — pins, the inset — scales with it
+     for free. --map-w has to be told, though: it drives sprite sizes and would
+     otherwise leave the clouds 20% small against a bigger map. */
+  :root{--map-w:120vw}
+  #world{width:120%;margin-left:-10%}
+
+  #stats{display:none}
+
+  /* horizontal, stripped back: no panel, no tab, no dashed rule — just the
+     three durations, because there isn't room for furniture */
+  #selector{
+    position:absolute;
+    top:auto;bottom:3%;left:0;right:0;
+    transform:none;
+    width:auto;max-width:none;
+    padding:0 6%;
+    --sel-row:auto;
+  }
+  .sel-panel,.sel-tab,.sel-track{display:none}
+  .sel-options{
+    display:flex;justify-content:center;align-items:flex-end;
+    gap:7%;padding-left:0;
+  }
+  #selector button{
+    display:flex;flex-direction:column;align-items:center;
+    height:auto;gap:1px;
+    padding:6px 4px;
+  }
+  .sel-dot{
+    position:static;transform:none;
+    width:6px;height:6px;border-radius:50%;
+    margin-bottom:5px;
+    opacity:1;
+  }
+  #selector button[aria-checked="true"] .sel-dot{opacity:1;background:var(--seal)}
+  .sel-num{font-size:30px;line-height:1}
+  .sel-lbl{font-size:9px;letter-spacing:.14em;opacity:.7}
+  .sel-period{
+    position:static;opacity:0;height:0;overflow:hidden;
+  }
+  #selector button[aria-checked="true"] .sel-period{
+    opacity:.7;height:auto;font-size:9px;margin-top:2px;
+  }
+
+  /* ---- cards ----
+     The head stacks (duration drops under the title), and both the rail and the
+     hotels become horizontally scrollable, so no card ever needs to squeeze
+     three items into a phone's width. */
+  .card{border-radius:18px 18px 0 0;padding:6vh 0 5vh}
+  .card-inner{padding-left:6%}
+  .card-index{font-size:min(28vh,220px);left:-3%;top:-1%}
+
+  .c-head{
+    grid-template-columns:1fr;
+    padding-right:6%;
+    margin-bottom:4vh;
+  }
+  .c-sub{grid-column:1;grid-row:1;margin-bottom:10px}
+  .chip{width:26px;height:26px;font-size:12px}
+  .chip-caption{font-size:13px}
+  .card h2{grid-column:1;grid-row:2;font-size:clamp(38px,11vw,60px)}
+  .c-when{
+    grid-column:1;grid-row:3;
+    align-items:flex-start;text-align:left;
+    flex-direction:row;align-items:baseline;gap:10px;
+    padding-bottom:0;margin-top:10px;
+  }
+  .when-dates{font-size:12.5px;margin-bottom:0}
+  .when-nights{font-size:20px}
+
+  .c-rail{margin-bottom:5vh}
+  .acts{gap:12px;padding-right:6%}
+  .act{width:74vw;max-width:330px}
+  .act-title{font-size:14px}
+  .act-price{font-size:13px}
+
+  .stays-title{font-size:clamp(26px,8vw,42px);margin-bottom:2vh}
+  /* scrolls rather than cramming three cards into 100vw */
+  .hotels{
+    display:flex;gap:12px;
+    overflow-x:auto;scroll-snap-type:x proximity;
+    scrollbar-width:none;padding-right:6%;
+  }
+  .hotels::-webkit-scrollbar{display:none}
+  .hotel{
+    flex:0 0 auto;width:74vw;max-width:330px;
+    scroll-snap-align:start;padding:14px;
+  }
+  .hotel .name{font-size:17px}
+  .hotel-media{width:86px}
+
+  #calib{width:100%}
+}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .cloud-track,.wave-bob{animation:none}
 }
 
 /* ============================================================
-   DEV TOOLS — grid overlay + pin calibration
+   FINAL CALL — sticky call to action
    ============================================================ */
-#grid-overlay{
-  position:absolute;inset:0;z-index:150;pointer-events:none;display:none;
-  padding-inline:var(--grid-margin);
+#final-call{
+  --fc-pad:19px;                /* matches the mockup's inset */
+  /* Pinned to the viewport, deliberately outside the grid — it's an overlay on
+     the page rather than part of the layout, and it's up from the first frame. */
+  position:fixed;
+  top:24px;
+  right:24px;
+  z-index:520;                  /* over the cards, under the calibration panel */
+  width:clamp(230px, 17vw, 300px);
+  padding:var(--fc-pad);
+  background:#464646;
+  border-radius:9px;
+
+  /* the supplied stack: five layered shadows, light from the upper right */
+  filter:
+    drop-shadow(-95px 96px 38px rgba(25, 52, 87, 0.01))
+    drop-shadow(-61px 62px 35px rgba(25, 52, 87, 0.07))
+    drop-shadow(-34px 35px 29px rgba(25, 52, 87, 0.25))
+    drop-shadow(-15px 15px 22px rgba(25, 52, 87, 0.42))
+    drop-shadow(-4px 4px 12px rgba(25, 52, 87, 0.48));
+
+  /* only ever hidden at the footer, which has its own larger version of the
+     same call to action */
+  opacity:0;
+  transform:translateY(-10px) scale(.98);
+  pointer-events:none;
+  transition:opacity .32s ease, transform .32s cubic-bezier(.3,1.2,.4,1);
 }
-#grid-overlay.on{display:grid;grid-template-columns:repeat(8,1fr);column-gap:var(--grid-gutter-in)}
-#grid-overlay span{
-  background:rgba(80,160,255,.20);
-  border-inline:1px solid rgba(80,160,255,.5);
+#final-call.is-visible{
+  opacity:1;
+  transform:translateY(0) scale(1);
+  pointer-events:auto;
 }
 
+.fc-logo{
+  display:block;width:100%;height:auto;
+  margin-bottom:11px;
+  -webkit-user-drag:none;
+}
+/* width/height on the element reserve the box before the file lands, so the
+   panel does not resize as it loads */
+
+.fc-btn{
+  display:block;text-align:center;text-decoration:none;
+  background:#FF3030;color:#fff;
+  font-family:var(--sans);font-weight:700;
+  font-size:13px;letter-spacing:.14em;
+  padding:15px 10px;border-radius:5px;
+  transition:background .2s, transform .2s;
+}
+.fc-btn:hover{background:#FF4747;transform:translateY(-1px)}
+.fc-btn:active{transform:translateY(0)}
+.fc-btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.fc-btn[aria-disabled="true"]{background:#6B6B6B}
+.fc-btn[aria-disabled="true"]:hover{background:#787878}
+
+@media(max-width:860px){
+  #final-call{
+    top:auto;bottom:14px;
+    left:6%;right:6%;width:auto;
+    --fc-pad:13px;
+  }
+  .fc-btn{font-size:12px;padding:13px 10px}
+}
+@media(prefers-reduced-motion:reduce){
+  #final-call{transition:none}
+  .fc-btn{transition:none}
+}
+
+/* ============================================================
+   DEV TOOLS — grid overlay + calibration
+   Removed from the DOM in production unless ?calibrate is present,
+   so these styles only ever apply during development.
+   ============================================================ */
 .dev-btn{
-  position:fixed;bottom:14px;z-index:210;color:#fff;border:0;border-radius:5px;
-  font-family:var(--mono);font-size:10px;letter-spacing:.12em;padding:9px 13px;cursor:pointer;
+  position:fixed;bottom:14px;
+  /* above everything, including the footer — otherwise they disappear behind
+     it exactly when you scroll down to check something */
+  z-index:1000;
+  color:#fff;border:0;border-radius:5px;cursor:pointer;
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+  padding:9px 13px;
+  box-shadow:0 2px 10px rgba(0,0,0,.3);
 }
 #grid-toggle{right:112px;background:#2B6CB0}
 #calib-toggle{right:14px;background:var(--seal)}
 
 #calib{
-  position:fixed;top:0;right:0;z-index:200;display:none;
+  position:fixed;top:0;right:0;z-index:1001;display:none;
   width:340px;max-height:100vh;overflow:auto;padding:16px;
   background:#11151C;border-left:1px solid #2C333F;
   font-family:var(--mono);font-size:11px;line-height:1.5;
@@ -626,59 +862,22 @@ body{
 body.is-calibrating .poi{cursor:move}
 .poi.is-picking{outline:2px dashed #fff;outline-offset:6px}
 
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-@media(max-width:860px){
-  #logo{width:52%;left:6%}
-  #selector{top:auto;bottom:14%;right:6%;transform:none;--sel-gutter:16px}
-  .sel-days .num{font-size:24px}
-  #stats{padding-inline:6%;grid-template-columns:repeat(4,1fr);column-gap:2%}
-  #stats .stat:nth-child(1){grid-column:1}
-  #stats .stat:nth-child(2){grid-column:2}
-  #stats .stat:nth-child(3){grid-column:3}
-  #stats .stat:nth-child(4){grid-column:4}
-  /* ---- mobile cards: one screen, no internal scrolling ----
-     The 600px desktop block becomes a full-height column. Everything is
-     compacted rather than stacked, because stacking three hotel cards alone
-     would overflow the viewport. */
-  .card{border-radius:18px 18px 0 0;padding:0 6%}
-  .card-inner{
-    height:100vh;height:100dvh;
-    padding:4.5vh 0 3vh;
-    grid-template-columns:1fr;
-    grid-template-rows:auto auto minmax(0,1fr) auto auto;
-    row-gap:0;
-  }
-  .c-head { grid-column:1 / -1; grid-row:1 }
-  .c-media{ grid-column:1 / -1; grid-row:2; height:17vh; margin-bottom:14px }
-  .c-body { grid-column:1 / -1; grid-row:3; min-height:0; overflow:hidden }
-  .c-stays{ grid-column:1 / -1; grid-row:4; margin-top:14px; padding-top:12px }
-  .c-foot { grid-column:1 / -1; grid-row:5; margin-top:10px; padding-top:10px }
-
-  .card h2{font-size:30px;margin-bottom:6px}
-  .c-meta{margin:10px 0 2px;gap:10px}
-  .badge{font-size:13px;padding:4px 9px}
-  .meta-dates{font-size:13px}
-  .card .subtitle{font-size:14px;margin-bottom:12px}
-  .card .rule{margin-bottom:14px}
-  .chips{margin-bottom:16px}
-  .todo{gap:6px}
-  .todo li{font-size:13px}
-
-  /* three across, not stacked — and the image slot is the first thing to go */
-  .hotels{grid-template-columns:repeat(3,1fr);gap:8px}
-  .hotel{padding:9px}
-  .hotel .name{font-size:11px;margin-bottom:5px}
-  .hotel .base{font-size:9px;margin-bottom:5px}
-  .hotel .amount{font-size:13px}
-  .hotel .per-night{font-size:9px}
-
-  .act-tip{width:200px;left:0}
-  #calib{width:100%}
+#grid-overlay{
+  position:absolute;inset:0;z-index:150;pointer-events:none;display:none;
+  padding-inline:var(--grid-margin);
+}
+#grid-overlay.on{
+  display:grid;grid-template-columns:repeat(8,1fr);column-gap:var(--grid-gutter-in);
+}
+#grid-overlay span{
+  background:rgba(80,160,255,.20);
+  border-inline:1px solid rgba(80,160,255,.5);
 }
 
-@media(prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}
-  .cloud-track,.wave-bob{animation:none}
+@media(max-width:860px){
+  /* stacked above the Final Call panel, which owns the bottom edge on mobile */
+  .dev-btn{bottom:auto;top:14px}
+  #grid-toggle{right:auto;left:14px}
+  #calib-toggle{right:auto;left:98px}
+  #calib{width:100%}
 }

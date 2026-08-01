@@ -20,11 +20,12 @@
   <div id="frame">
 
     <div id="world">
-      <img id="basemap" alt="Illustrated map of Japan">
+      <img id="basemap" alt="">
+      <!-- second layer, used to crossfade between per-itinerary map variants -->
+      <img id="basemap-alt" alt="" aria-hidden="true">
       <div class="layer" id="waves"></div>
       <div id="inset"></div>
       <div class="layer" id="pois"></div>
-      <div class="layer" id="clouds"></div>
     </div>
 
     <!-- the dataviz sits inside the map frame, over the artwork's lower margin -->
@@ -37,11 +38,27 @@
     <div id="grid-overlay" aria-hidden="true"></div>
 
   </div>
+
+  <!-- outside #frame on purpose: clouds drift across the whole viewport, not
+       just the 1920px band the map is capped to -->
+  <div id="clouds" aria-hidden="true"></div>
 </header>
 
 <!-- ============ STACKED CITY CARDS ============ -->
 <!-- sticky bar that stays reachable while the cards stack -->
 <div id="to-map"><button type="button">↑ BACK TO MAP</button></div>
+
+<!-- Final Call: appears once the hero has scrolled away, hides at the footer.
+     `hidden` until the data resolves, so it can't flash before the link exists. -->
+<aside id="final-call" hidden>
+  <!-- <img> rather than inline: the file carries 80 generically-named gradient
+       ids (linear-gradient, linear-gradient-2 …) which would be global if
+       inlined and could collide. As an image it gets its own document scope.
+       3.5 KB gzipped, against 13.8 KB for the equivalent 2x PNG. -->
+  <img class="fc-logo" src="/shared/ui/final-call-logo.svg" alt="Final Call"
+       width="216" height="28">
+  <a class="fc-btn" href="#" target="_blank" rel="noopener noreferrer">ARE YOU IN?</a>
+</aside>
 
 <main id="cards"></main>
 <footer id="footer"></footer>

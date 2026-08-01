@@ -1,176 +1,196 @@
-import { TRIP } from './data.js'
-import { asset } from './paths.js'
+import { TRIP, tripAsset } from './data.js'
 
 /* ============================================================
    MAP
-   Base map, Hong Kong inset, drifting cloud/wave sprites, and
-   POI pins generated from a single shared pin design.
+   Base map (with optional per-itinerary variant), inset, waves,
+   clouds, and POI pins.
+
+   Two coordinate spaces live here, deliberately:
+
+     waves + pins  features OF the map. x/y are fractions of the
+                   map image, so they sit on real geography and
+                   are calibratable.
+
+     clouds        weather OVER the scene. x/y are percentages of
+                   the VIEWPORT, so they keep drifting across a
+                   2560px screen instead of being trapped inside
+                   the 1920px map frame. Their SIZE still tracks
+                   the map, via a CSS variable.
    ============================================================ */
 
-/* Cloud scatter. x is a % of the map width; negative starts off-stage left.
-   x + travel must clear the right edge so the wrap is never visible. Each
-   cloud rides its own full-width track, so translateX percentages resolve
-   against the map rather than the viewport and behave identically at any
-   screen size. Varied durations give the layers different speeds. */
-/* One dial for every cloud and wave at once. 1 = exactly as exported, relative
-   to the map. Nudge this if the whole sky reads too heavy or too sparse; use a
-   per-sprite `scale` for one-offs. */
+/* One dial for every sprite. 1 = exactly as exported, relative to the map. */
 const SPRITE_SCALE = 1
-
-/* One pin, both states. Geometry is verbatim from the exported SVGs; only the
-   fills are parameterised. */
-const PIN_SVG = `
-<svg class="poi-shape" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <path class="pin-badge" d="M34 4C34 6.20914 35.7909 8 38 8V35C35.7909 35 34 36.7909 34 39H7C7 36.7909 5.20914 35 3 35V8C5.20914 8 7 6.20914 7 4H34Z"/>
-  <path class="pin-panel" d="M31.9893 6.5C32.2154 8.33291 33.6671 9.78458 35.5 10.0107V32.9883C33.667 33.2144 32.2154 34.6671 31.9893 36.5H9.01074C8.78457 34.6671 7.33297 33.2144 5.5 32.9883V10.0107C7.33291 9.78458 8.78458 8.33291 9.01074 6.5H31.9893Z"/>
-  <rect class="pin-inner" x="7.5" y="8.5" width="26" height="26"/>
-</svg>`
-
-
-/* Sizes come from each file's own pixel dimensions rather than hand-tuned
-   percentages, so resizing a cloud means re-exporting the PNG, not editing code.
-   `scale` is an optional per-sprite override. */
-const CLOUDS = [
-  { file:'01.png', x:-18, y:25.5, dur:118, travel:140 },
-  { file:'02.png', x:-10, y:18.5, dur:96,  travel:126 },
-  { file:'03.png', x:-24, y:41.0, dur:104, travel:142 },
-  { file:'04.png', x:-13, y:15.0, dur:132, travel:130 },
-  { file:'05.png', x:-20, y:29.0, dur:110, travel:136 },
-  { file:'06.png', x:-28, y:47.0, dur:142, travel:148 },
-  { file:'07.png', x:-15, y:56.0, dur:100, travel:130 },
-  { file:'08.png', x:-18, y:62.0, dur:124, travel:134 },
-]
-
-/* Waves bob vertically and drift a little sideways. Amplitudes are larger
-   than they look — at this scale a 6px bob was invisible. */
-const WAVES = [
-  { file:'wave-0001.png', x:13.0, y:66.0, dur:6.5, dy:18, dx:10 },
-  { file:'wave-0002.png', x:30.0, y:19.0, dur:5.0, dy:13, dx:-7 },
-  { file:'wave-0003.png', x:19.5, y:24.0, dur:5.8, dy:15, dx:8 },
-  { file:'wave-0004.png', x:57.5, y:74.0, dur:5.3, dy:13, dx:-9 },
-  { file:'wave-0005.png', x:69.0, y:70.0, dur:6.1, dy:16, dx:7 },
-  { file:'wave-0006.png', x:84.5, y:56.0, dur:6.9, dy:19, dx:-11 },
-  { file:'wave-0007.png', x:24.5, y:33.0, dur:4.8, dy:12, dx:6 },
-]
 
 export const MapView = {
   el: {},
+  pinSvg: '',
 
-  init(){
+  async init(){
     this.el.world  = document.getElementById('world')
     this.el.base   = document.getElementById('basemap')
+    this.el.alt    = document.getElementById('basemap-alt')
     this.el.inset  = document.getElementById('inset')
     this.el.clouds = document.getElementById('clouds')
     this.el.waves  = document.getElementById('waves')
     this.el.pois   = document.getElementById('pois')
 
     const d = TRIP.data
-    this.el.base.src = asset(d.map.base)
-    document.querySelector('#logo img').src = asset('assets/logo.png')
+    this.el.base.src = tripAsset(d.map.base)
+    this.el.base.dataset.src = tripAsset(d.map.base)
+    document.querySelector('#logo img').src = tripAsset(d.map.logo || 'logo.png')
 
-    /* Per-trip surround colour, so it can't drift from the colour baked into
-       the map artwork. Falls back to the token for older trip files. */
     if(d.map.backgroundColor)
       document.documentElement.style.setProperty('--sea', d.map.backgroundColor)
 
-    /* The map's own pixel dimensions drive the hero's height — width is 100%,
-       height follows. baseSize is only a placeholder to reserve space before the
-       file loads; once it has, the real image wins, so a stale baseSize can
-       never squash the artwork. */
     this.el.world.style.aspectRatio =
       `${d.map.baseSize.w}/${d.map.baseSize.h * this.visible()}`
     this.syncRatio()
 
-    this.renderSprites()
+    /* the pin is a per-trip asset, not baked into this file, so a new trip can
+       ship its own geometry without a code change */
+    await this.loadPin()
+
+    this.renderClouds()
+    this.renderWaves()
     this.renderInset()
   },
 
-  /* A sprite's width is its exported width as a fraction of THE MAP's width.
-     Both come out of the same canvas, so a cloud drawn 787px wide beside a
-     3840px map occupies 787/3840 of it — whatever size either is displayed at.
-     (Measuring against grid.artboard instead was wrong by exactly the ratio
-     between the canvas and the artboard, which made everything twice too big.)
-     naturalWidth isn't known until a file loads, so this runs on load. */
-  sizeSprite(img, scale = 1){
-    const apply = () => {
-      const mapW = this.el.base.naturalWidth || TRIP.data.map.baseSize?.w
-      if(!img.naturalWidth || !mapW) return
-      img.parentElement.style.width =
-        (img.naturalWidth / mapW * 100 * scale * SPRITE_SCALE) + '%'
-    }
-    const ready = () => img.complete && this.el.base.complete
-    if(ready()) apply()
-    else {
-      img.addEventListener('load', apply, { once:true })
-      this.el.base.addEventListener('load', apply, { once:true })
+  async loadPin(){
+    const path = TRIP.data.map.pin || 'pin.svg'
+    try {
+      const res = await fetch(tripAsset(path))
+      if(!res.ok) throw new Error(`HTTP ${res.status}`)
+      const raw = await res.text()
+      this.pinSvg = raw.replace(/<\?xml[^>]*\?>/g, '').replace(/<!--[\s\S]*?-->/g, '').trim()
+      if(!/class="pin-panel"/.test(this.pinSvg))
+        console.warn(`[final-call] ${path} has no .pin-panel — hover states won't work. ` +
+                     `A pin needs .pin-badge, .pin-panel and .pin-inner.`)
+    } catch(e){
+      console.error(`[final-call] couldn't load the pin (${path}):`, e.message)
+      this.pinSvg = '<svg viewBox="0 0 42 42"><circle class="pin-panel" cx="21" cy="21" r="15"/></svg>'
     }
   },
 
-  /* How much of the image's height the hero shows, from the top. `cropBottom`
-     trims empty space off the bottom of the artwork without re-exporting it:
-     0.15 hides the lowest 15%. Coordinates stay fractions of the FULL image, so
-     cropping never invalidates a calibration — they're just scaled on the way
-     out by vScale(). */
-  visible(){ return 1 - (TRIP.data.map.cropBottom ?? 0) },
-  vScale(){ return 1 / this.visible() },
+  /* `cropBottom` hides empty space at the base of the artwork without
+     re-exporting. Coordinates stay fractions of the FULL image, so a crop
+     never invalidates a calibration — they're scaled on the way out.
 
-  /* place a y fraction of the image as a percentage of the visible hero */
-  yPct(v){ return v * this.vScale() * 100 },
+     On narrow screens the crop is dropped: the map is already small there, and
+     the dataviz that the cleared space existed for is hidden anyway. */
+  isNarrow(){ return window.matchMedia('(max-width: 860px)').matches },
+  visible(){ return this.isNarrow() ? 1 : 1 - (TRIP.data.map.cropBottom ?? 0) },
+  yPct(v){ return v / this.visible() * 100 },
 
-  /* adopt the image's true ratio, and say so if the data disagrees */
+  /* the crop changes at the breakpoint, so anything positioned against it has
+     to be recomputed when we cross it */
+  watchBreakpoint(onChange){
+    const mq = window.matchMedia('(max-width: 860px)')
+    const handler = () => {
+      const { naturalWidth:w, naturalHeight:h } = this.el.base
+      if(w && h) this.el.world.style.aspectRatio = `${w}/${h * this.visible()}`
+      this.renderWaves()
+      this.placeInset()
+      onChange?.()
+    }
+    mq.addEventListener ? mq.addEventListener('change', handler) : mq.addListener(handler)
+  },
+
   syncRatio(){
     const img = this.el.base
     const apply = () => {
       const { naturalWidth:w, naturalHeight:h } = img
       if(!w || !h) return
       this.el.world.style.aspectRatio = `${w}/${h * this.visible()}`
+      document.documentElement.style.setProperty('--map-natural-w', w)
 
       const dec = TRIP.data.map.baseSize
       if(dec && (dec.w !== w || dec.h !== h))
-        console.warn(`[japon] map.baseSize says ${dec.w}x${dec.h} but the image is ${w}x${h}. ` +
-                     `Layout has self-corrected, but every pin coordinate is a fraction of the ` +
-                     `image — run "npm run remap" to fix them.`)
+        console.warn(`[final-call] map.baseSize says ${dec.w}x${dec.h} but the image is ` +
+                     `${w}x${h}. Layout self-corrected, but pin coordinates are fractions ` +
+                     `of the image — run "npm run remap".`)
     }
     img.complete ? apply() : img.addEventListener('load', apply, { once:true })
   },
 
-  renderSprites(){
-    /* negative delays scatter the clouds across the sky on load rather than
-       letting them all enter from the left as a pack */
-    this.el.clouds.innerHTML = CLOUDS.map((c, i) => `
+  /* ---- two sizing models, on purpose --------------------------------------
+     'map'   width is a fraction of the map's rendered width, so the sprite
+             shrinks with the map on smaller screens. One CSS calc against
+             --map-w, no resize listener.
+
+     'fixed' width is the exported pixel size divided by `divisor`, held
+             constant at every viewport. Right for assets exported at 2x for a
+             3840 canvas: divisor 2 renders them at their intended size and
+             keeps them there rather than shrinking below 1920.
+     -------------------------------------------------------------------- */
+  sizeSprite(img, { mode = 'map', scale = 1, divisor = 2 } = {}){
+    const apply = () => {
+      if(!img.naturalWidth) return
+      /* NOT parentElement: waves nest an extra .wave-bob for the animation, so
+         the image's parent isn't the sized box. Clouds don't. */
+      const wrap = img.closest('.sprite')
+      if(!wrap) return
+      if(mode === 'fixed'){
+        wrap.style.width = (img.naturalWidth / divisor * scale * SPRITE_SCALE) + 'px'
+      } else {
+        const mapW = this.el.base.naturalWidth || TRIP.data.map.baseSize?.w
+        if(!mapW) return
+        wrap.style.setProperty(
+          '--sprite-ratio', (img.naturalWidth / mapW * scale * SPRITE_SCALE).toFixed(5))
+      }
+    }
+    const ready = () => img.complete && (mode === 'fixed' || this.el.base.complete)
+    if(ready()) apply()
+    else {
+      img.addEventListener('load', apply, { once:true })
+      if(mode !== 'fixed') this.el.base.addEventListener('load', apply, { once:true })
+    }
+  },
+
+  renderClouds(){
+    const clouds = TRIP.data.map.clouds ?? []
+    /* negative delays scatter them across the sky on load rather than letting
+       them all enter from the left together */
+    this.el.clouds.innerHTML = clouds.map((c, i) => `
       <div class="cloud-track" style="
            animation-duration:${c.dur}s;
            animation-delay:-${(c.dur * ((i * 0.137) % 1)).toFixed(1)}s;
            --travel:${c.travel}%">
-        <div class="sprite" style="left:${c.x}%;top:${this.yPct(c.y / 100).toFixed(3)}%">
-          <img src="${asset('assets/cloud/' + c.file)}" alt="">
+        <div class="sprite" style="left:${c.x}%;top:${c.y}%">
+          <img src="${tripAsset(c.file)}" alt="">
         </div>
       </div>`).join('')
 
-    this.el.waves.innerHTML = WAVES.map(w => `
-      <div class="sprite" style="left:${w.x}%;top:${this.yPct(w.y / 100).toFixed(3)}%">
+    clouds.forEach((c, i) =>
+      this.sizeSprite(this.el.clouds.querySelectorAll('img')[i],
+                      { mode:'map', scale:c.scale ?? 1 }))
+  },
+
+  /* Waves are placed on the map like pins — a map with no water simply has none. */
+  renderWaves(){
+    const waves = TRIP.data.map.waves ?? []
+    this.el.waves.innerHTML = waves.map((w, i) => `
+      <div class="sprite" data-wave="${i}"
+           style="left:${(w.x * 100).toFixed(3)}%;top:${this.yPct(w.y).toFixed(3)}%">
         <div class="wave-bob" style="
-             animation-duration:${w.dur}s;--dy:${w.dy}px;--dx:${w.dx}px">
-          <img src="${asset('assets/wave/' + w.file)}" alt="">
+             animation-duration:${w.dur ?? 6}s;--dy:${w.dy ?? 14}px;--dx:${w.dx ?? 0}px">
+          <img src="${tripAsset(w.file)}" alt="">
         </div>
       </div>`).join('')
 
-    CLOUDS.forEach((c, i) =>
-      this.sizeSprite(this.el.clouds.querySelectorAll('img')[i], c.scale ?? 1))
-    WAVES.forEach((w, i) =>
-      this.sizeSprite(this.el.waves.querySelectorAll('img')[i], w.scale ?? 1))
+    /* waves render at their exported size over `divisor` — see map.waveDivisor */
+    const divisor = TRIP.data.map.waveDivisor ?? 2
+    waves.forEach((w, i) =>
+      this.sizeSprite(this.el.waves.querySelectorAll('img')[i],
+                      { mode:'fixed', divisor, scale:w.scale ?? 1 }))
   },
 
   renderInset(){
     const ins = TRIP.data.map.inset
     if(!ins){ this.el.inset.hidden = true; return }
-    this.el.inset.innerHTML = `<img src="${asset(ins.src)}" alt="${ins.id} inset map">`
+    this.el.inset.innerHTML = `<img src="${tripAsset(ins.src)}" alt="${ins.id} inset map">`
     this.placeInset()
   },
 
-  /* `left` is deliberately NOT set here — the inset is pinned to grid column 1
-     by CSS. Writing it inline was overriding that. Only vertical position and
-     width remain data-driven. */
   placeInset(){
     const ins = TRIP.data.map.inset
     if(!ins) return
@@ -180,11 +200,35 @@ export const MapView = {
     })
   },
 
-  /* Pins are generated from one shared shape; the number comes from the
-     stop's position in the ACTIVE itinerary, so reordering or switching
-     variants renumbers them automatically. Locations not in the itinerary
-     dim and lose their number, so the map reads as a constant world with a
-     changing route drawn on it. */
+  /* An itinerary may point at different artwork of the same dimensions — a
+     recolour, say. Two images are stacked and crossfaded so the swap doesn't
+     flash through the background. */
+  setVariant(itinerary){
+    const url = tripAsset(itinerary?.map?.base ?? TRIP.data.map.base)
+    if(this.el.base.dataset.src === url) return
+
+    this.el.alt.src = url
+    const reveal = () => {
+      this.el.alt.classList.add('is-shown')
+      /* once faded in, promote it so the next swap crossfades from here */
+      setTimeout(() => {
+        this.el.base.src = url
+        this.el.base.dataset.src = url
+        this.el.alt.classList.remove('is-shown')
+      }, 420)
+    }
+    this.el.alt.complete ? reveal() : this.el.alt.addEventListener('load', reveal, { once:true })
+  },
+
+  /* called on selector hover, so switching feels instant */
+  preloadVariant(itinerary){
+    const want = itinerary?.map?.base
+    if(!want) return
+    new Image().src = tripAsset(want)
+  },
+
+  /* Numbered from the stop's position in the ACTIVE itinerary, so reordering
+     or switching variant renumbers them automatically. */
   renderPins(itinerary, onSelect){
     const ins = TRIP.data.map.inset
     const order = new Map(itinerary.stops.map((s, i) => [s.locationId, i + 1]))
@@ -200,20 +244,13 @@ export const MapView = {
       btn.className = 'poi' + (num ? '' : ' is-inactive')
       btn.dataset.locationId = loc.id
       btn.style.left = (c.x * 100) + '%'
-      /* inset pins are relative to the inset box, which isn't cropped */
       btn.style.top  = (c.onInset ? c.y * 100 : this.yPct(c.y)).toFixed(3) + '%'
       btn.setAttribute('aria-label', num ? `${num}. ${loc.name.en}` : loc.name.en)
-      /* Inline rather than <img>, so CSS can recolour it on hover. The two
-         supplied states differ only in fills, so this is the hover markup with
-         the colours driven by variables — the inner rect is present in both and
-         simply transparent at rest. The digit stays DOM text because it's
-         generated from the itinerary, not baked into the artwork. */
-      btn.innerHTML = PIN_SVG +
+      btn.innerHTML = this.pinSvg +
         `<span class="poi-num">${num ?? ''}</span>` +
         `<span class="tip">${loc.name.en}</span>`
       btn.addEventListener('click', e => onSelect(loc.id, e))
 
-      /* pins flagged onInset are positioned relative to the inset box */
       const onInset = c.onInset && ins && c.onInset === ins.id
       ;(onInset ? this.el.inset : this.el.pois).appendChild(btn)
     }

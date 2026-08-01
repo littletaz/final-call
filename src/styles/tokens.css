@@ -51,14 +51,18 @@
   --pin-cream:#F4E5CE;
   --pin-rect:#D14736;
 
-  /* ---- map ---- */
+  /* ---- map ----
+     The map is capped at the artboard width and centred, so its rendered width
+     is always this. Sprites size themselves against it. */
+  --map-w:min(100vw, var(--artboard));
+
   /* Where the dataviz sits, measured up from the bottom of the map frame.
      A px value (clamped) rather than a percentage, so it doesn't drift as the
      frame's height changes with the window. */
-  --stats-bottom:clamp(40px, 4.3vw, 120px);
+  --stats-bottom:clamp(100px, 6vw, 180px);
 
   /* ---- paper texture over the sea ---- */
-  --paper-texture:url('/assets/textures/paper-texture.jpg');
+  --paper-texture:url('/shared/textures/paper-texture.jpg');
   --paper-texture-opacity:.4;
 
   /* ---- motion ---- */

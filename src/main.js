@@ -6,6 +6,7 @@ import { MapView } from './js/map.js'
 import { Cards } from './js/cards.js'
 import { Footer } from './js/footer.js'
 import { loadFonts } from './js/fonts.js'
+import { FinalCall } from './js/finalcall.js'
 import { scrollToEl } from './js/scroll.js'
 
 /* ============================================================
@@ -25,6 +26,8 @@ function renderAll(){
   Cards.renderStats(active)
   Cards.renderCards(active)
   Footer.render(active)
+  FinalCall.update(active)
+  MapView.setVariant(active)
   MapView.renderPins(active, goToCard)
   if(Calib?.on) Calib.enableDrag()
 }
@@ -89,14 +92,18 @@ function initBackToMap(){
       ?.setAttribute('content', t.subtitle ?? t.title)
     document.querySelector('#logo img')?.setAttribute('alt', t.title)
 
-    MapView.init()
+    await MapView.init()
     Cards.init()
     Footer.init()
+    FinalCall.init()
 
     setItinerary(TRIP.data.defaultItineraryId)
     await initDevTools()
 
     initBackToMap()
+    /* crossing the mobile breakpoint changes the crop, which moves every pin */
+    MapView.watchBreakpoint(() => MapView.renderPins(active, goToCard))
+
     window.addEventListener('resize', () => {
       MapView.placeInset()
       Cards.positionMarker()   /* the marker is measured, so it re-measures */

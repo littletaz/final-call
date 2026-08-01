@@ -10,11 +10,15 @@
    ============================================================ */
 
 import { readFileSync, readdirSync, existsSync } from 'fs'
-import { join, resolve, basename } from 'path'
+import { basename, dirname, join, resolve } from 'path'
 
 const ROOT   = resolve(process.cwd())
 const TRIPS  = join(ROOT, 'public', 'trips')
 const PUBLIC = join(ROOT, 'public')
+
+/* asset paths inside a trip file are relative to that file's own folder */
+const inTrip = (tripPath, p) =>
+  p.startsWith('shared/') ? join(PUBLIC, p) : join(dirname(tripPath), p)
 
 const TIERS = ['budget', 'mid', 'splurge']
 const ARRIVE = ['flight', 'surface']
@@ -46,7 +50,7 @@ const warn = (file, msg) => { warnings++; console.log(`  \x1b[33m!\x1b[0m ${msg}
 const ok   = msg          => console.log(`  \x1b[32m✓\x1b[0m ${msg}`)
 
 function validateTrip(path){
-  const name = basename(path)
+  const name = `${basename(dirname(path))}/${basename(path)}`
   console.log(`\n\x1b[1m${name}\x1b[0m`)
 
   let t
@@ -61,8 +65,10 @@ function validateTrip(path){
   for(const k of ['id', 'title', 'defaultItineraryId', 'map', 'locations', 'itineraries'])
     if(t[k] == null) err(name, `missing required key: ${k}`)
 
-  if(t.id && basename(path, '.json') !== t.id)
-    warn(name, `filename "${basename(path, '.json')}" doesn't match id "${t.id}"`)
+  /* a trip is a folder named after its id, containing trip.json */
+  const folder = basename(dirname(path))
+  if(t.id && folder !== t.id)
+    warn(name, `folder "${folder}" doesn't match id "${t.id}" — they should match`)
 
   if(!Array.isArray(t.locations) || !t.locations.length){ err(name, 'locations must be a non-empty array'); return }
   if(!Array.isArray(t.itineraries) || !t.itineraries.length){ err(name, 'itineraries must be a non-empty array'); return }
@@ -188,8 +194,35 @@ function validateTrip(path){
   /* ---------- map + assets ---------- */
   const checkAsset = (p, label) => {
     if(!p) return false
-    if(!existsSync(join(PUBLIC, p))){ err(name, `${label} not found: public/${p}`); return false }
+    if(!existsSync(inTrip(path, p))){ err(name, `${label} not found: ${p} (relative to the trip folder)`); return false }
     return true
+  }
+  checkAsset(t.map?.pin || 'pin.svg', 'map.pin')
+  checkAsset(t.map?.logo || 'logo.png', 'map.logo')
+
+  /* sprites moved into the data, so they're worth checking */
+  for(const [key, arr] of [['clouds', t.map?.clouds], ['waves', t.map?.waves]]){
+    for(const [i, sp] of (arr ?? []).entries()){
+      if(!sp.file){ err(name, `map.${key}[${i}]: file is required`); continue }
+      checkAsset(sp.file, `map.${key}[${i}].file`)
+      if(key === 'waves'){
+        /* waves are placed on the map, so they need coordinates like pins */
+        if(typeof sp.x !== 'number' || typeof sp.y !== 'number')
+          err(name, `map.waves[${i}]: x/y are required (fractions of the map image)`)
+        else if(sp.x < 0 || sp.x > 1 || sp.y < 0 || sp.y > 1)
+          err(name, `map.waves[${i}]: x/y must be 0-1 (got ${sp.x}, ${sp.y})`)
+      } else {
+        /* clouds drift across the viewport, so x + travel must clear the edge */
+        if(sp.x != null && sp.travel != null && sp.x + sp.travel <= 100)
+          err(name, `map.clouds[${i}]: x + travel is ${sp.x + sp.travel} — must exceed 100, ` +
+                    `or the loop reset happens on screen`)
+      }
+    }
+  }
+
+  /* per-itinerary map variants must match the base dimensions */
+  for(const it of t.itineraries ?? []){
+    if(it.map?.base) checkAsset(it.map.base, `itineraries.${it.id}.map.base`)
   }
   const baseOk = checkAsset(t.map?.base, 'map.base')
   checkAsset(t.map?.inset?.src, 'map.inset.src')
@@ -198,7 +231,7 @@ function validateTrip(path){
      disagrees with the file silently moves every pin. Read the real size
      straight out of the PNG/JPEG header. */
   if(baseOk && t.map?.baseSize){
-    const real = imageSize(join(PUBLIC, t.map.base))
+    const real = imageSize(inTrip(path, t.map.base))
     if(!real) warn(name, `couldn't read dimensions of ${t.map.base}`)
     else if(real.w !== t.map.baseSize.w || real.h !== t.map.baseSize.h)
       err(name, `map.baseSize is ${t.map.baseSize.w}x${t.map.baseSize.h} but ` +
@@ -238,8 +271,8 @@ function validateTrip(path){
     if(!f?.family){ err(name, `artDirection.fonts.${role}: family is required`); continue }
     if(!f.google && !f.src)
       err(name, `artDirection.fonts.${role} ("${f.family}") has neither google nor src — it will never load`)
-    if(f.src && !existsSync(join(PUBLIC, f.src)))
-      err(name, `artDirection.fonts.${role}: file not found — public/${f.src}`)
+    if(f.src && !existsSync(inTrip(path, f.src)))
+      err(name, `artDirection.fonts.${role}: file not found — ${f.src} (relative to the trip folder)`)
     if(f.src && !/\.woff2$/.test(f.src))
       warn(name, `artDirection.fonts.${role}: ${f.src} isn't woff2 — roughly half the size for the same outlines`)
     if(!f.fallback)

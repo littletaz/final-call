@@ -1,3 +1,4 @@
+import { MapView } from './map.js'
 import { TRIP, deriveStats, stayTotal, stopDates, eur } from './data.js'
 import { countUp } from './countup.js'
 
@@ -26,20 +27,22 @@ export const Cards = {
     const items = TRIP.data.itineraries
     const activeIndex = Math.max(0, items.findIndex(it => it.id === active.id))
 
-    /* A caption, because three bare numbers don't say what they do. */
+    /* Panel + tab are decoration, so they're aria-hidden; the options carry
+       the semantics. The date sits in its own absolutely-positioned slot so
+       revealing it on hover can't move anything. */
     this.el.selector.innerHTML =
-      `<p class="sel-caption">DURATION</p>` +
-      `<div class="sel-options" role="radiogroup" aria-label="Itinerary length">` +
+      `<div class="sel-panel" aria-hidden="true"></div>` +
+      `<p class="sel-tab">ITINERARY</p>` +
+      `<div class="sel-options">` +
         `<span class="sel-track" aria-hidden="true"><span class="sel-marker"></span></span>` +
         items.map((it, i) => `
           <button type="button" role="radio"
                   data-itinerary="${it.id}" data-index="${i}"
                   aria-checked="${it.id === active.id}"
                   tabindex="${i === activeIndex ? 0 : -1}">
-            <span class="sel-days">
-              <span class="num">${it.days}</span>
-              <span class="lbl">DAYS</span>
-            </span>
+            <span class="sel-dot" aria-hidden="true"></span>
+            <span class="sel-num">${it.days}</span>
+            <span class="sel-lbl">DAYS</span>
             <span class="sel-period">${it.periodDisplay ?? ''}</span>
           </button>`).join('') +
       `</div>`
@@ -48,6 +51,10 @@ export const Cards = {
 
     buttons.forEach(b => {
       b.addEventListener('click', () => onPick(b.dataset.itinerary))
+      /* fetch any alternate map artwork before it's needed, so the swap is
+         instant rather than fading in from nothing */
+      b.addEventListener('pointerenter', () => MapView.preloadVariant(
+        TRIP.data.itineraries.find(i => i.id === b.dataset.itinerary)), { once:true })
       b.addEventListener('keydown', e => {
         const step = { ArrowDown:1, ArrowRight:1, ArrowUp:-1, ArrowLeft:-1 }[e.key]
         if(!step) return
@@ -65,13 +72,17 @@ export const Cards = {
   /* The marker is one element that slides, rather than a pseudo-element on each
      option pinned with magic offsets. Its position is measured from the chosen
      button, so it stays aligned whatever the type size or spacing. */
+  /* The marker lives inside .sel-track, which starts half a row down so the
+     dashed rule spans dot-to-dot rather than the full height. So the offset is
+     measured against the track, not the options box. */
   positionMarker(){
     const sel = this.el.selector.querySelector('.sel-options') || this.el.selector
-    const marker = sel.querySelector('.sel-marker')
+    const marker  = sel.querySelector('.sel-marker')
+    const track   = sel.querySelector('.sel-track')
     const current = sel.querySelector('button[aria-checked="true"]')
-    if(!marker || !current) return
-    marker.style.transform =
-      `translateY(${current.offsetTop + current.offsetHeight / 2}px)`
+    if(!marker || !current || !track) return
+    const y = current.offsetTop + current.offsetHeight / 2 - track.offsetTop
+    marker.style.transform = `translateY(${y}px)`
   },
 
   renderStats(itinerary){
@@ -99,6 +110,8 @@ export const Cards = {
      there is no stay, so it falls back to the nightly rate.
      A stay with a bookingUrl renders as a link; without one it stays a plain
      block rather than a dead anchor. */
+  /* On overnight stops the figure is the total for the stay; on day-trip spurs
+     there is no stay, so it falls back to the nightly rate. */
   hotel(stay, stop){
     const t = stayTotal(stay, stop)
     const amount = t
@@ -106,91 +119,84 @@ export const Cards = {
       : `${eur(stay.priceNightEUR[0])}\u2013${eur(stay.priceNightEUR[1])} <span class="per-night">/night</span>`
 
     const inner = `
-      <span class="tier">${stay.tier.toUpperCase()}</span>
-      <span class="name">${stay.name}</span>
-      ${stay.base ? `<span class="base">${stay.base}</span>` : ''}
-      <span class="amount">${amount}</span>`
+      <span class="hotel-text">
+        <span class="tier">${stay.tier[0].toUpperCase() + stay.tier.slice(1)}</span>
+        <span class="name">${stay.name}</span>
+        ${stay.base ? `<span class="base">${stay.base}</span>` : ''}
+        <span class="amount">${amount}</span>
+      </span>
+      <span class="hotel-media">${stay.image
+        ? `<img src="${stay.image}" alt="">` : ''}</span>`
 
     if(!stay.bookingUrl) return `<div class="hotel">${inner}</div>`
-
     return `<a class="hotel is-link" href="${stay.bookingUrl}"
                target="_blank" rel="noopener noreferrer"
                aria-label="${stay.name} \u2014 opens booking search in a new tab">
-      ${inner}
-      <span class="go" aria-hidden="true">\u2197</span>
-    </a>`
+      ${inner}</a>`
   },
 
+  /* A card in the horizontal rail: image, then title / description / price.
+     `note` is the description; it was previously hidden in a hover tooltip. */
   activity(a){
-    const free  = a.priceEUR && a.priceEUR[1] === 0
+    const free = a.priceEUR && a.priceEUR[1] === 0
     const price = !a.priceEUR ? ''
       : free ? `<span class="act-price is-free">FREE</span>`
       : `<span class="act-price">${eur(a.priceEUR[0])}\u2013${eur(a.priceEUR[1])}</span>`
 
-    /* the tooltip carries the note and will carry the image once we have one */
-    const tip = a.note
-      ? `<span class="act-tip">
-           ${a.image ? `<img src="${a.image}" alt="">` : `<span class="act-tip-ph">IMAGE</span>`}
-           <span class="act-tip-note">${a.note}</span>
-         </span>`
-      : ''
-
-    return `<li class="act">
-      <span class="act-title">${a.title}</span>
-      ${price}${tip}
-    </li>`
+    return `<article class="act">
+      <div class="act-media">${a.image
+        ? `<img src="${a.image}" alt="">`
+        : `<span class="act-media-ph">IMAGE</span>`}</div>
+      <div class="act-meta">
+        <h4 class="act-title">${a.title}</h4>
+        ${price}
+      </div>
+      ${a.note ? `<p class="act-note">${a.note}</p>` : ''}
+    </article>`
   },
 
   card(stop, i, count, dates){
     const loc = TRIP.byId[stop.locationId]
     if(!loc) return ''
 
-    /* a spur is a day trip folded into the previous stop's nights: it still
-       earns a pin and a card, but contributes no nights */
-    const badge = stop.spur
-      ? `<span class="badge is-spur">DAY TRIP</span>`
-      : `<span class="badge">${stop.nights} NIGHT${stop.nights === 1 ? '' : 'S'}</span>`
+    /* a spur is a day trip folded into the previous stop's nights */
+    const nights = stop.spur
+      ? `<span class="when-nights is-spur">day trip</span>`
+      : `<span class="when-nights">${stop.nights} night${stop.nights === 1 ? '' : 's'}</span>`
 
     const d = dates[stop.locationId]
-    const dateLine = (d && stop.nights) ? `${fmt(d.from)} \u2013 ${fmt(d.to)}` : ''
+    const dateLine = (d && stop.nights)
+      ? `<span class="when-dates">${fmt(d.from)} \u2013 ${fmt(d.to)}</span>` : ''
+
+    const acts = (loc.thingsToDo ?? []).map(a => this.activity(a)).join('')
+    const stays = loc.stays.slice(0, 3).map(st => this.hotel(st, stop)).join('')
 
     /* sticky + rising z-index is what makes each card slide over the last */
     return `<section class="card" id="card-${loc.id}" style="z-index:${i + 1}">
+      <span class="card-index" aria-hidden="true">${i + 1}</span>
+
       <div class="card-inner">
-
-        <div class="c-head">
-          <div class="eyebrow">${loc.epithet}</div>
-          <h2>${loc.name.en}<span class="jp">${loc.name.jp}</span></h2>
-          <p class="subtitle">${loc.subtitle}</p>
-          <div class="c-meta">
-            ${badge}
-            ${dateLine ? `<span class="meta-dates">${dateLine}</span>` : ''}
-          </div>
-          <div class="rule"></div>
-        </div>
-
-        <div class="c-body">
-          <div class="chips">
+        <header class="c-head">
+          <p class="c-sub">
             ${loc.kanjiChips.map(k => `<span class="chip">${k}</span>`).join('')}
             <span class="chip-caption">${loc.chipCaption}</span>
-          </div>
-          <p class="slot-label">THINGS TO DO</p>
-          <ul class="todo">${loc.thingsToDo.map(a => this.activity(a)).join('')}</ul>
+          </p>
+          <h2>${loc.name.en}<span class="jp">${loc.name.jp}</span></h2>
+          <div class="c-when">${dateLine}${nights}</div>
+        </header>
+
+        <!-- horizontal rail: bleeds off the right edge so it reads as
+             continuing past the frame rather than ending at it -->
+        <div class="c-rail">
+          <div class="acts" role="list" aria-label="Things to do in ${loc.name.en}">${acts}</div>
         </div>
 
-        <div class="c-media">
-          <div class="hero-slot">HERO IMAGE<br>${loc.name.en}</div>
-        </div>
-
-        <div class="c-stays">
-          <p class="slot-label">WHERE WE SLEEP \u2014 EST. PRICE PER STAY</p>
-          <div class="hotels">${loc.stays.slice(0, 3).map(s => this.hotel(s, stop)).join('')}</div>
-        </div>
-
-        <div class="c-foot">
-          <span>STOP ${i + 1} / ${count}</span>
-        </div>
-
+        <section class="c-stays">
+          <h3 class="stays-title">where we sleep</h3>
+          ${loc.stays.length
+            ? `<div class="hotels">${stays}</div>`
+            : `<p class="no-stay">No stay \u2014 folded into the neighbouring base.</p>`}
+        </section>
       </div>
     </section>`
   },

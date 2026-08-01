@@ -9,9 +9,19 @@ import { asset } from './paths.js'
 
 export const TRIP = {
   registry: null,
-  file: null,        /* path of the loaded trip file, e.g. trips/japon-2026.json */
-  data: null,        /* the whole trip file */
-  byId: {},          /* locationId -> location */
+  file: null,        /* e.g. trips/japan-2026/trip.json */
+  dir: null,         /* e.g. trips/japan-2026 — assets resolve against this */
+  data: null,
+  byId: {},
+}
+
+/* Every asset path inside a trip file is relative to that trip's own folder,
+   so two trips can both ship a `pin.svg` without colliding. Anything under
+   shared/ is addressed absolutely and skips this. */
+export function tripAsset(p){
+  if(!p) return p
+  if(/^(https?:)?\/\//.test(p) || p.startsWith('shared/')) return asset(p)
+  return asset(`${TRIP.dir}/${p}`)
 }
 
 async function getJSON(url){
@@ -32,6 +42,7 @@ export async function loadData(){
 
   const data = await getJSON(entry.file)
   TRIP.file = entry.file
+  TRIP.dir  = entry.file.replace(/\/[^/]*$/, '')
   TRIP.data = data
   TRIP.byId = Object.fromEntries(data.locations.map(l => [l.id, l]))
 
