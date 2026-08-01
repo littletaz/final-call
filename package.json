@@ -1,0 +1,16 @@
+{
+  "name": "final-call",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "validate": "node scripts/validate-trip.mjs"
+  },
+  "devDependencies": {
+    "vite": "^6.0.7"
+  },
+  "description": "Illustrated, data-driven trip pages. One file per trip."
+}

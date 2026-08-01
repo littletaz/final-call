@@ -1,0 +1,1494 @@
+{
+  "_readme": "ONE FILE PER TRIP. Everything a trip needs: manifest, locations, itineraries. Drop a new file into public/trips/ and add it to index.json to publish it. See TRIP_SCHEMA.md for the authoring contract.",
+  "schemaVersion": 1,
+  "id": "japon-2026",
+  "title": "Japon & Hong Kong",
+  "subtitle": "Three weeks at peak autumn",
+  "defaultItineraryId": "full-21",
+  "map": {
+    "assetId": "japan-ink-map-v2",
+    "base": "assets/map/map-japon.png",
+    "baseSize": {
+      "w": 3840,
+      "h": 2556
+    },
+    "inset": {
+      "id": "hongkong-inset",
+      "src": "assets/map/map-hk.png",
+      "forLocationId": "hongkong",
+      "x": 0.075,
+      "y": 0.3,
+      "w": 0.155
+    },
+    "_calibrated": false,
+    "_calibrationNote": "Pin + inset coordinates are unverified best guesses. Use the CALIBRATE panel in the page, then paste the exported values back into this file and locations.json.",
+    "backgroundColor": "#596D88",
+    "_canvasNote": "All trips in this project share one canvas ratio. The artwork carries its own margin so land never reaches the edge, and leaves clear space at the bottom for the dataviz. baseSize MUST match the real pixel size of base."
+  },
+  "artDirection": {
+    "id": "sumi-e-ink-wash",
+    "colors": {
+      "sea": "#596D88",
+      "paper": "#FAEDDC",
+      "seal": "#CF4736",
+      "ink": "#1E222B"
+    },
+    "type": {
+      "display": "Osaka Moji",
+      "serif": "PLACEHOLDER — Georgia stands in for the intended Didone",
+      "sans": "PLACEHOLDER — system sans stands in for the intended geometric sans"
+    }
+  },
+  "grid": {
+    "_source": "Figma artboard 1920, count 8, type stretch, margin 218, gutter 20",
+    "artboard": 1920,
+    "columns": 8,
+    "margin": 218,
+    "gutter": 20,
+    "columnWidth": 168,
+    "contentWidth": 1484
+  },
+  "budget": {
+    "_readme": "Footer budget model. Per person. `comfortTiers` scale the base figures.",
+    "currency": "EUR",
+    "categories": [
+      {
+        "id": "flights",
+        "label": "Flights",
+        "baseEUR": [
+          900,
+          1100
+        ]
+      },
+      {
+        "id": "stays",
+        "label": "Stays",
+        "baseEUR": [
+          1250,
+          1450
+        ],
+        "_derived": "overridden by the sum of chosen stays"
+      },
+      {
+        "id": "transport",
+        "label": "Transport",
+        "baseEUR": [
+          450,
+          550
+        ]
+      },
+      {
+        "id": "food",
+        "label": "Food",
+        "baseEUR": [
+          700,
+          850
+        ]
+      },
+      {
+        "id": "activities",
+        "label": "Activities",
+        "baseEUR": [
+          350,
+          450
+        ],
+        "_derived": "overridden by the sum of activity prices"
+      }
+    ],
+    "comfortTiers": [
+      {
+        "id": "shoestring",
+        "label": "Very poor",
+        "multiplier": 0.55
+      },
+      {
+        "id": "budget",
+        "label": "Budget friendly",
+        "multiplier": 0.78
+      },
+      {
+        "id": "comfort",
+        "label": "Comfort",
+        "multiplier": 1.0
+      },
+      {
+        "id": "midhigh",
+        "label": "Mid-high",
+        "multiplier": 1.45
+      },
+      {
+        "id": "luxury",
+        "label": "Luxury",
+        "multiplier": 2.3
+      }
+    ],
+    "defaultTierId": "comfort"
+  },
+  "cta": {
+    "headline": "So… are you in?",
+    "buttonLabel": "YES",
+    "flightSearch": {
+      "_readme": "Legs are searched together as one multi-city query. `provider` is kayak | momondo | google. Google has no stable public multi-city URL format, so it falls back to searching the first leg only.",
+      "provider": "kayak",
+      "passengers": 2,
+      "cabin": "economy",
+      "legs": [
+        {
+          "from": "PAR",
+          "to": "HKG",
+          "dateFrom": "itineraryStart"
+        },
+        {
+          "from": "TYO",
+          "to": "PAR",
+          "dateFrom": "itineraryEnd"
+        }
+      ]
+    }
+  },
+  "locations": [
+    {
+      "id": "hongkong",
+      "pin": "01",
+      "name": {
+        "en": "Hong Kong",
+        "jp": "香港"
+      },
+      "epithet": "THE GATEWAY",
+      "subtitle": "Kowloon · HK Island · Lantau",
+      "coordinates": {
+        "x": 0.46,
+        "y": 0.6,
+        "onInset": "hongkong-inset"
+      },
+      "tags": [
+        "city",
+        "food",
+        "culture"
+      ],
+      "intro": "We kick off in high gear. Bamboo steamers at midnight, glowing canyon streets, and Victoria Peak at dusk as the harbour explodes into neon. The perfect hyper-sensory jolt before the mountain silence.",
+      "kanjiChips": [
+        "香",
+        "港"
+      ],
+      "chipCaption": "A neon cocktail of steam & concrete",
+      "hero": null,
+      "thingsToDo": [
+        {
+          "title": "Dragon's Back ridge at sunrise",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free. Bus there, noodles at the bottom.",
+          "image": null
+        },
+        {
+          "title": "Star Ferry crossings",
+          "priceEUR": [
+            1,
+            2
+          ],
+          "note": "Cheapest harbour view in the world.",
+          "image": null
+        },
+        {
+          "title": "Sham Shui Po lanes and market stalls",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free to wander; bring cash for snacks.",
+          "image": null
+        },
+        {
+          "title": "Dim sum crawl",
+          "priceEUR": [
+            15,
+            30
+          ],
+          "note": "Seafood and chicken baskets — skip the char siu.",
+          "image": null
+        }
+      ],
+      "stays": [
+        {
+          "name": "Royal Plaza Hotel",
+          "tier": "budget",
+          "priceNightEUR": [
+            50,
+            70
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Royal+Plaza+Hotel%2C+Hong+Kong"
+        },
+        {
+          "name": "Eaton HK",
+          "tier": "mid",
+          "priceNightEUR": [
+            110,
+            140
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Eaton+HK%2C+Hong+Kong"
+        },
+        {
+          "name": "Hotel ICON",
+          "tier": "splurge",
+          "priceNightEUR": [
+            160,
+            200
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Hotel+ICON%2C+Hong+Kong"
+        }
+      ],
+      "foodNotes": "No char siu or pork buns — seafood and chicken dim sum are the safe defaults."
+    },
+    {
+      "id": "japan-alps",
+      "pin": "02",
+      "name": {
+        "en": "Japan Alps",
+        "jp": "飛騨"
+      },
+      "epithet": "THE DEEP ALPS",
+      "subtitle": "Takayama · Kamikochi · Shin-Hotaka",
+      "coordinates": {
+        "x": 0.474,
+        "y": 0.638
+      },
+      "tags": [
+        "mountains",
+        "nature",
+        "hiking",
+        "photography"
+      ],
+      "intro": "This is where we go offline. Six nights trekking alpine trails framed by peak autumn larches, staying in historic wooden towns, and sinking into steaming outdoor onsen beneath cold starlit skies.",
+      "kanjiChips": [
+        "山",
+        "湯"
+      ],
+      "chipCaption": "Hike hard, soak endlessly",
+      "hero": null,
+      "thingsToDo": [
+        {
+          "title": "Kamikochi at dawn — Taisho Pond mirror-still",
+          "priceEUR": [
+            15,
+            25
+          ],
+          "note": "Bus in; private cars are banned.",
+          "image": null
+        },
+        {
+          "title": "Shin-Hotaka Ropeway",
+          "priceEUR": [
+            25,
+            35
+          ],
+          "note": "Double-decker cable car, return fare.",
+          "image": null
+        },
+        {
+          "title": "Shirakawa-go thatched village",
+          "priceEUR": [
+            20,
+            30
+          ],
+          "note": "Nohi bus return from Takayama.",
+          "image": null
+        },
+        {
+          "title": "Takayama morning market + Hida beef",
+          "priceEUR": [
+            15,
+            40
+          ],
+          "note": "Skewers at the market, or a proper sit-down.",
+          "image": null
+        }
+      ],
+      "stays": [
+        {
+          "name": "APA Hotel Takayama Ekimae",
+          "tier": "budget",
+          "priceNightEUR": [
+            55,
+            85
+          ],
+          "nights": 2,
+          "base": "Takayama",
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=APA+Hotel+Takayama+Ekimae%2C+Takayama"
+        },
+        {
+          "name": "Ryokan Asunaro",
+          "tier": "mid",
+          "priceNightEUR": [
+            190,
+            210
+          ],
+          "nights": 4,
+          "base": "Hirayu Onsen",
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Ryokan+Asunaro%2C+Hirayu+Onsen"
+        },
+        {
+          "name": "Honjin Hiranoya Kachoan",
+          "tier": "splurge",
+          "priceNightEUR": [
+            120,
+            370
+          ],
+          "nights": 2,
+          "base": "Takayama",
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Honjin+Hiranoya+Kachoan%2C+Takayama"
+        }
+      ],
+      "foodNotes": "Hida beef is the regional specialty — beef, not pork, so an easy no-pork base."
+    },
+    {
+      "id": "kanazawa",
+      "pin": "03",
+      "name": {
+        "en": "Kanazawa",
+        "jp": "金沢"
+      },
+      "epithet": "THE GOLD COAST",
+      "subtitle": "Kenroku-en · Higashi Chaya · Omicho",
+      "coordinates": {
+        "x": 0.456,
+        "y": 0.613
+      },
+      "tags": [
+        "city",
+        "gardens",
+        "food",
+        "photography"
+      ],
+      "intro": "A castle town that was never bombed, so it was never rebuilt. Gold-leaf workshops, black-tile roofs, and teahouse lanes that light from the inside at dusk.",
+      "kanjiChips": [
+        "金",
+        "箔"
+      ],
+      "chipCaption": "Gold leaf and garden moss",
+      "hero": null,
+      "thingsToDo": [
+        {
+          "title": "Kenroku-en Garden at opening time",
+          "priceEUR": [
+            3,
+            5
+          ],
+          "note": "Go before the tour groups.",
+          "image": null
+        },
+        {
+          "title": "Higashi Chaya geisha district",
+          "priceEUR": [
+            0,
+            8
+          ],
+          "note": "Free to walk; teahouse entry extra.",
+          "image": null
+        },
+        {
+          "title": "Omicho Market seafood lunch",
+          "priceEUR": [
+            15,
+            30
+          ],
+          "note": "Kaisendon at the counter.",
+          "image": null
+        },
+        {
+          "title": "Gold-leaf workshop",
+          "priceEUR": [
+            10,
+            25
+          ],
+          "note": "Make something to take home.",
+          "image": null
+        }
+      ],
+      "stays": [
+        {
+          "name": "APA Hotel Kanazawa Ekimae",
+          "tier": "budget",
+          "priceNightEUR": [
+            50,
+            80
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=APA+Hotel+Kanazawa+Ekimae%2C+Kanazawa%2C+Japan"
+        },
+        {
+          "name": "Smile Hotel Kanazawa",
+          "tier": "budget",
+          "priceNightEUR": [
+            50,
+            80
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Smile+Hotel+Kanazawa%2C+Kanazawa%2C+Japan"
+        },
+        {
+          "name": "Kanazawa Machiya Inn Hana",
+          "tier": "mid",
+          "priceNightEUR": [
+            70,
+            110
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Kanazawa+Machiya+Inn+Hana%2C+Kanazawa%2C+Japan"
+        }
+      ],
+      "foodNotes": "Kaiseki dinners — flag no-pork when booking."
+    },
+    {
+      "id": "noto",
+      "pin": "04",
+      "name": {
+        "en": "Noto Peninsula",
+        "jp": "能登"
+      },
+      "epithet": "THE QUIET SPUR",
+      "subtitle": "Wakura Onsen · Nanao",
+      "coordinates": {
+        "x": 0.466,
+        "y": 0.562
+      },
+      "tags": [
+        "coast",
+        "nature",
+        "photography"
+      ],
+      "intro": "A day out to a coastline still finding its feet after 2024. Terraced rice fields running straight into the sea, and almost nobody else on the train.",
+      "kanjiChips": [
+        "能",
+        "登"
+      ],
+      "chipCaption": "A coast that went quiet again",
+      "hero": null,
+      "thingsToDo": [
+        {
+          "title": "Wakura Onsen day bath",
+          "priceEUR": [
+            5,
+            12
+          ],
+          "note": "Public bath at the hot spring town.",
+          "image": null
+        },
+        {
+          "title": "Nanao coastline by local train",
+          "priceEUR": [
+            8,
+            15
+          ],
+          "note": "Return fare from Kanazawa.",
+          "image": null
+        }
+      ],
+      "stays": [
+        {
+          "name": "Wakura Onsen ryokan",
+          "tier": "mid",
+          "priceNightEUR": [
+            130,
+            190
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Wakura+Onsen+ryokan%2C+Noto+Peninsula%2C+Japan"
+        },
+        {
+          "name": "Nanao business hotel",
+          "tier": "budget",
+          "priceNightEUR": [
+            55,
+            80
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Nanao+business+hotel%2C+Noto+Peninsula%2C+Japan"
+        },
+        {
+          "name": "Kagaya (Wakura)",
+          "tier": "splurge",
+          "priceNightEUR": [
+            280,
+            450
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Kagaya+%28Wakura%29%2C+Noto+Peninsula%2C+Japan"
+        }
+      ],
+      "foodNotes": "Seafood-forward, no particular pork risk."
+    },
+    {
+      "id": "kyoto-edges",
+      "pin": "05",
+      "name": {
+        "en": "Kyoto's Edges",
+        "jp": "京都"
+      },
+      "epithet": "THE BACK ROADS",
+      "subtitle": "Ohara · Kurama · Arashiyama",
+      "coordinates": {
+        "x": 0.431,
+        "y": 0.698
+      },
+      "tags": [
+        "temples",
+        "gardens",
+        "photography"
+      ],
+      "intro": "Kyoto without the crush. We stay on the edges and head up into the hills instead — moss temples in Ohara, cedar forest above Kurama, bamboo at first light.",
+      "kanjiChips": [
+        "京",
+        "苔"
+      ],
+      "chipCaption": "Maples without the crowds",
+      "hero": null,
+      "thingsToDo": [
+        {
+          "title": "Sanzen-in Temple, Ohara",
+          "priceEUR": [
+            5,
+            8
+          ],
+          "note": "Moss gardens, mountain village quiet.",
+          "image": null
+        },
+        {
+          "title": "Kurama–Kibune cedar walk",
+          "priceEUR": [
+            3,
+            10
+          ],
+          "note": "Trail fee plus optional cable car.",
+          "image": null
+        },
+        {
+          "title": "Arashiyama bamboo at first light",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free — but be there before 7am.",
+          "image": null
+        },
+        {
+          "title": "Adashino Nenbutsu-ji stone statues",
+          "priceEUR": [
+            4,
+            6
+          ],
+          "note": "Thousands of them, almost no one there.",
+          "image": null
+        }
+      ],
+      "stays": [
+        {
+          "name": "APA Hotel Kyoto Ekimae",
+          "tier": "budget",
+          "priceNightEUR": [
+            85,
+            130
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=APA+Hotel+Kyoto+Ekimae%2C+Kyoto%2C+Japan"
+        },
+        {
+          "name": "APA Hotel Kyoto Gojo Omiya",
+          "tier": "budget",
+          "priceNightEUR": [
+            85,
+            130
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=APA+Hotel+Kyoto+Gojo+Omiya%2C+Kyoto%2C+Japan"
+        },
+        {
+          "name": "Ryokan near Arashiyama",
+          "tier": "mid",
+          "priceNightEUR": [
+            140,
+            200
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Ryokan+near+Arashiyama%2C+Kyoto%2C+Japan"
+        }
+      ],
+      "foodNotes": "Shojin ryori (temple vegetarian) is a naturally no-pork option here."
+    },
+    {
+      "id": "sanin-coast",
+      "pin": "06",
+      "name": {
+        "en": "San-in Coast",
+        "jp": "山陰"
+      },
+      "epithet": "THE FAR SIDE",
+      "subtitle": "Tottori Dunes · Mt. Daisen",
+      "coordinates": {
+        "x": 0.373,
+        "y": 0.694
+      },
+      "tags": [
+        "coast",
+        "mountains",
+        "nature",
+        "photography"
+      ],
+      "intro": "Japan's least-visited coastline. Sand dunes on one side, the west's answer to Fuji on the other, reflected in a pond most people have never heard of.",
+      "kanjiChips": [
+        "山",
+        "陰"
+      ],
+      "chipCaption": "The quietest coast in Japan",
+      "hero": null,
+      "thingsToDo": [
+        {
+          "title": "Tottori Sand Dunes",
+          "priceEUR": [
+            0,
+            6
+          ],
+          "note": "Free; sandboard or camel ride extra.",
+          "image": null
+        },
+        {
+          "title": "Mt. Daisen + Kagamigaike pond",
+          "priceEUR": [
+            0,
+            5
+          ],
+          "note": "Free trail; Daisen-ji donation.",
+          "image": null
+        },
+        {
+          "title": "Sand Museum",
+          "priceEUR": [
+            5,
+            8
+          ],
+          "note": "Sculpture, surprisingly good.",
+          "image": null
+        }
+      ],
+      "stays": [
+        {
+          "name": "Green Rich Hotel Tottori",
+          "tier": "budget",
+          "priceNightEUR": [
+            45,
+            65
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Green+Rich+Hotel+Tottori%2C+Tottori%2C+Japan"
+        },
+        {
+          "name": "APA Hotel Tottori Ekimae Minami",
+          "tier": "budget",
+          "priceNightEUR": [
+            50,
+            70
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=APA+Hotel+Tottori+Ekimae+Minami%2C+Tottori%2C+Japan"
+        },
+        {
+          "name": "Ryokan Marumo",
+          "tier": "mid",
+          "priceNightEUR": [
+            70,
+            100
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Ryokan+Marumo%2C+Tottori%2C+Japan"
+        }
+      ],
+      "foodNotes": ""
+    },
+    {
+      "id": "naoshima",
+      "pin": "07",
+      "name": {
+        "en": "Naoshima",
+        "jp": "直島"
+      },
+      "epithet": "THE ART ISLAND",
+      "subtitle": "Chichu · Benesse · Art House Project",
+      "coordinates": {
+        "x": 0.38,
+        "y": 0.727
+      },
+      "tags": [
+        "islands",
+        "art"
+      ],
+      "intro": "An art island where we sleep inside the museum. Guests get the galleries after the day-trippers leave — the one night worth breaking the budget for.",
+      "kanjiChips": [
+        "直",
+        "島"
+      ],
+      "chipCaption": "A museum, after hours",
+      "hero": null,
+      "thingsToDo": [
+        {
+          "title": "Chichu Art Museum",
+          "priceEUR": [
+            16,
+            20
+          ],
+          "note": "Book ahead — timed entry.",
+          "image": null
+        },
+        {
+          "title": "Benesse House museum",
+          "priceEUR": [
+            10,
+            15
+          ],
+          "note": "Free if you're staying the night.",
+          "image": null
+        },
+        {
+          "title": "Art House Project",
+          "priceEUR": [
+            10,
+            14
+          ],
+          "note": "Multi-site ticket through the village.",
+          "image": null
+        }
+      ],
+      "stays": [
+        {
+          "name": "Benesse House",
+          "tier": "splurge",
+          "priceNightEUR": [
+            300,
+            700
+          ],
+          "nights": 1,
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Benesse+House%2C+Naoshima%2C+Japan"
+        },
+        {
+          "name": "Naoshima minshuku",
+          "tier": "budget",
+          "priceNightEUR": [
+            60,
+            90
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Naoshima+minshuku%2C+Naoshima%2C+Japan"
+        },
+        {
+          "name": "Guesthouse Oomiyake",
+          "tier": "mid",
+          "priceNightEUR": [
+            90,
+            130
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Guesthouse+Oomiyake%2C+Naoshima%2C+Japan"
+        }
+      ],
+      "foodNotes": ""
+    },
+    {
+      "id": "shimanami",
+      "pin": "08",
+      "name": {
+        "en": "Shimanami Kaido",
+        "jp": "瀬戸"
+      },
+      "epithet": "THE BRIDGE RIDE",
+      "subtitle": "Onomichi · Imabari · the islands",
+      "coordinates": {
+        "x": 0.355,
+        "y": 0.746
+      },
+      "tags": [
+        "islands",
+        "cycling",
+        "coast"
+      ],
+      "intro": "Seventy kilometres of bridges island-hopping across the Inland Sea on rented bikes, citrus groves and fishing harbours on both sides.",
+      "kanjiChips": [
+        "瀬",
+        "戸"
+      ],
+      "chipCaption": "Bridges, bikes, and citrus",
+      "hero": null,
+      "thingsToDo": [
+        {
+          "title": "Shimanami Kaido one-way bike rental",
+          "priceEUR": [
+            10,
+            20
+          ],
+          "note": "Drop-off at the far end included.",
+          "image": null
+        },
+        {
+          "title": "Bridge tolls",
+          "priceEUR": [
+            3,
+            6
+          ],
+          "note": "A few hundred yen per bridge.",
+          "image": null
+        },
+        {
+          "title": "Onomichi temple walk",
+          "priceEUR": [
+            0,
+            4
+          ],
+          "note": "Free; ropeway up is extra.",
+          "image": null
+        }
+      ],
+      "stays": [
+        {
+          "name": "Onomichi hillside guesthouse",
+          "tier": "budget",
+          "priceNightEUR": [
+            50,
+            75
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Onomichi+hillside+guesthouse%2C+Setouchi%2C+Japan"
+        },
+        {
+          "name": "LOG (Onomichi)",
+          "tier": "mid",
+          "priceNightEUR": [
+            90,
+            150
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=LOG+%28Onomichi%29%2C+Setouchi%2C+Japan"
+        },
+        {
+          "name": "Cyclist-friendly inn, Imabari",
+          "tier": "budget",
+          "priceNightEUR": [
+            55,
+            85
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Cyclist-friendly+inn%2C+Imabari%2C+Setouchi%2C+Japan"
+        }
+      ],
+      "foodNotes": ""
+    },
+    {
+      "id": "tokyo",
+      "pin": "09",
+      "name": {
+        "en": "Tokyo",
+        "jp": "東京"
+      },
+      "epithet": "THE LANDING",
+      "subtitle": "Ryogoku · Meiji Jingu Gaien · Shibuya",
+      "coordinates": {
+        "x": 0.553,
+        "y": 0.665
+      },
+      "tags": [
+        "city",
+        "shopping",
+        "culture"
+      ],
+      "intro": "Two nights to land back on earth, starting at 7am on a tatami floor two metres from a sumo ring. Then golden ginkgo avenues and one last stretch of shopping.",
+      "kanjiChips": [
+        "東",
+        "京"
+      ],
+      "chipCaption": "Sumo dawn, neon dusk",
+      "hero": null,
+      "thingsToDo": [
+        {
+          "title": "Sumo stable morning practice",
+          "priceEUR": [
+            55,
+            70
+          ],
+          "note": "Small group, must be arranged ahead.",
+          "image": null
+        },
+        {
+          "title": "Meiji Jingu Gaien ginkgo avenue",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free, and peaking exactly then.",
+          "image": null
+        },
+        {
+          "title": "Depachika food halls",
+          "priceEUR": [
+            10,
+            30
+          ],
+          "note": "Last meals and gifts.",
+          "image": null
+        }
+      ],
+      "stays": [
+        {
+          "name": "APA Hotel Shinjuku Kabukicho",
+          "tier": "budget",
+          "priceNightEUR": [
+            90,
+            125
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=APA+Hotel+Shinjuku+Kabukicho%2C+Tokyo%2C+Japan"
+        },
+        {
+          "name": "Shibuya Excel Hotel Tokyu",
+          "tier": "mid",
+          "priceNightEUR": [
+            100,
+            150
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Shibuya+Excel+Hotel+Tokyu%2C+Tokyo%2C+Japan"
+        },
+        {
+          "name": "Park Hotel Tokyo",
+          "tier": "splurge",
+          "priceNightEUR": [
+            150,
+            220
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Park+Hotel+Tokyo%2C+Tokyo%2C+Japan"
+        }
+      ],
+      "foodNotes": ""
+    },
+    {
+      "id": "koyasan",
+      "pin": "10",
+      "name": {
+        "en": "Koyasan",
+        "jp": "高野山"
+      },
+      "epithet": "THE MOUNTAIN MONASTERY",
+      "subtitle": "Danjo Garan · Okunoin · Shukubo",
+      "coordinates": {
+        "x": 0.424,
+        "y": 0.726
+      },
+      "tags": [
+        "mountains",
+        "temples",
+        "spiritual",
+        "photography"
+      ],
+      "intro": "A working Buddhist monastery town founded by Kukai in 816, thick with cedar and incense smoke. We sleep inside a temple, eat what the monks eat, and walk into the largest cemetery in Japan at dusk with a single lantern.",
+      "kanjiChips": [
+        "高",
+        "野"
+      ],
+      "chipCaption": "Cedar, incense, mountain quiet",
+      "hero": null,
+      "thingsToDo": [
+        {
+          "title": "Okunoin cemetery night walk",
+          "priceEUR": [
+            15,
+            25
+          ],
+          "note": "Guided lantern walk through 200,000 graves.",
+          "image": null
+        },
+        {
+          "title": "Danjo Garan & Konpon Daito pagoda",
+          "priceEUR": [
+            3,
+            6
+          ],
+          "note": "The vermillion heart of the complex.",
+          "image": null
+        },
+        {
+          "title": "Morning goma fire ritual",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Included with any shukubo stay.",
+          "image": null
+        },
+        {
+          "title": "Daimon Gate & cable car arrival",
+          "priceEUR": [
+            4,
+            8
+          ],
+          "note": "The dramatic way in, via Nankai Koya Line.",
+          "image": null
+        }
+      ],
+      "stays": [
+        {
+          "name": "Saizen-in Shukubo",
+          "tier": "budget",
+          "priceNightEUR": [
+            70,
+            90
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Saizen-in+Shukubo%2C+Koyasan%2C+Japan"
+        },
+        {
+          "name": "Eko-in Shukubo",
+          "tier": "mid",
+          "priceNightEUR": [
+            110,
+            160
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Eko-in+Shukubo%2C+Koyasan%2C+Japan"
+        },
+        {
+          "name": "Fukuchi-in Shukubo",
+          "tier": "splurge",
+          "priceNightEUR": [
+            220,
+            280
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Fukuchi-in+Shukubo%2C+Koyasan%2C+Japan"
+        }
+      ],
+      "foodNotes": "Shojin ryori (Buddhist vegetarian) comes with every shukubo stay — naturally meat-free, zero pork risk."
+    },
+    {
+      "id": "kumano-kodo",
+      "pin": "11",
+      "name": {
+        "en": "Kumano Kodo",
+        "jp": "熊野古道"
+      },
+      "epithet": "THE PILGRIM'S TRAIL",
+      "subtitle": "Yunomine Onsen · Hongu Taisha · Nakahechi",
+      "coordinates": {
+        "x": 0.437,
+        "y": 0.745
+      },
+      "tags": [
+        "mountains",
+        "hiking",
+        "onsen",
+        "spiritual"
+      ],
+      "intro": "A thousand-year-old pilgrimage route through cedar-dark mountains to three Grand Shrines, ending most days in a hot spring older than the trail itself. This is where the trip goes fully offline.",
+      "kanjiChips": [
+        "熊",
+        "野"
+      ],
+      "chipCaption": "Old trails, older hot springs",
+      "hero": null,
+      "thingsToDo": [
+        {
+          "title": "Nakahechi trail day-hikes",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Takijiri to Chikatsuyu to Hongu, in stages.",
+          "image": null
+        },
+        {
+          "title": "Kumano Hongu Taisha",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "One of three Grand Shrines, free to enter.",
+          "image": null
+        },
+        {
+          "title": "Tsuboyu bath, Yunomine Onsen",
+          "priceEUR": [
+            3,
+            5
+          ],
+          "note": "The only UNESCO-listed bath you can actually bathe in.",
+          "image": null
+        },
+        {
+          "title": "Luggage forwarding between inns",
+          "priceEUR": [
+            5,
+            10
+          ],
+          "note": "Takkyubin courier — book through your minshuku.",
+          "image": null
+        }
+      ],
+      "stays": [
+        {
+          "name": "J-Hoppers Kumano Yunomine Guesthouse",
+          "tier": "budget",
+          "priceNightEUR": [
+            45,
+            65
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=J-Hoppers+Kumano+Yunomine+Guesthouse%2C+Wakayama%2C+Japan"
+        },
+        {
+          "name": "Minshuku Chikatsuyu",
+          "tier": "mid",
+          "priceNightEUR": [
+            70,
+            100
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Minshuku+Chikatsuyu%2C+Wakayama%2C+Japan"
+        },
+        {
+          "name": "Onsen ryokan, Kawayu",
+          "tier": "splurge",
+          "priceNightEUR": [
+            150,
+            220
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Onsen+ryokan%2C+Kawayu%2C+Wakayama%2C+Japan"
+        }
+      ],
+      "foodNotes": "Minshuku dinners are river-fish and mountain-vegetable based — an easy no-pork base, but flag ahead at smaller family-run inns."
+    },
+    {
+      "id": "nachi",
+      "pin": "12",
+      "name": {
+        "en": "Nachi Falls",
+        "jp": "那智の滝"
+      },
+      "epithet": "THE SACRED CASCADE",
+      "subtitle": "Nachi Taisha · Seiganto-ji · Japan's tallest waterfall",
+      "coordinates": {
+        "x": 0.448,
+        "y": 0.756
+      },
+      "tags": [
+        "nature",
+        "spiritual",
+        "photography"
+      ],
+      "intro": "A single 133-metre drop, worshipped as a kami in its own right, with a vermillion pagoda framed against it. A short detour off the Kumano trail that punches far above its weight.",
+      "kanjiChips": [
+        "那",
+        "智"
+      ],
+      "chipCaption": "133 metres, one drop",
+      "hero": null,
+      "thingsToDo": [
+        {
+          "title": "Nachi Falls viewing platform",
+          "priceEUR": [
+            0,
+            3
+          ],
+          "note": "Free view; closer platform is a small fee.",
+          "image": null
+        },
+        {
+          "title": "Kumano Nachi Taisha & Seiganto-ji",
+          "priceEUR": [
+            0,
+            3
+          ],
+          "note": "Shrine and pagoda side by side on the hillside.",
+          "image": null
+        },
+        {
+          "title": "Daimonzaka stone stairway walk",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Mossy cedar-lined approach, free.",
+          "image": null
+        }
+      ],
+      "stays": [
+        {
+          "name": "Katsuura seaside guesthouse",
+          "tier": "budget",
+          "priceNightEUR": [
+            50,
+            75
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Katsuura+seaside+guesthouse%2C+Katsuura%2C+Japan"
+        },
+        {
+          "name": "Ryokan Nachikatsuura",
+          "tier": "mid",
+          "priceNightEUR": [
+            90,
+            130
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Ryokan+Nachikatsuura%2C+Katsuura%2C+Japan"
+        },
+        {
+          "name": "Hotel Urashima (cave onsen)",
+          "tier": "splurge",
+          "priceNightEUR": [
+            150,
+            250
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Hotel+Urashima+%28cave+onsen%29%2C+Katsuura%2C+Japan"
+        }
+      ],
+      "foodNotes": "Katsuura is a major tuna port — fresh maguro sashimi is the local specialty."
+    },
+    {
+      "id": "osaka",
+      "pin": "13",
+      "name": {
+        "en": "Osaka",
+        "jp": "大阪"
+      },
+      "epithet": "THE MERCHANT CITY",
+      "subtitle": "Dotonbori · Kuromon Market · Osaka Castle",
+      "coordinates": {
+        "x": 0.421,
+        "y": 0.708
+      },
+      "tags": [
+        "city",
+        "food",
+        "shopping",
+        "culture"
+      ],
+      "intro": "Two loud, greasy, glorious days back among people after the mountain quiet — kuidaore, 'eat till you drop,' is Osaka's actual civic motto, and we take it seriously before the flight home.",
+      "kanjiChips": [
+        "大",
+        "阪"
+      ],
+      "chipCaption": "Eat till you drop",
+      "hero": null,
+      "thingsToDo": [
+        {
+          "title": "Dotonbori street food crawl",
+          "priceEUR": [
+            15,
+            35
+          ],
+          "note": "Takoyaki, okonomiyaki, kushikatsu under the neon.",
+          "image": null
+        },
+        {
+          "title": "Kuromon Ichiba Market",
+          "priceEUR": [
+            10,
+            25
+          ],
+          "note": "Breakfast among the stalls.",
+          "image": null
+        },
+        {
+          "title": "Osaka Castle grounds & keep",
+          "priceEUR": [
+            5,
+            8
+          ],
+          "note": "Grounds free, keep entry is separate.",
+          "image": null
+        },
+        {
+          "title": "Umeda Sky Building observation deck",
+          "priceEUR": [
+            12,
+            15
+          ],
+          "note": "Best skyline view at sunset.",
+          "image": null
+        }
+      ],
+      "stays": [
+        {
+          "name": "Toyoko Inn Osaka Namba",
+          "tier": "budget",
+          "priceNightEUR": [
+            45,
+            65
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Toyoko+Inn+Osaka+Namba%2C+Osaka%2C+Japan"
+        },
+        {
+          "name": "Cross Hotel Osaka",
+          "tier": "mid",
+          "priceNightEUR": [
+            95,
+            140
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Cross+Hotel+Osaka%2C+Osaka%2C+Japan"
+        },
+        {
+          "name": "Centara Grand Hotel Osaka",
+          "tier": "splurge",
+          "priceNightEUR": [
+            160,
+            220
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Centara+Grand+Hotel+Osaka%2C+Osaka%2C+Japan"
+        }
+      ],
+      "foodNotes": "Kushikatsu stalls fry pork by default — ask for chicken or vegetable skewers to avoid it."
+    }
+  ],
+  "itineraries": [
+    {
+      "id": "full-21",
+      "days": 21,
+      "label": "Alps & Inland Sea",
+      "dateRange": {
+        "start": "2026-10-29",
+        "end": "2026-11-18"
+      },
+      "flights": 3,
+      "_flightsNote": "Paris→Hong Kong, Hong Kong→Nagoya, Okayama→Tokyo. The Tokyo→Paris return is treated as going home rather than a trip leg — change to 4 if you'd rather count it.",
+      "budgetPerPersonEUR": [
+        3900,
+        4650
+      ],
+      "stops": [
+        {
+          "locationId": "hongkong",
+          "nights": 3,
+          "arriveBy": "flight"
+        },
+        {
+          "locationId": "japan-alps",
+          "nights": 6,
+          "arriveBy": "flight"
+        },
+        {
+          "locationId": "kanazawa",
+          "nights": 3,
+          "arriveBy": "surface"
+        },
+        {
+          "locationId": "noto",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "kanazawa"
+        },
+        {
+          "locationId": "kyoto-edges",
+          "nights": 3,
+          "arriveBy": "surface"
+        },
+        {
+          "locationId": "sanin-coast",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "kyoto-edges"
+        },
+        {
+          "locationId": "naoshima",
+          "nights": 1,
+          "arriveBy": "surface"
+        },
+        {
+          "locationId": "shimanami",
+          "nights": 2,
+          "arriveBy": "surface"
+        },
+        {
+          "locationId": "tokyo",
+          "nights": 2,
+          "arriveBy": "flight"
+        }
+      ],
+      "periodDisplay": "29 Oct – 18 Nov"
+    },
+    {
+      "id": "koyasan-17",
+      "days": 17,
+      "label": "Temples & Trails",
+      "dateRange": {
+        "start": "2026-10-22",
+        "end": "2026-11-07"
+      },
+      "flights": 2,
+      "_flightsNote": "Paris→Hong Kong, Hong Kong→Kansai (Osaka), transferring up to Koyasan by rail. The return flight departs Kansai Airport itself, so it's treated as going home rather than a trip leg.",
+      "budgetPerPersonEUR": [
+        null,
+        null
+      ],
+      "stops": [
+        {
+          "locationId": "hongkong",
+          "nights": 3,
+          "arriveBy": "flight"
+        },
+        {
+          "locationId": "koyasan",
+          "nights": 3,
+          "arriveBy": "flight"
+        },
+        {
+          "locationId": "kumano-kodo",
+          "nights": 6,
+          "arriveBy": "surface"
+        },
+        {
+          "locationId": "nachi",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "kumano-kodo"
+        },
+        {
+          "locationId": "osaka",
+          "nights": 4,
+          "arriveBy": "surface"
+        }
+      ],
+      "periodDisplay": "22 Oct – 7 Nov"
+    },
+    {
+      "id": "coast-12",
+      "days": 12,
+      "label": "Coast & Islands",
+      "dateRange": {
+        "start": "2026-10-01",
+        "end": "2026-10-12"
+      },
+      "flights": 2,
+      "_flightsNote": "Inbound flight connecting to Kanazawa (via Komatsu or Osaka with an onward transfer), then Hiroshima/Okayama→Tokyo for the last leg. The Tokyo→home return is treated as going home rather than a trip leg.",
+      "budgetPerPersonEUR": [
+        null,
+        null
+      ],
+      "stops": [
+        {
+          "locationId": "kanazawa",
+          "nights": 2,
+          "arriveBy": "flight"
+        },
+        {
+          "locationId": "noto",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "kanazawa"
+        },
+        {
+          "locationId": "kyoto-edges",
+          "nights": 3,
+          "arriveBy": "surface"
+        },
+        {
+          "locationId": "sanin-coast",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "kyoto-edges"
+        },
+        {
+          "locationId": "naoshima",
+          "nights": 1,
+          "arriveBy": "surface"
+        },
+        {
+          "locationId": "shimanami",
+          "nights": 3,
+          "arriveBy": "surface"
+        },
+        {
+          "locationId": "tokyo",
+          "nights": 2,
+          "arriveBy": "flight"
+        }
+      ],
+      "periodDisplay": "1–12 Oct"
+    }
+  ]
+}

@@ -1,0 +1,588 @@
+/* ============================================================
+   LAYOUT & COMPONENTS
+   ============================================================ */
+*{margin:0;padding:0;box-sizing:border-box}
+/* custom easing lives in js/scroll.js — native smooth would fight it */
+html{scroll-behavior:auto}
+body{
+  background:var(--sea);
+  color:#fff;
+  font-family:var(--sans);
+  overflow-x:hidden;
+}
+
+/* ---------- loading / error ---------- */
+#boot{
+  position:fixed;inset:0;z-index:900;background:var(--sea);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+  color:rgba(255,255,255,.7);text-align:center;padding:8vw;
+}
+#boot.hide{display:none}
+#boot .err{max-width:52ch;line-height:1.9;color:#ffd9d2}
+#boot code{
+  background:rgba(0,0,0,.3);padding:3px 7px;border-radius:4px;
+  color:#fff;letter-spacing:0;
+}
+
+/* ============================================================
+   HERO
+   The map and every overlay live inside #frame, capped at the
+   1920 artboard width. Past that we simply show more sea — the
+   body background is the same blue, so the edge is invisible.
+   ============================================================ */
+/* `isolation` keeps the multiply blend inside the hero so it can't reach the
+   cards or footer below. The texture is 1440x2641 — taller than the stage will
+   ever be at any width — so `cover` fills it from a single instance, with no
+   tiling and therefore no visible seams.
+
+   The background colour here is NOT decorative: because the group is isolated,
+   the texture can only multiply against what's inside it. The map PNG is opaque,
+   but the water band below it (and the margins beside the frame on wide screens)
+   would otherwise be transparent within the group — and multiplying against
+   transparency washes the area pale instead of graining it. This matches the
+   sea baked into map-japon.png exactly (#596D88). */
+#stage{
+  position:relative;width:100%;overflow:hidden;
+  isolation:isolate;
+  background:var(--sea);
+}
+#stage::after{
+  content:"";
+  position:absolute;inset:0;z-index:70;pointer-events:none;
+  background:var(--paper-texture) center top / cover no-repeat;
+  mix-blend-mode:multiply;
+  opacity:var(--paper-texture-opacity);
+}
+#frame{position:relative;width:100%;max-width:var(--artboard);margin:0 auto}
+/* aspect-ratio (contain) or an explicit height (cover) is set from the trip
+   data in MapView.applyFit() — no default here, so nothing fights it */
+#world{position:relative;width:100%;overflow:hidden}
+
+.layer{position:absolute;inset:0}
+#basemap{
+  position:absolute;inset:0;width:100%;height:100%;display:block;
+  object-position:center;   /* object-fit is set per fit mode in applyFit() */
+  user-select:none;-webkit-user-drag:none;
+}
+
+/* open water under the map, where the dataviz sits */
+
+/* ---------- HK inset ---------- */
+/* aligned to the first grid column rather than a free-floating coordinate */
+#inset{position:absolute;z-index:7;left:var(--grid-margin)}
+#inset img{width:100%;display:block;-webkit-user-drag:none}
+#inset .poi{width:14%}
+
+/* ---------- sprites ---------- */
+.sprite{position:absolute;pointer-events:none}
+.sprite img{display:block;width:100%;height:auto;-webkit-user-drag:none}
+
+/* Each cloud rides its own full-width track. Because a track is exactly
+   the map's width, translateX percentages are relative to the map rather
+   than the viewport, so the loop behaves identically at any screen size.
+   Clouds start and finish fully off-stage, so the wrap is never seen. */
+/* clouds sit above the logo, and must never eat clicks meant for pins */
+#clouds{z-index:60;pointer-events:none}
+#clouds *{pointer-events:none}
+.cloud-track{position:absolute;inset:0;animation:cloud-drift linear infinite}
+@keyframes cloud-drift{
+  from{transform:translateX(0)}
+  to  {transform:translateX(var(--travel))}
+}
+
+#waves{z-index:3;pointer-events:none}
+#waves *{pointer-events:none}
+.wave-bob{animation:wave-bob ease-in-out infinite alternate}
+@keyframes wave-bob{
+  from{transform:translate(0,0)}
+  to  {transform:translate(var(--dx,0),var(--dy,14px))}
+}
+
+/* ---------- POIs ---------- */
+#pois{z-index:8;pointer-events:none}
+#pois .poi{pointer-events:auto}
+.poi{
+  position:absolute;width:3.1%;transform:translate(-50%,-50%);
+  background:none;border:0;padding:0;cursor:pointer;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
+  transition:transform .22s var(--ease-pop);
+}
+.poi .poi-shape{width:100%;height:auto;display:block;-webkit-user-drag:none}
+/* the number is DOM text over one shared pin shape, so it renumbers itself */
+.poi .poi-num{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--sans);font-weight:700;font-size:min(1.05vw,15px);
+  color:#fff;line-height:1;padding-bottom:11%;
+  pointer-events:none;user-select:none;
+}
+.poi.is-inactive .poi-num{opacity:0}
+.poi:hover,.poi:focus-visible{transform:translate(-50%,-50%) scale(1.28);z-index:20}
+.poi.is-inactive{opacity:.28;filter:grayscale(1)}
+.poi .tip{
+  position:absolute;bottom:118%;left:50%;transform:translateX(-50%);
+  background:var(--seal);color:#fff;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;padding:5px 9px;border-radius:5px;white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.poi:hover .tip,.poi:focus-visible .tip{opacity:1}
+
+/* ---------- grid-aligned overlay UI ---------- */
+#logo{
+  position:absolute;top:4%;left:var(--grid-margin);z-index:40;
+  width:32.3%;pointer-events:none;
+}
+#logo img{width:100%;display:block}
+
+/* Centred on the FIRST viewport, not on the frame: the stage is taller than the
+   screen, so centring within it would push the selector below the fold. `50vh`
+   works because #frame starts at the top of the document. */
+#selector{
+  position:absolute;top:50vh;right:var(--grid-margin);z-index:40;
+  transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:20px;
+  border-left:2px dotted rgba(255,255,255,.4);padding-left:20px;
+}
+#selector button{
+  position:relative;background:none;border:0;color:rgba(255,255,255,.5);
+  font-family:inherit;text-align:left;cursor:pointer;
+  display:flex;align-items:baseline;gap:10px;transition:color .2s;
+}
+#selector .num{font-family:var(--display);font-size:32px;line-height:1}
+#selector .unit{font-size:9.5px;letter-spacing:.13em;line-height:1.5}
+#selector .period{opacity:.8;letter-spacing:.06em}
+#selector button:hover{color:rgba(255,255,255,.82)}
+#selector button[aria-current="true"]{color:#fff}
+#selector button[aria-current="true"]::before{
+  content:"";position:absolute;left:-27px;top:11px;
+  width:9px;height:9px;border-radius:50%;background:var(--seal);
+}
+
+/* Dataviz on grid columns 3–6, one item per column. It now sits INSIDE the map
+   frame rather than in a band beneath it, so the artwork must leave clear space
+   at the bottom of its canvas. --stats-bottom is that inset. */
+#stats{
+  position:absolute;left:0;right:0;bottom:var(--stats-bottom);z-index:40;
+  padding-inline:var(--grid-margin);
+  display:grid;grid-template-columns:repeat(8,1fr);column-gap:var(--grid-gutter-in);
+}
+#stats .stat{text-align:center}
+#stats .stat:nth-child(1){grid-column:3}
+#stats .stat:nth-child(2){grid-column:4}
+#stats .stat:nth-child(3){grid-column:5}
+#stats .stat:nth-child(4){grid-column:6}
+#stats .val{font-family:var(--display);font-size:clamp(34px,4.6vw,62px);line-height:1}
+#stats .key{font-size:10px;letter-spacing:.16em;margin-top:8px;opacity:.85}
+#stats .rule{width:70%;height:5px;background:var(--seal);margin:10px auto 0;border-radius:2px}
+
+/* ============================================================
+   STACKED CITY CARDS
+   Each card is sticky at top:0 with a rising z-index, so it
+   slides over the one before it.
+   ============================================================ */
+#cards{position:relative;background:var(--sea)}
+
+/* sits above every card so it stays reachable while they stack */
+#to-map{
+  position:sticky;top:0;z-index:500;
+  display:flex;justify-content:center;
+  padding:14px 0 0;pointer-events:none;
+}
+#to-map button{
+  pointer-events:auto;cursor:pointer;
+  background:var(--seal);color:#fff;border:0;border-radius:999px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  padding:11px 20px;box-shadow:0 4px 16px rgba(0,0,0,.28);
+  opacity:0;transform:translateY(-12px);
+  transition:opacity .3s,transform .3s;
+}
+#to-map.is-visible button{opacity:1;transform:translateY(0)}
+.card{
+  position:sticky;top:0;min-height:100vh;
+  background:var(--card-bg);color:var(--card-fg);
+  border-radius:26px 26px 0 0;
+  box-shadow:0 -14px 40px rgba(0,0,0,.22);
+  padding:0 var(--grid-margin);overflow:hidden;
+  display:flex;align-items:center;
+}
+/* Card content sits on the same 8-column grid as the hero, so the text
+   edge lines up with the logo above it. Areas: head + body on columns 1-4,
+   media on 6-8, stays across 1-6, foot full width. */
+.card-inner{
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  column-gap:var(--grid-gutter-in);
+  align-items:start;
+}
+/* the whole content block is a fixed height so every card reads the same
+   regardless of how many activities or hotels it carries */
+.card-inner{
+  height:740px;
+  grid-template-rows:auto minmax(0,1fr) auto auto;
+}
+.c-head { grid-column:1 / span 4; grid-row:1 }
+.c-body { grid-column:1 / span 4; grid-row:2; min-height:0; overflow:hidden }
+.c-media{ grid-column:6 / span 3; grid-row:1 / span 2; height:100%; align-self:stretch }
+.c-stays{ grid-column:1 / -1;     grid-row:3; margin-top:22px }
+.c-foot {
+  grid-column:1 / -1; grid-row:4;
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:16px;padding-top:12px;border-top:1px solid var(--hairline);
+  font-size:10px;letter-spacing:.12em;color:var(--ph-fg);
+}
+
+.card .eyebrow{
+  font-size:10.5px;letter-spacing:.16em;color:var(--seal);margin-bottom:14px;
+}
+/* nights + dates are the two facts people scan for, so they get their own
+   line at display size rather than sitting inside the eyebrow */
+.c-meta{
+  display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+  margin:16px 0 4px;
+}
+.badge{
+  font-family:var(--sans);font-weight:600;
+  font-size:15px;letter-spacing:.06em;
+  color:var(--seal);border:1px solid var(--seal);
+  padding:5px 12px;border-radius:4px;white-space:nowrap;
+}
+.badge.is-spur{border-style:dashed;border-color:#9A9A92;color:#9A9A92}
+.meta-dates{
+  font-family:var(--sans);font-weight:500;
+  font-size:16px;letter-spacing:.02em;color:#44443E;
+  font-variant-numeric:tabular-nums;
+}
+
+.card h2{
+  font-family:var(--serif);font-size:clamp(34px,4.4vw,60px);font-weight:400;
+  letter-spacing:-.015em;line-height:1.05;margin-bottom:10px;
+}
+.card h2 .jp{font-size:.42em;color:var(--ph-fg);margin-left:.4em}
+.card .subtitle{
+  font-family:var(--serif);font-size:clamp(15px,1.5vw,20px);
+  color:var(--muted);margin-bottom:20px;
+}
+.card .rule{width:96px;height:2px;background:var(--seal);margin:18px 0 22px}
+.card .intro{max-width:50ch;line-height:1.72;font-size:15.5px;color:#33332E;margin-bottom:24px}
+
+.chips{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:30px}
+.chip{
+  width:28px;height:28px;border:1px solid var(--seal);color:var(--seal);
+  display:flex;align-items:center;justify-content:center;font-size:14px;border-radius:3px;
+}
+.chip-caption{color:var(--muted);font-size:13px;margin-left:6px}
+
+.slot-label{font-size:9px;letter-spacing:.16em;color:#B0B0A8;margin:0 0 12px}
+
+.todo{list-style:none;display:flex;flex-direction:column;gap:9px}
+.todo li{position:relative;padding-left:18px;font-size:14.5px;color:#44443E;line-height:1.5}
+.todo li::before{
+  content:"";position:absolute;left:0;top:.62em;
+  width:8px;height:1.5px;background:var(--seal);
+}
+.act{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.act-title{flex:1 1 auto}
+.act-price{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;
+  color:var(--seal);white-space:nowrap;
+}
+.act-price.is-free{color:#8A8A82}
+
+/* hover card: image slot + the practical note */
+.act-tip{
+  position:absolute;left:18px;bottom:calc(100% + 8px);z-index:80;
+  width:230px;background:#fff;border:1px solid var(--hairline);border-radius:8px;
+  box-shadow:0 10px 30px rgba(0,0,0,.16);padding:8px;
+  opacity:0;visibility:hidden;transform:translateY(6px);
+  transition:opacity .18s,transform .18s,visibility .18s;
+}
+.act:hover .act-tip{opacity:1;visibility:visible;transform:translateY(0)}
+.act-tip img{width:100%;border-radius:5px;display:block;margin-bottom:7px}
+.act-tip-ph{
+  display:flex;align-items:center;justify-content:center;
+  height:96px;border-radius:5px;margin-bottom:7px;
+  background:repeating-linear-gradient(45deg,var(--ph-a),var(--ph-a) 8px,var(--ph-b) 8px,var(--ph-b) 16px);
+  color:var(--ph-fg);font-size:9px;letter-spacing:.14em;
+}
+.act-tip-note{display:block;font-size:12px;line-height:1.5;color:#55554E}
+
+.hero-slot{
+  border:2px dashed #CFCFC6;border-radius:10px;height:100%;min-height:0;
+  background:repeating-linear-gradient(45deg,var(--ph-a),var(--ph-a) 9px,var(--ph-b) 9px,var(--ph-b) 18px);
+  display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;
+  color:var(--ph-fg);font-size:10px;letter-spacing:.14em;
+}
+
+.c-stays{border-top:1px solid var(--hairline);padding-top:16px}
+.hotels{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.hotel{
+  position:relative;
+  border:1px solid #E4E4DC;border-radius:8px;padding:14px;background:#FCFCFA;
+  text-decoration:none;color:inherit;
+}
+.hotel .tier,.hotel .name,.hotel .base,.hotel .amount{display:block}
+
+/* only the ones with a bookingUrl behave like links */
+.hotel.is-link{
+  cursor:pointer;
+  transition:border-color .2s,box-shadow .2s,transform .2s;
+}
+.hotel.is-link:hover,
+.hotel.is-link:focus-visible{
+  border-color:var(--seal);
+  box-shadow:0 6px 18px rgba(0,0,0,.09);
+  transform:translateY(-2px);
+  outline:none;
+}
+.hotel.is-link:hover .name{text-decoration:underline;text-underline-offset:2px}
+.hotel .go{
+  position:absolute;top:12px;right:13px;
+  font-size:13px;line-height:1;color:#C9C9C0;
+  transition:color .2s,transform .2s;
+}
+.hotel.is-link:hover .go{color:var(--seal);transform:translate(1px,-1px)}
+.hotel .tier{font-size:8.5px;letter-spacing:.14em;color:var(--seal);margin-bottom:5px}
+.hotel .name{font-size:13px;line-height:1.35;margin-bottom:7px;color:#22221E;padding-right:18px}
+.hotel .base{font-size:9.5px;color:#B0B0A8;margin-bottom:10px;letter-spacing:.06em}
+
+/* prices stay in the sans — the hand-lettered face is hard to read as numerals */
+.hotel .amount{
+  font-family:var(--sans);font-weight:600;font-size:16px;color:#111;line-height:1.2;
+  font-variant-numeric:tabular-nums;margin-top:auto;
+}
+/* push the price to the bottom so the three cards align on it */
+.hotel{display:flex;flex-direction:column}
+.hotel .per-night{font-weight:400;font-size:11px;color:#A0A098;letter-spacing:.02em}
+.no-stay{color:var(--ph-fg);font-style:italic;font-size:13px}
+
+
+
+/* ============================================================
+   FOOTER — budget, comfort slider, closing CTA
+   ============================================================ */
+#footer{
+  position:relative;z-index:600;   /* above the sticky card stack */
+  background:var(--ink);color:#fff;
+  padding:14vh 0 10vh;
+}
+.f-inner{
+  max-width:var(--artboard);margin:0 auto;
+  padding-inline:var(--grid-margin);
+  display:grid;grid-template-columns:repeat(8,1fr);
+  column-gap:var(--grid-gutter-in);row-gap:0;
+}
+#footer .slot-label{color:rgba(255,255,255,.42)}
+
+.f-head{grid-column:1 / span 4}
+.f-head h2{
+  font-family:var(--serif);font-size:clamp(32px,3.6vw,52px);font-weight:400;
+  line-height:1.05;margin-bottom:8px;
+}
+.f-sub{color:rgba(255,255,255,.55);font-size:13px;letter-spacing:.04em}
+
+/* ---- comfort slider ---- */
+.f-tiers{grid-column:6 / span 3;align-self:end}
+.f-range{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:3px;border-radius:2px;background:rgba(255,255,255,.22);
+  outline:none;cursor:pointer;margin:6px 0 12px;
+}
+.f-range::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:18px;height:18px;border-radius:50%;background:var(--seal);
+  border:3px solid var(--ink);cursor:grab;
+}
+.f-range::-moz-range-thumb{
+  width:18px;height:18px;border-radius:50%;background:var(--seal);
+  border:3px solid var(--ink);cursor:grab;
+}
+.f-range:focus-visible{box-shadow:0 0 0 3px rgba(207,71,54,.35)}
+.f-ticks{display:flex;justify-content:space-between;gap:4px}
+.f-tick{
+  background:none;border:0;padding:0;cursor:pointer;
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;
+  color:rgba(255,255,255,.35);text-align:center;line-height:1.3;
+  transition:color .2s;
+}
+.f-tick:hover{color:rgba(255,255,255,.7)}
+.f-tick.on{color:var(--seal)}
+
+/* ---- category breakdown ---- */
+.f-rows{grid-column:1 / span 5;margin-top:7vh}
+.f-row{
+  display:grid;grid-template-columns:120px 1fr auto;
+  align-items:center;gap:16px;
+  padding:13px 0;border-bottom:1px solid rgba(255,255,255,.1);
+}
+.f-cat{font-size:13px;letter-spacing:.03em;color:rgba(255,255,255,.85)}
+.f-bar{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
+.f-bar-fill{
+  display:block;height:100%;border-radius:3px;background:var(--seal);
+  transition:width .45s cubic-bezier(.3,.9,.3,1);
+}
+.f-amt{
+  font-family:var(--sans);font-weight:600;font-size:13px;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+  color:rgba(255,255,255,.92);
+}
+
+/* ---- total ---- */
+.f-total{grid-column:7 / span 2;margin-top:7vh;align-self:start;text-align:right}
+.f-total-label{
+  display:block;font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+  color:rgba(255,255,255,.42);margin-bottom:10px;
+}
+.f-total-amt{
+  display:block;font-family:var(--sans);font-weight:600;
+  font-size:clamp(24px,2.6vw,36px);line-height:1.05;
+  font-variant-numeric:tabular-nums;
+}
+.f-total-note{
+  display:block;margin-top:10px;font-size:11.5px;line-height:1.6;
+  color:rgba(255,255,255,.5);
+}
+
+/* ---- closing CTA ---- */
+.f-cta{
+  grid-column:1 / -1;margin-top:12vh;padding-top:7vh;
+  border-top:1px solid rgba(255,255,255,.12);text-align:center;
+}
+.f-cta h3{
+  font-family:var(--serif);font-weight:400;
+  font-size:clamp(40px,6.5vw,96px);line-height:1;margin-bottom:36px;
+}
+.f-yes{
+  display:inline-block;background:var(--seal);color:#fff;text-decoration:none;
+  border:0;border-radius:999px;cursor:pointer;
+  font-family:var(--mono);font-size:13px;letter-spacing:.24em;
+  padding:20px 56px;transition:transform .2s var(--ease-pop),box-shadow .2s;
+}
+.f-yes:hover{transform:scale(1.05);box-shadow:0 10px 34px rgba(207,71,54,.4)}
+.f-yes.is-disabled{background:rgba(255,255,255,.14);cursor:not-allowed}
+.f-yes.is-disabled:hover{transform:none;box-shadow:none}
+.f-cta-note{
+  margin:22px auto 0;max-width:56ch;
+  font-size:12px;line-height:1.8;color:rgba(255,255,255,.5);
+}
+.f-cta-note a{color:rgba(255,255,255,.8)}
+
+@media(max-width:860px){
+  #footer{padding:9vh 0 7vh}
+  .f-inner{grid-template-columns:1fr;padding-inline:6%}
+  .f-head,.f-tiers,.f-rows,.f-total,.f-cta{grid-column:1 / -1}
+  .f-tiers{margin-top:5vh}
+  .f-rows{margin-top:5vh}
+  .f-total{margin-top:4vh;text-align:left}
+  .f-row{grid-template-columns:96px 1fr auto;gap:10px}
+  .f-cat{font-size:12px}
+  .f-amt{font-size:11.5px}
+  .f-cta{margin-top:7vh;padding-top:5vh}
+  .f-tick{font-size:7.5px}
+}
+
+/* ============================================================
+   DEV TOOLS — grid overlay + pin calibration
+   ============================================================ */
+#grid-overlay{
+  position:absolute;inset:0;z-index:150;pointer-events:none;display:none;
+  padding-inline:var(--grid-margin);
+}
+#grid-overlay.on{display:grid;grid-template-columns:repeat(8,1fr);column-gap:var(--grid-gutter-in)}
+#grid-overlay span{
+  background:rgba(80,160,255,.20);
+  border-inline:1px solid rgba(80,160,255,.5);
+}
+
+.dev-btn{
+  position:fixed;bottom:14px;z-index:210;color:#fff;border:0;border-radius:5px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;padding:9px 13px;cursor:pointer;
+}
+#grid-toggle{right:112px;background:#2B6CB0}
+#calib-toggle{right:14px;background:var(--seal)}
+
+#calib{
+  position:fixed;top:0;right:0;z-index:200;display:none;
+  width:340px;max-height:100vh;overflow:auto;padding:16px;
+  background:#11151C;border-left:1px solid #2C333F;
+  font-family:var(--mono);font-size:11px;line-height:1.5;
+}
+#calib.on{display:block}
+#calib h3{font-size:11px;letter-spacing:.12em;margin-bottom:10px;color:var(--seal)}
+#calib h4{font-size:10px;letter-spacing:.1em;margin:14px 0 6px;color:#7F8CA0}
+#calib p{color:#93A0B4;margin-bottom:12px}
+#calib .row{
+  display:flex;justify-content:space-between;gap:8px;padding:5px 0;
+  border-bottom:1px solid #1D2430;cursor:pointer;
+}
+#calib .row:hover{color:#fff}
+#calib .row.sel{background:#1B2430;color:var(--seal)}
+#calib button{
+  background:#1D2430;border:1px solid #2F3846;color:#CFD8E4;font-family:inherit;
+  font-size:11px;padding:6px 9px;cursor:pointer;border-radius:4px;margin:3px 3px 0 0;
+}
+#calib button:hover{border-color:var(--seal);color:#fff}
+#calib textarea{
+  width:100%;height:170px;margin-top:10px;padding:8px;
+  background:#0B0E13;color:#8FD6A0;border:1px solid #2F3846;border-radius:4px;
+  font-family:inherit;font-size:10px;resize:vertical;
+}
+body.is-calibrating .poi{cursor:move}
+.poi.is-picking{outline:2px dashed #fff;outline-offset:6px}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(max-width:860px){
+  #logo{width:52%;left:6%}
+  #selector{top:auto;bottom:14%;right:6%;transform:none}
+  #stats{padding-inline:6%;grid-template-columns:repeat(4,1fr);column-gap:2%}
+  #stats .stat:nth-child(1){grid-column:1}
+  #stats .stat:nth-child(2){grid-column:2}
+  #stats .stat:nth-child(3){grid-column:3}
+  #stats .stat:nth-child(4){grid-column:4}
+  /* ---- mobile cards: one screen, no internal scrolling ----
+     The 600px desktop block becomes a full-height column. Everything is
+     compacted rather than stacked, because stacking three hotel cards alone
+     would overflow the viewport. */
+  .card{border-radius:18px 18px 0 0;padding:0 6%}
+  .card-inner{
+    height:100vh;height:100dvh;
+    padding:4.5vh 0 3vh;
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto minmax(0,1fr) auto auto;
+    row-gap:0;
+  }
+  .c-head { grid-column:1 / -1; grid-row:1 }
+  .c-media{ grid-column:1 / -1; grid-row:2; height:17vh; margin-bottom:14px }
+  .c-body { grid-column:1 / -1; grid-row:3; min-height:0; overflow:hidden }
+  .c-stays{ grid-column:1 / -1; grid-row:4; margin-top:14px; padding-top:12px }
+  .c-foot { grid-column:1 / -1; grid-row:5; margin-top:10px; padding-top:10px }
+
+  .card h2{font-size:30px;margin-bottom:6px}
+  .c-meta{margin:10px 0 2px;gap:10px}
+  .badge{font-size:13px;padding:4px 9px}
+  .meta-dates{font-size:13px}
+  .card .subtitle{font-size:14px;margin-bottom:12px}
+  .card .rule{margin-bottom:14px}
+  .chips{margin-bottom:16px}
+  .todo{gap:6px}
+  .todo li{font-size:13px}
+
+  /* three across, not stacked — and the image slot is the first thing to go */
+  .hotels{grid-template-columns:repeat(3,1fr);gap:8px}
+  .hotel{padding:9px}
+  .hotel .name{font-size:11px;margin-bottom:5px}
+  .hotel .base{font-size:9px;margin-bottom:5px}
+  .hotel .amount{font-size:13px}
+  .hotel .per-night{font-size:9px}
+
+  .act-tip{width:200px;left:0}
+  #calib{width:100%}
+}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .cloud-track,.wave-bob{animation:none}
+}

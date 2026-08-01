@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Final Call</title>
+<!-- title and description are replaced from the trip data once it loads -->
+  <meta name="description" content="Illustrated trip itineraries.">
+<link rel="preload" href="/assets/fonts/OsakaMoji-Regular.woff2" as="font" type="font/woff2" crossorigin>
+</head>
+<body>
+
+<!-- shown until the data resolves; also carries any load error -->
+<div id="boot">LOADING&hellip;</div>
+
+<!-- ============ HERO ============ -->
+<header id="stage">
+  <div id="frame">
+
+    <div id="world">
+      <img id="basemap" alt="Illustrated map of Japan">
+      <div class="layer" id="waves"></div>
+      <div id="inset"></div>
+      <div class="layer" id="pois"></div>
+      <div class="layer" id="clouds"></div>
+    </div>
+
+    <!-- the dataviz sits inside the map frame, over the artwork's lower margin -->
+    <div id="stats"></div>
+
+    <div id="logo"><img alt=""></div>
+    <nav id="selector" aria-label="Choose an itinerary"></nav>
+    <div id="grid-overlay" aria-hidden="true"></div>
+
+  </div>
+</header>
+
+<!-- ============ STACKED CITY CARDS ============ -->
+<!-- sticky bar that stays reachable while the cards stack -->
+<div id="to-map"><button type="button">↑ BACK TO MAP</button></div>
+
+<main id="cards"></main>
+<footer id="footer"></footer>
+
+<!-- ============ DEV TOOLS ============ -->
+<button id="grid-toggle"  class="dev-btn" type="button">GRID</button>
+<button id="calib-toggle" class="dev-btn" type="button">CALIBRATE</button>
+
+<aside id="calib">
+  <h3>CALIBRATION</h3>
+  <p>Pick a row, then click the map to place that pin. Or drag pins directly.
+     Pins marked &#10697; sit inside the Hong Kong inset.</p>
+  <div id="calib-rows"></div>
+
+  <h4>HONG KONG INSET</h4>
+  <div>
+    <button type="button" data-act="inset-left">&#9664;</button>
+    <button type="button" data-act="inset-right">&#9654;</button>
+    <button type="button" data-act="inset-up">&#9650;</button>
+    <button type="button" data-act="inset-down">&#9660;</button>
+    <button type="button" data-act="inset-bigger">+</button>
+    <button type="button" data-act="inset-smaller">&minus;</button>
+  </div>
+
+  <h4>EXPORT</h4>
+  <div>
+    <button type="button" data-act="copy">COPY JSON</button>
+    <button type="button" data-act="reset">RESET</button>
+  </div>
+  <textarea id="calib-out" readonly aria-label="Exported coordinates"></textarea>
+</aside>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

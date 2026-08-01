@@ -1,0 +1,59 @@
+/* ============================================================
+   TOKENS — the only file that should need editing when the
+   art direction changes. Values mirror data/trip.json.
+   ============================================================ */
+
+@font-face{
+  font-family:'Osaka Moji';
+  src:url('/assets/fonts/OsakaMoji-Regular.woff2') format('woff2'),
+      url('/assets/fonts/OsakaMoji-Regular.otf')   format('opentype');
+  font-weight:400;
+  font-style:normal;
+  font-display:swap;
+}
+
+:root{
+  /* ---- Figma grid ------------------------------------------
+     artboard 1920 · 8 columns · stretch · margin 218 · gutter 20
+     margin 11.3542% + (8 x 8.75%) + (7 x 1.0417%) = 100%
+     --------------------------------------------------------- */
+  --artboard:1920px;
+  --grid-margin:11.3542%;   /* 218 / 1920 */
+  --grid-gutter:1.0417%;    /*  20 / 1920 — as % of the artboard  */
+  --grid-gutter-in:1.3477%; /*  20 / 1484 — as % of the content box */
+  --grid-col:8.75%;         /* 168 / 1920 */
+
+  /* ---- colour ---- */
+  --sea:#596D88;
+  --paper:#FAEDDC;
+  --seal:#CF4736;
+  --ink:#1E222B;
+
+  --card-bg:#FFFFFF;
+  --card-fg:#111111;
+  --muted:#8A8A82;
+  --hairline:#E8E8E2;
+  --ph-a:#F6F6F3;
+  --ph-b:#EEEEEA;
+  --ph-fg:#A8A8A0;
+
+  /* ---- type ----
+     `--display` is the hand-lettered face; it carries NO CJK glyphs,
+     so kanji fall through to a system Japanese font.
+     `--serif` and `--sans` are placeholders pending the real faces. */
+  --display:'Osaka Moji','Hiragino Sans','Yu Gothic',sans-serif;
+  --serif:Georgia,'Times New Roman',serif;
+  --sans:ui-sans-serif,system-ui,'Helvetica Neue',Arial,sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  /* ---- map ---- */
+  /* where the dataviz sits, measured up from the bottom of the map frame.
+     The artwork needs to keep this strip clear. */
+  --stats-bottom:5%;
+
+  /* ---- paper texture over the sea ---- */
+  --paper-texture:url('/assets/textures/paper-texture.jpg');
+  --paper-texture-opacity:.4;
+
+  /* ---- motion ---- */
+  --ease-pop:cubic-bezier(.3,1.4,.4,1);
+}
