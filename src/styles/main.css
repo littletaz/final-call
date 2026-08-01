@@ -143,7 +143,7 @@ body{
   position:absolute;inset:0;
   display:flex;align-items:center;justify-content:center;
   font-family:var(--sans);font-weight:600;font-size:min(1.05vw,15px);
-  line-height:1;padding-bottom:6%;
+  line-height:1;
   pointer-events:none;user-select:none;
 }
 .poi.is-inactive .poi-num{opacity:0}
