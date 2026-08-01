@@ -21,6 +21,26 @@ const ARRIVE = ['flight', 'surface']
 
 let errors = 0, warnings = 0
 
+/* enough header parsing to get width/height without pulling in a dependency */
+function imageSize(path){
+  try{
+    const b = readFileSync(path)
+    if(b.length > 24 && b.toString('ascii', 1, 4) === 'PNG')
+      return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) }
+    if(b[0] === 0xFF && b[1] === 0xD8){                       /* JPEG */
+      let i = 2
+      while(i < b.length){
+        if(b[i] !== 0xFF) { i++; continue }
+        const marker = b[i + 1]
+        if(marker >= 0xC0 && marker <= 0xCF && ![0xC4, 0xC8, 0xCC].includes(marker))
+          return { h: b.readUInt16BE(i + 5), w: b.readUInt16BE(i + 7) }
+        i += 2 + b.readUInt16BE(i + 2)
+      }
+    }
+  }catch(e){}
+  return null
+}
+
 const err  = (file, msg) => { errors++;   console.log(`  \x1b[31m✗\x1b[0m ${msg}`) }
 const warn = (file, msg) => { warnings++; console.log(`  \x1b[33m!\x1b[0m ${msg}`) }
 const ok   = msg          => console.log(`  \x1b[32m✓\x1b[0m ${msg}`)
@@ -167,11 +187,24 @@ function validateTrip(path){
 
   /* ---------- map + assets ---------- */
   const checkAsset = (p, label) => {
-    if(!p) return
-    if(!existsSync(join(PUBLIC, p))) err(name, `${label} not found: public/${p}`)
+    if(!p) return false
+    if(!existsSync(join(PUBLIC, p))){ err(name, `${label} not found: public/${p}`); return false }
+    return true
   }
-  checkAsset(t.map?.base, 'map.base')
+  const baseOk = checkAsset(t.map?.base, 'map.base')
   checkAsset(t.map?.inset?.src, 'map.inset.src')
+
+  /* Every pin coordinate is a fraction of this image, so a baseSize that
+     disagrees with the file silently moves every pin. Read the real size
+     straight out of the PNG/JPEG header. */
+  if(baseOk && t.map?.baseSize){
+    const real = imageSize(join(PUBLIC, t.map.base))
+    if(!real) warn(name, `couldn't read dimensions of ${t.map.base}`)
+    else if(real.w !== t.map.baseSize.w || real.h !== t.map.baseSize.h)
+      err(name, `map.baseSize is ${t.map.baseSize.w}x${t.map.baseSize.h} but ` +
+                `${t.map.base} is actually ${real.w}x${real.h}. ` +
+                `Run: npm run remap -- <this file> --new ${real.w}x${real.h}`)
+  }
 
   if(t.map?.inset){
     const i = t.map.inset
@@ -182,6 +215,36 @@ function validateTrip(path){
   }
   if(t.map?._calibrated === false)
     warn(name, 'coordinates are uncalibrated (map._calibrated is false)')
+
+  const crop = t.map?.cropBottom
+  if(crop != null){
+    if(typeof crop !== 'number' || crop < 0 || crop >= 1)
+      err(name, `map.cropBottom must be a number between 0 and 1 (got ${crop})`)
+    else {
+      /* a pin below the cut would be scrolled out of existence */
+      const below = (t.locations ?? [])
+        .filter(l => !l.coordinates?.onInset && l.coordinates?.y > 1 - crop)
+        .map(l => `${l.id} (y ${l.coordinates.y})`)
+      if(below.length)
+        err(name, `map.cropBottom ${crop} hides everything below y ${(1-crop).toFixed(3)}, ` +
+                  `but these pins sit there: ${below.join(', ')}`)
+    }
+  }
+  /* fonts are per-trip; a typo means silently falling back forever */
+  const fonts = t.artDirection?.fonts
+  if(!fonts) warn(name, 'no artDirection.fonts — the page will use fallback faces')
+  else for(const [role, f] of Object.entries(fonts)){
+    if(role.startsWith('_')) continue
+    if(!f?.family){ err(name, `artDirection.fonts.${role}: family is required`); continue }
+    if(!f.google && !f.src)
+      err(name, `artDirection.fonts.${role} ("${f.family}") has neither google nor src — it will never load`)
+    if(f.src && !existsSync(join(PUBLIC, f.src)))
+      err(name, `artDirection.fonts.${role}: file not found — public/${f.src}`)
+    if(f.src && !/\.woff2$/.test(f.src))
+      warn(name, `artDirection.fonts.${role}: ${f.src} isn't woff2 — roughly half the size for the same outlines`)
+    if(!f.fallback)
+      warn(name, `artDirection.fonts.${role}: no fallback stack — text is unstyled until the face loads`)
+  }
 
   if(t.map?.backgroundColor && !/^#[0-9a-fA-F]{6}$/.test(t.map.backgroundColor))
     err(name, `map.backgroundColor "${t.map.backgroundColor}" must be a 6-digit hex`)

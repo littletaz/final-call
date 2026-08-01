@@ -81,7 +81,7 @@ Drop the result in `public/trips/`, add a line to `index.json`, then run
 `NIGHTS` and `PLACES` are computed from the stops at runtime and can't drift out
 of sync with the itinerary. `RENTALS` is 0 by design (the route is deliberately
 car-free). `FLIGHTS` is explicit in the data, because whether the journey home
-counts is a judgement call — see `_flightsNote` in `itineraries.json`.
+counts is a judgement call — see `_flightsNote` on the itinerary.
 
 ### Two conventions worth knowing
 
@@ -98,13 +98,23 @@ multiply by the full stop length and be badly wrong.
 
 ## Calibration
 
-Pin coordinates are **best guesses**, flagged `_calibrated: false` in `trip.json`.
+Pin coordinates are **best guesses**, flagged `_calibrated: false` in the trip file.
 
 1. Click **CALIBRATE** (bottom right).
 2. Pick a row, then click the map to place that pin — or drag pins directly.
 3. Nudge the Hong Kong inset with the arrow buttons.
-4. **COPY JSON** and paste into `locations.json` / `trip.json`.
-5. Set `_calibrated: true`.
+4. **COPY JSON**, save it to a file, then:
+
+   ```bash
+   npm run calibrate:apply -- public/trips/<trip>.json calib.json
+   # or:  pbpaste | npm run calibrate:apply -- public/trips/<trip>.json
+   ```
+
+   That writes every coordinate, updates `baseSize` from the real image, and
+   sets `_calibrated: true`.
+5. **Click RESET in the panel afterwards.** Calibration is held in
+   `localStorage` while you work and *overrides the file on load* — so until you
+   clear it you'll be looking at the saved session, not what you just committed.
 
 Edits persist in `localStorage` while you work. **RESET** clears and reloads.
 **GRID** overlays the 8-column grid for checking against Figma.
@@ -124,6 +134,35 @@ data paths the same way rather than hardcoding.
 
 ---
 
+## Deploying
+
+Pushing to `main` builds and publishes to GitHub Pages via
+`.github/workflows/deploy.yml`. One-time setup on GitHub:
+
+**Settings → Pages → Build and deployment → Source: GitHub Actions**
+
+The workflow runs `npm run validate` before `npm run build`, so a malformed trip
+file fails the deploy rather than shipping a broken page.
+
+`vite.config.js` uses `base: './'`, so the build works both at a domain root and
+under a project-site subpath like `user.github.io/final-call/` with no changes.
+
+### Dev tools in production
+
+The GRID and CALIBRATE buttons are removed from the DOM for normal visitors, and
+the calibration module is a **separate chunk that is never fetched** — it isn't
+in the main bundle at all.
+
+To calibrate against the deployed site, add `?calibrate` to the URL:
+
+```
+https://user.github.io/final-call/?calibrate
+```
+
+During `npm run dev` they are always on.
+
+---
+
 ## Known placeholders
 
 | Item | Status |
@@ -137,6 +176,7 @@ data paths the same way rather than hardcoding.
 | Footer hero image / art direction | Structure built, styling is first-pass |
 | Landing page / trip switcher | Not built yet |
 | Cloud + wave positions | Hardcoded in `src/js/map.js`, not in the data |
+| Cloud + wave sizes | Derived from each PNG — see below |
 | Itinerary route line | Removed for now |
 | Parallax | Removed; layer structure still supports adding it back |
 | 17-day + 14-day variants | Structurally real, nights and budgets not costed |
@@ -162,6 +202,56 @@ This trip is an **open jaw** (Paris → Hong Kong out, Tokyo → Paris home), wh
 `q=` can't express in one search. The CTA therefore links the outbound leg, with
 the leg home offered as a second link in the note beneath. On itineraries without
 exact dates the button disables itself and says so.
+
+## Changing the map canvas
+
+Pin, inset and sprite coordinates are all fractions of the map image. Change the
+image's dimensions and every one of them points somewhere else. `scripts/remap-canvas.mjs`
+rewrites them so they keep pointing at the same spot on the artwork:
+
+```bash
+# preview first — nothing is written
+npm run remap -- public/trips/japon-2026.json --new 3840x3840 --dry
+
+# then for real
+npm run remap -- public/trips/japon-2026.json --new 3840x3840 --top 642
+```
+
+`--top` is how many pixels of new canvas sit **above** where the old artwork
+begins. Omit it and the old artwork is assumed centred. It also updates
+`baseSize` and prints replacement y values for the clouds and waves in
+`src/js/map.js`, which live in code rather than data.
+
+This only works if the artwork was **padded**. If you moved things around while
+re-exporting, use the CALIBRATE panel for pins and adjust the sky by eye.
+
+## Trimming the map's empty base
+
+`map.cropBottom` in the trip file hides a fraction of the image from the bottom
+and shortens the hero to match — a way to reduce dead space without touching the
+artwork. Pin and sprite coordinates remain fractions of the full image and are
+rescaled on render, so a calibration survives a crop change.
+
+The dataviz sits `--stats-bottom` above the base of the (cropped) frame. That's a
+clamped px value rather than a percentage, so it doesn't drift as the frame's
+height changes with the window.
+
+## Sprite sizing
+
+Cloud and wave widths are **not** hand-tuned. Each sprite renders at its exported
+width **as a fraction of the map image**. Both come out of the same canvas, so a
+cloud drawn 787px wide beside a 3840px map occupies 787/3840 of it — correct at
+any display size, and self-correcting if the map is ever re-exported at a
+different resolution.
+
+To resize one, **re-export the PNG at the size you want** — no code change. To
+nudge the whole sky at once, change `SPRITE_SCALE` at the top of `src/js/map.js`
+(1 = exactly as exported). For a single sprite, add `scale` to its entry
+(`scale: 1.4` = 40% larger than exported).
+
+Only position and motion live in code: `x`/`y` as percentages of the map,
+`dur` seconds per loop, `travel` how far a cloud drifts before wrapping.
+`x + travel` must exceed 100 or the loop reset becomes visible.
 
 ## Notes
 

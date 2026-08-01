@@ -10,18 +10,18 @@
     "base": "assets/map/map-japon.png",
     "baseSize": {
       "w": 3840,
-      "h": 2556
+      "h": 3840
     },
+    "cropBottom": 0.15,
     "inset": {
       "id": "hongkong-inset",
       "src": "assets/map/map-hk.png",
       "forLocationId": "hongkong",
-      "x": 0.075,
-      "y": 0.3,
-      "w": 0.155
+      "x": 0.1,
+      "y": 0.2,
+      "w": 0.18
     },
-    "_calibrated": false,
-    "_calibrationNote": "Pin + inset coordinates are unverified best guesses. Use the CALIBRATE panel in the page, then paste the exported values back into this file and locations.json.",
+    "_calibrated": true,
     "backgroundColor": "#596D88",
     "_canvasNote": "All trips in this project share one canvas ratio. The artwork carries its own margin so land never reaches the edge, and leaves clear space at the bottom for the dataviz. baseSize MUST match the real pixel size of base."
   },
@@ -33,10 +33,20 @@
       "seal": "#CF4736",
       "ink": "#1E222B"
     },
-    "type": {
-      "display": "Osaka Moji",
-      "serif": "PLACEHOLDER — Georgia stands in for the intended Didone",
-      "sans": "PLACEHOLDER — system sans stands in for the intended geometric sans"
+    "fonts": {
+      "_readme": "Loaded on demand — only the trip being viewed fetches its faces. `google` is a Google Fonts family+axis string; `src` is a self-hosted file under public/. `fallback` is what shows while the face loads.",
+      "display": {
+        "family": "Osaka Moji",
+        "src": "assets/fonts/OsakaMoji-Regular.woff2",
+        "weight": "400",
+        "fallback": "'Hiragino Sans','Yu Gothic',sans-serif",
+        "_note": "no CJK glyphs — kanji fall through to the fallback"
+      },
+      "sans": {
+        "family": "Elms Sans",
+        "google": "Elms+Sans:ital,wght@0,300..700;1,400",
+        "fallback": "ui-sans-serif,system-ui,'Helvetica Neue',Arial,sans-serif"
+      }
     }
   },
   "grid": {
@@ -157,8 +167,8 @@
       "epithet": "THE GATEWAY",
       "subtitle": "Kowloon · HK Island · Lantau",
       "coordinates": {
-        "x": 0.46,
-        "y": 0.6,
+        "x": 0.508,
+        "y": 0.5163,
         "onInset": "hongkong-inset"
       },
       "tags": [
@@ -252,8 +262,8 @@
       "epithet": "THE DEEP ALPS",
       "subtitle": "Takayama · Kamikochi · Shin-Hotaka",
       "coordinates": {
-        "x": 0.474,
-        "y": 0.638
+        "x": 0.4769,
+        "y": 0.4565
       },
       "tags": [
         "mountains",
@@ -353,8 +363,8 @@
       "epithet": "THE GOLD COAST",
       "subtitle": "Kenroku-en · Higashi Chaya · Omicho",
       "coordinates": {
-        "x": 0.456,
-        "y": 0.613
+        "x": 0.4547,
+        "y": 0.4243
       },
       "tags": [
         "city",
@@ -448,8 +458,8 @@
       "epithet": "THE QUIET SPUR",
       "subtitle": "Wakura Onsen · Nanao",
       "coordinates": {
-        "x": 0.466,
-        "y": 0.562
+        "x": 0.4757,
+        "y": 0.4009
       },
       "tags": [
         "coast",
@@ -524,8 +534,8 @@
       "epithet": "THE BACK ROADS",
       "subtitle": "Ohara · Kurama · Arashiyama",
       "coordinates": {
-        "x": 0.431,
-        "y": 0.698
+        "x": 0.4372,
+        "y": 0.4892
       },
       "tags": [
         "temples",
@@ -618,8 +628,8 @@
       "epithet": "THE FAR SIDE",
       "subtitle": "Tottori Dunes · Mt. Daisen",
       "coordinates": {
-        "x": 0.373,
-        "y": 0.694
+        "x": 0.3863,
+        "y": 0.4886
       },
       "tags": [
         "coast",
@@ -704,8 +714,8 @@
       "epithet": "THE ART ISLAND",
       "subtitle": "Chichu · Benesse · Art House Project",
       "coordinates": {
-        "x": 0.38,
-        "y": 0.727
+        "x": 0.3787,
+        "y": 0.5172
       },
       "tags": [
         "islands",
@@ -789,8 +799,8 @@
       "epithet": "THE BRIDGE RIDE",
       "subtitle": "Onomichi · Imabari · the islands",
       "coordinates": {
-        "x": 0.355,
-        "y": 0.746
+        "x": 0.3507,
+        "y": 0.5237
       },
       "tags": [
         "islands",
@@ -874,8 +884,8 @@
       "epithet": "THE LANDING",
       "subtitle": "Ryogoku · Meiji Jingu Gaien · Shibuya",
       "coordinates": {
-        "x": 0.553,
-        "y": 0.665
+        "x": 0.5582,
+        "y": 0.4699
       },
       "tags": [
         "city",
@@ -959,8 +969,8 @@
       "epithet": "THE MOUNTAIN MONASTERY",
       "subtitle": "Danjo Garan · Okunoin · Shukubo",
       "coordinates": {
-        "x": 0.424,
-        "y": 0.726
+        "x": 0.436,
+        "y": 0.5167
       },
       "tags": [
         "mountains",
@@ -1054,8 +1064,8 @@
       "epithet": "THE PILGRIM'S TRAIL",
       "subtitle": "Yunomine Onsen · Hongu Taisha · Nakahechi",
       "coordinates": {
-        "x": 0.437,
-        "y": 0.745
+        "x": 0.4424,
+        "y": 0.512
       },
       "tags": [
         "mountains",
@@ -1149,8 +1159,8 @@
       "epithet": "THE SACRED CASCADE",
       "subtitle": "Nachi Taisha · Seiganto-ji · Japan's tallest waterfall",
       "coordinates": {
-        "x": 0.448,
-        "y": 0.756
+        "x": 0.4489,
+        "y": 0.5301
       },
       "tags": [
         "nature",
@@ -1234,8 +1244,8 @@
       "epithet": "THE MERCHANT CITY",
       "subtitle": "Dotonbori · Kuromon Market · Osaka Castle",
       "coordinates": {
-        "x": 0.421,
-        "y": 0.708
+        "x": 0.4278,
+        "y": 0.5067
       },
       "tags": [
         "city",

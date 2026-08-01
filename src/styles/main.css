@@ -15,7 +15,7 @@ body{
 #boot{
   position:fixed;inset:0;z-index:900;background:var(--sea);
   display:flex;align-items:center;justify-content:center;
-  font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+  font-family:var(--sans);font-weight:500;font-size:11px;letter-spacing:.16em;
   color:rgba(255,255,255,.7);text-align:center;padding:8vw;
 }
 #boot.hide{display:none}
@@ -60,9 +60,15 @@ body{
 #world{position:relative;width:100%;overflow:hidden}
 
 .layer{position:absolute;inset:0}
+/* `contain` rather than the default `fill`: if the declared ratio and the real
+   image ever disagree, the map letterboxes for a frame instead of stretching.
+   It should never trigger — syncRatio() adopts the image's own ratio — but a
+   momentarily letterboxed map is recoverable and a crushed one looks broken. */
+/* Top-aligned at full width, its natural height. When #world is shorter than
+   the image (map.cropBottom), the surplus is clipped off the bottom rather than
+   the image being squashed to fit. */
 #basemap{
-  position:absolute;inset:0;width:100%;height:100%;display:block;
-  object-position:center;   /* object-fit is set per fit mode in applyFit() */
+  position:absolute;top:0;left:0;width:100%;height:auto;display:block;
   user-select:none;-webkit-user-drag:none;
 }
 
@@ -108,13 +114,36 @@ body{
   filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
   transition:transform .22s var(--ease-pop);
 }
-.poi .poi-shape{width:100%;height:auto;display:block;-webkit-user-drag:none}
+.poi .poi-shape{width:100%;height:auto;display:block}
+
+/* rest state: solid red badge, cream outline, cream numeral */
+.pin-badge{fill:var(--pin-red)}
+.pin-panel{fill:var(--pin-red);stroke:var(--pin-cream)}
+.pin-inner{stroke:none}
+.poi .poi-num{color:var(--pin-cream)}
+
+/* hover/focus/active: the panel inverts and the inner rule appears */
+.poi:hover .pin-panel,
+.poi:focus-visible .pin-panel,
+.poi.is-current .pin-panel{fill:var(--pin-cream);stroke:var(--pin-cream)}
+.poi:hover .pin-inner,
+.poi:focus-visible .pin-inner,
+.poi.is-current .pin-inner{stroke:var(--pin-rect)}
+.poi:hover .poi-num,
+.poi:focus-visible .poi-num,
+.poi.is-current .poi-num{color:var(--pin-red)}
+
+.pin-panel,.pin-inner{transition:fill .18s, stroke .18s}
+.poi .poi-num{transition:color .18s}
+@media(prefers-reduced-motion:reduce){
+  .pin-panel,.pin-inner,.poi .poi-num{transition:none}
+}
 /* the number is DOM text over one shared pin shape, so it renumbers itself */
 .poi .poi-num{
   position:absolute;inset:0;
   display:flex;align-items:center;justify-content:center;
-  font-family:var(--sans);font-weight:700;font-size:min(1.05vw,15px);
-  color:#fff;line-height:1;padding-bottom:11%;
+  font-family:var(--sans);font-weight:600;font-size:min(1.05vw,15px);
+  line-height:1;padding-bottom:6%;
   pointer-events:none;user-select:none;
 }
 .poi.is-inactive .poi-num{opacity:0}
@@ -138,30 +167,93 @@ body{
 /* Centred on the FIRST viewport, not on the frame: the stage is taller than the
    screen, so centring within it would push the selector below the fold. `50vh`
    works because #frame starts at the top of the document. */
+/* ---------- itinerary selector ----------
+   A radiogroup: one marker slides along a track rather than a pseudo-element
+   pinned to each option with hand-measured offsets. */
+/* ---- itinerary selector ----
+   Sits UNDER the paper texture (z-index 40 vs 70), so it's multiplied by it
+   like everything else in the hero. That rules out low-contrast tints — the
+   palette here is deliberately just white at a few opacities plus the seal red,
+   both of which survive a 40% multiply of light paper. */
 #selector{
+  --sel-gutter:22px;          /* track to text */
+  --sel-dot:10px;
   position:absolute;top:50vh;right:var(--grid-margin);z-index:40;
   transform:translateY(-50%);
-  display:flex;flex-direction:column;gap:20px;
-  border-left:2px dotted rgba(255,255,255,.4);padding-left:20px;
 }
+.sel-caption{
+  font-family:var(--sans);font-weight:500;font-size:9px;letter-spacing:.2em;
+  color:rgba(255,255,255,.5);
+  margin:0 0 14px var(--sel-gutter);
+  white-space:nowrap;
+}
+.sel-options{
+  position:relative;
+  display:flex;flex-direction:column;gap:4px;
+  padding-left:var(--sel-gutter);
+}
+
+/* the track owns the line, so the buttons don't have to know about it */
+.sel-track{
+  position:absolute;left:0;top:10px;bottom:10px;width:2px;
+  background-image:linear-gradient(rgba(255,255,255,.42) 55%, transparent 0);
+  background-size:2px 7px;    /* a dotted rule that doesn't rely on border-style */
+  pointer-events:none;
+}
+.sel-marker{
+  position:absolute;left:50%;top:0;
+  width:var(--sel-dot);height:var(--sel-dot);border-radius:50%;
+  background:var(--seal);
+  margin-left:calc(var(--sel-dot) / -2);
+  margin-top:calc(var(--sel-dot) / -2);
+  transition:transform .38s cubic-bezier(.4,1.3,.5,1);
+  /* masks the dotted line behind it — must follow the trip's own sea colour,
+     not a hardcoded one, or it shows as a patch on a differently-coloured map */
+  box-shadow:0 0 0 4px var(--sea);
+}
+
 #selector button{
-  position:relative;background:none;border:0;color:rgba(255,255,255,.5);
-  font-family:inherit;text-align:left;cursor:pointer;
-  display:flex;align-items:baseline;gap:10px;transition:color .2s;
+  position:relative;background:none;border:0;cursor:pointer;
+  font-family:inherit;text-align:left;color:rgba(255,255,255,.5);
+  display:flex;flex-direction:column;gap:1px;
+  padding:7px 12px 7px 0;      /* a real hit area, not just the glyphs */
+  border-radius:4px;
+  transition:color .22s, transform .22s;
 }
-#selector .num{font-family:var(--display);font-size:32px;line-height:1}
-#selector .unit{font-size:9.5px;letter-spacing:.13em;line-height:1.5}
-#selector .period{opacity:.8;letter-spacing:.06em}
-#selector button:hover{color:rgba(255,255,255,.82)}
-#selector button[aria-current="true"]{color:#fff}
-#selector button[aria-current="true"]::before{
-  content:"";position:absolute;left:-27px;top:11px;
-  width:9px;height:9px;border-radius:50%;background:var(--seal);
+#selector button:hover{color:rgba(255,255,255,.85);transform:translateX(2px)}
+#selector button:focus-visible{
+  outline:2px solid var(--seal);outline-offset:3px;color:#fff;
+}
+#selector button[aria-checked="true"]{color:#fff}
+
+.sel-days{display:flex;align-items:baseline;gap:7px}
+.sel-days .num{
+  font-family:var(--display);font-size:34px;line-height:.88;
+  transition:font-size .22s;
+}
+#selector button[aria-checked="true"] .sel-days .num{font-size:40px}
+.sel-days .lbl{font-size:9px;letter-spacing:.18em;opacity:.75}
+
+.sel-period{
+  font-size:10.5px;letter-spacing:.03em;
+  font-variant-numeric:tabular-nums;
+  opacity:0;max-height:0;overflow:hidden;
+  transition:opacity .22s, max-height .22s;
+}
+/* the dates only matter for the length you're actually looking at */
+#selector button[aria-checked="true"] .sel-period,
+#selector button:hover .sel-period{opacity:.85;max-height:20px}
+
+@media(prefers-reduced-motion:reduce){
+  .sel-marker,.sel-days .num,.sel-period,#selector button{transition:none}
 }
 
 /* Dataviz on grid columns 3–6, one item per column. It now sits INSIDE the map
    frame rather than in a band beneath it, so the artwork must leave clear space
    at the bottom of its canvas. --stats-bottom is that inset. */
+/* A percentage bottom drifts, because the frame's height scales with its width.
+   A clamped px value keeps the dataviz a consistent distance off the coastline
+   at every screen size. */
 #stats{
   position:absolute;left:0;right:0;bottom:var(--stats-bottom);z-index:40;
   padding-inline:var(--grid-margin);
@@ -184,15 +276,17 @@ body{
 #cards{position:relative;background:var(--sea)}
 
 /* sits above every card so it stays reachable while they stack */
+/* `fixed`, not `sticky`: a sticky element still occupies space in normal flow,
+   which showed up as a blue gap between the map and the first card. */
 #to-map{
-  position:sticky;top:0;z-index:500;
+  position:fixed;top:14px;left:0;right:0;z-index:500;
   display:flex;justify-content:center;
-  padding:14px 0 0;pointer-events:none;
+  pointer-events:none;
 }
 #to-map button{
   pointer-events:auto;cursor:pointer;
   background:var(--seal);color:#fff;border:0;border-radius:999px;
-  font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  font-family:var(--sans);font-weight:500;font-size:10px;letter-spacing:.14em;
   padding:11px 20px;box-shadow:0 4px 16px rgba(0,0,0,.28);
   opacity:0;transform:translateY(-12px);
   transition:opacity .3s,transform .3s;
@@ -256,13 +350,13 @@ body{
 }
 
 .card h2{
-  font-family:var(--serif);font-size:clamp(34px,4.4vw,60px);font-weight:400;
-  letter-spacing:-.015em;line-height:1.05;margin-bottom:10px;
+  font-family:var(--sans);font-size:clamp(34px,4.4vw,60px);font-weight:600;
+  letter-spacing:-.025em;line-height:1.04;margin-bottom:10px;
 }
 .card h2 .jp{font-size:.42em;color:var(--ph-fg);margin-left:.4em}
 .card .subtitle{
-  font-family:var(--serif);font-size:clamp(15px,1.5vw,20px);
-  color:var(--muted);margin-bottom:20px;
+  font-family:var(--sans);font-weight:400;font-size:clamp(14px,1.35vw,18px);
+  color:var(--muted);margin-bottom:20px;letter-spacing:.01em;
 }
 .card .rule{width:96px;height:2px;background:var(--seal);margin:18px 0 22px}
 .card .intro{max-width:50ch;line-height:1.72;font-size:15.5px;color:#33332E;margin-bottom:24px}
@@ -285,7 +379,8 @@ body{
 .act{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .act-title{flex:1 1 auto}
 .act-price{
-  font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;
+  font-family:var(--sans);font-weight:600;font-size:10.5px;letter-spacing:.04em;
+  font-variant-numeric:tabular-nums;
   color:var(--seal);white-space:nowrap;
 }
 .act-price.is-free{color:#8A8A82}
@@ -377,8 +472,8 @@ body{
 
 .f-head{grid-column:1 / span 4}
 .f-head h2{
-  font-family:var(--serif);font-size:clamp(32px,3.6vw,52px);font-weight:400;
-  line-height:1.05;margin-bottom:8px;
+  font-family:var(--sans);font-size:clamp(32px,3.6vw,52px);font-weight:600;
+  letter-spacing:-.02em;line-height:1.05;margin-bottom:8px;
 }
 .f-sub{color:rgba(255,255,255,.55);font-size:13px;letter-spacing:.04em}
 
@@ -402,7 +497,7 @@ body{
 .f-ticks{display:flex;justify-content:space-between;gap:4px}
 .f-tick{
   background:none;border:0;padding:0;cursor:pointer;
-  font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;
+  font-family:var(--sans);font-weight:500;font-size:8.5px;letter-spacing:.06em;
   color:rgba(255,255,255,.35);text-align:center;line-height:1.3;
   transition:color .2s;
 }
@@ -431,7 +526,7 @@ body{
 /* ---- total ---- */
 .f-total{grid-column:7 / span 2;margin-top:7vh;align-self:start;text-align:right}
 .f-total-label{
-  display:block;font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+  display:block;font-family:var(--sans);font-weight:500;font-size:9px;letter-spacing:.16em;
   color:rgba(255,255,255,.42);margin-bottom:10px;
 }
 .f-total-amt{
@@ -450,13 +545,13 @@ body{
   border-top:1px solid rgba(255,255,255,.12);text-align:center;
 }
 .f-cta h3{
-  font-family:var(--serif);font-weight:400;
+  font-family:var(--sans);font-weight:600;letter-spacing:-.03em;
   font-size:clamp(40px,6.5vw,96px);line-height:1;margin-bottom:36px;
 }
 .f-yes{
   display:inline-block;background:var(--seal);color:#fff;text-decoration:none;
   border:0;border-radius:999px;cursor:pointer;
-  font-family:var(--mono);font-size:13px;letter-spacing:.24em;
+  font-family:var(--sans);font-weight:600;font-size:13px;letter-spacing:.24em;
   padding:20px 56px;transition:transform .2s var(--ease-pop),box-shadow .2s;
 }
 .f-yes:hover{transform:scale(1.05);box-shadow:0 10px 34px rgba(207,71,54,.4)}
@@ -536,7 +631,8 @@ body.is-calibrating .poi{cursor:move}
    ============================================================ */
 @media(max-width:860px){
   #logo{width:52%;left:6%}
-  #selector{top:auto;bottom:14%;right:6%;transform:none}
+  #selector{top:auto;bottom:14%;right:6%;transform:none;--sel-gutter:16px}
+  .sel-days .num{font-size:24px}
   #stats{padding-inline:6%;grid-template-columns:repeat(4,1fr);column-gap:2%}
   #stats .stat:nth-child(1){grid-column:1}
   #stats .stat:nth-child(2){grid-column:2}

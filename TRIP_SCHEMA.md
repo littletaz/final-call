@@ -124,6 +124,8 @@ it and report pass/fail per item. Don't output a corrected file unless asked.
     "baseSize": { "w": 3840, "h": 2556 },   // the image's TRUE pixel size — pin
                                             // positions are fractions of this
     "backgroundColor": "#596D88",           // MUST match the artwork's edge colour
+    "cropBottom": 0.12,                     // optional: hide the lowest 12% of
+                                            // the image — see below
     "inset": {                            // OPTIONAL — a place off the main map
       "id": "hongkong-inset",
       "src": "assets/map/map-hk.png",
@@ -161,7 +163,20 @@ Two things the artwork has to provide:
 - **Margin on all four sides**, wide enough that the map reads as floating in the
   surround rather than being cropped by it.
 - **Clear space at the bottom** for the dataviz, which sits *inside* the frame.
-  How far up it sits is `--stats-bottom` in `tokens.css` (default 5%).
+  How far up it sits is `--stats-bottom` in `tokens.css`.
+
+### Trimming the bottom without re-exporting
+
+If the artwork leaves more empty space at the base than a given trip needs, set
+`map.cropBottom` — a fraction of the image height to hide, measured from the
+bottom. `0.12` hides the lowest 12% and shortens the hero to match.
+
+Coordinates stay fractions of the **full** image, so cropping never invalidates a
+calibration; pins, clouds and the inset are rescaled at render time. Changing the
+crop later doesn't require recalibrating.
+
+The validator refuses a crop that would hide a pin, naming the ones that sit
+below the cut.
 
 `baseSize` must match the file's real pixel dimensions — the hero's aspect ratio
 is derived from it, and every pin coordinate is a fraction of it. Get it wrong

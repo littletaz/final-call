@@ -9,6 +9,7 @@ import { asset } from './paths.js'
 
 export const TRIP = {
   registry: null,
+  file: null,        /* path of the loaded trip file, e.g. trips/japon-2026.json */
   data: null,        /* the whole trip file */
   byId: {},          /* locationId -> location */
 }
@@ -30,6 +31,7 @@ export async function loadData(){
   if(!entry) throw new Error('trips/index.json lists no trips')
 
   const data = await getJSON(entry.file)
+  TRIP.file = entry.file
   TRIP.data = data
   TRIP.byId = Object.fromEntries(data.locations.map(l => [l.id, l]))
 

@@ -4,8 +4,8 @@ import './styles/main.css'
 import { TRIP, loadData } from './js/data.js'
 import { MapView } from './js/map.js'
 import { Cards } from './js/cards.js'
-import { Calib } from './js/calibrate.js'
 import { Footer } from './js/footer.js'
+import { loadFonts } from './js/fonts.js'
 import { scrollToEl } from './js/scroll.js'
 
 /* ============================================================
@@ -26,12 +26,37 @@ function renderAll(){
   Cards.renderCards(active)
   Footer.render(active)
   MapView.renderPins(active, goToCard)
-  if(Calib.on) Calib.enableDrag()
+  if(Calib?.on) Calib.enableDrag()
 }
 
+/* set once the calibration module loads; stays null in production */
+let Calib = null
+
 function goToCard(locationId){
-  if(Calib.on) return          /* clicks place pins, they don't navigate */
+  if(Calib?.on) return         /* clicks place pins, they don't navigate */
   scrollToEl(document.getElementById('card-' + locationId))
+}
+
+/* Dev tools are a separate chunk, fetched only when actually wanted:
+   during `npm run dev`, or on a deployed site with ?calibrate in the URL.
+   A normal visitor never downloads or sees them. */
+function devToolsWanted(){
+  return import.meta.env.DEV ||
+         new URLSearchParams(location.search).has('calibrate')
+}
+
+async function initDevTools(){
+  if(!devToolsWanted()){
+    document.querySelectorAll('[data-dev]').forEach(n => n.remove())
+    return
+  }
+  document.querySelectorAll('[data-dev]').forEach(n => n.removeAttribute('hidden'))
+  const mod = await import('./js/calibrate.js')
+  Calib = mod.Calib
+  Calib.init(() => MapView.renderPins(active, goToCard))
+  Calib.apply()
+  MapView.placeInset()
+  MapView.renderPins(active, goToCard)
 }
 
 /* The back-to-map bar only appears once the map has scrolled away, so it
@@ -55,6 +80,10 @@ function initBackToMap(){
     /* the shell is trip-agnostic — the real title comes from the data, so a
        second trip doesn't need its own index.html */
     const t = TRIP.data
+
+    /* first, so the faces are already in flight while the rest renders */
+    loadFonts(t.artDirection?.fonts)
+
     document.title = t.subtitle ? `${t.title} — ${t.subtitle}` : t.title
     document.querySelector('meta[name="description"]')
       ?.setAttribute('content', t.subtitle ?? t.title)
@@ -64,15 +93,14 @@ function initBackToMap(){
     Cards.init()
     Footer.init()
 
-    /* saved calibration overrides the committed coordinates */
-    Calib.init(() => MapView.renderPins(active, goToCard))
-    Calib.apply()
-    MapView.placeInset()
-
     setItinerary(TRIP.data.defaultItineraryId)
+    await initDevTools()
 
     initBackToMap()
-    window.addEventListener('resize', () => MapView.placeInset())
+    window.addEventListener('resize', () => {
+      MapView.placeInset()
+      Cards.positionMarker()   /* the marker is measured, so it re-measures */
+    })
     bootEl.classList.add('hide')
   }catch(err){
     console.error(err)

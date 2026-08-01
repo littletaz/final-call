@@ -1,16 +1,11 @@
 /* ============================================================
    TOKENS — the only file that should need editing when the
-   art direction changes. Values mirror data/trip.json.
+   art direction changes. Values mirror the trip file in public/trips/.
    ============================================================ */
 
-@font-face{
-  font-family:'Osaka Moji';
-  src:url('/assets/fonts/OsakaMoji-Regular.woff2') format('woff2'),
-      url('/assets/fonts/OsakaMoji-Regular.otf')   format('opentype');
-  font-weight:400;
-  font-style:normal;
-  font-display:swap;
-}
+/* No @font-face here — faces are declared per trip in artDirection.fonts and
+   injected by src/js/fonts.js. These variables hold the FALLBACK stacks; the
+   loader overwrites them with the real families once the trip data resolves. */
 
 :root{
   /* ---- Figma grid ------------------------------------------
@@ -38,17 +33,29 @@
   --ph-fg:#A8A8A0;
 
   /* ---- type ----
-     `--display` is the hand-lettered face; it carries NO CJK glyphs,
-     so kanji fall through to a system Japanese font.
-     `--serif` and `--sans` are placeholders pending the real faces. */
-  --display:'Osaka Moji','Hiragino Sans','Yu Gothic',sans-serif;
-  --serif:Georgia,'Times New Roman',serif;
+     Two faces only: Osaka Moji for numerals and display, Elms Sans for
+     everything else. No serif. Elms Sans is variable (300-700), so weight
+     carries the hierarchy the serif used to.
+     Osaka Moji has no CJK glyphs, so kanji fall through to a system JP face. */
+  --display:'Hiragino Sans','Yu Gothic',sans-serif;
   --sans:ui-sans-serif,system-ui,'Helvetica Neue',Arial,sans-serif;
+
+  /* alias, so any stray reference resolves to the same face */
+  --serif:var(--sans);
+
+  /* dev tools only (calibration panel) — not part of the design */
   --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+
+  /* ---- POI pins (values taken from the supplied SVGs) ---- */
+  --pin-red:#D04736;
+  --pin-cream:#F4E5CE;
+  --pin-rect:#D14736;
+
   /* ---- map ---- */
-  /* where the dataviz sits, measured up from the bottom of the map frame.
-     The artwork needs to keep this strip clear. */
-  --stats-bottom:5%;
+  /* Where the dataviz sits, measured up from the bottom of the map frame.
+     A px value (clamped) rather than a percentage, so it doesn't drift as the
+     frame's height changes with the window. */
+  --stats-bottom:clamp(40px, 4.3vw, 120px);
 
   /* ---- paper texture over the sea ---- */
   --paper-texture:url('/assets/textures/paper-texture.jpg');

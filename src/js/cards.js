@@ -19,16 +19,59 @@ export const Cards = {
     this.el.cards    = document.getElementById('cards')
   },
 
-  /* the selector shows duration + when, not the variant's nickname */
+  /* A single-choice filter, so it's a radiogroup rather than a list of buttons:
+     arrow keys move between options, and only the selected one is a tab stop.
+     Shows duration + when, never the variant's internal nickname. */
   renderSelector(active, onPick){
-    this.el.selector.innerHTML = TRIP.data.itineraries.map(it => `
-      <button type="button" data-itinerary="${it.id}" aria-current="${it.id === active.id}">
-        <span class="num">${it.days}</span>
-        <span class="unit">DAYS<br><span class="period">${it.periodDisplay ?? ''}</span></span>
-      </button>`).join('')
+    const items = TRIP.data.itineraries
+    const activeIndex = Math.max(0, items.findIndex(it => it.id === active.id))
 
-    this.el.selector.querySelectorAll('button').forEach(b =>
-      b.addEventListener('click', () => onPick(b.dataset.itinerary)))
+    /* A caption, because three bare numbers don't say what they do. */
+    this.el.selector.innerHTML =
+      `<p class="sel-caption">DURATION</p>` +
+      `<div class="sel-options" role="radiogroup" aria-label="Itinerary length">` +
+        `<span class="sel-track" aria-hidden="true"><span class="sel-marker"></span></span>` +
+        items.map((it, i) => `
+          <button type="button" role="radio"
+                  data-itinerary="${it.id}" data-index="${i}"
+                  aria-checked="${it.id === active.id}"
+                  tabindex="${i === activeIndex ? 0 : -1}">
+            <span class="sel-days">
+              <span class="num">${it.days}</span>
+              <span class="lbl">DAYS</span>
+            </span>
+            <span class="sel-period">${it.periodDisplay ?? ''}</span>
+          </button>`).join('') +
+      `</div>`
+
+    const buttons = [...this.el.selector.querySelectorAll('button')]
+
+    buttons.forEach(b => {
+      b.addEventListener('click', () => onPick(b.dataset.itinerary))
+      b.addEventListener('keydown', e => {
+        const step = { ArrowDown:1, ArrowRight:1, ArrowUp:-1, ArrowLeft:-1 }[e.key]
+        if(!step) return
+        e.preventDefault()
+        /* wrap around, the way a radiogroup is expected to behave */
+        const next = buttons[(+b.dataset.index + step + buttons.length) % buttons.length]
+        next.focus()
+        onPick(next.dataset.itinerary)
+      })
+    })
+
+    this.positionMarker()
+  },
+
+  /* The marker is one element that slides, rather than a pseudo-element on each
+     option pinned with magic offsets. Its position is measured from the chosen
+     button, so it stays aligned whatever the type size or spacing. */
+  positionMarker(){
+    const sel = this.el.selector.querySelector('.sel-options') || this.el.selector
+    const marker = sel.querySelector('.sel-marker')
+    const current = sel.querySelector('button[aria-checked="true"]')
+    if(!marker || !current) return
+    marker.style.transform =
+      `translateY(${current.offsetTop + current.offsetHeight / 2}px)`
   },
 
   renderStats(itinerary){

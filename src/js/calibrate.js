@@ -169,17 +169,26 @@ export const Calib = {
     this.render()
   },
 
-  /* shaped to match the data files, so it pastes straight in */
+  /* Names the file these values belong in, rather than a generic label — the
+     project used to have several data files and the old wording outlived them. */
   dump(){
+    const target = TRIP.file ? `public/${TRIP.file}` : 'your trip file'
     this.el.out.value = JSON.stringify({
-      '// paste into trip.json → map.inset': {
-        x:+this.inset.x.toFixed(4), y:+this.inset.y.toFixed(4), w:+this.inset.w.toFixed(4),
+      _target: target,
+      _apply: `npm run calibrate:apply -- ${target} calib.json`,
+      _thenReset: 'click RESET below, or these saved values keep overriding the file',
+      map: {
+        baseSize: { ...TRIP.data.map.baseSize },
+        inset: {
+          y: +this.inset.y.toFixed(4),
+          w: +this.inset.w.toFixed(4),
+        },
       },
-      '// paste each into locations.json → coordinates': TRIP.data.locations.map(l => ({
+      locations: TRIP.data.locations.map(l => ({
         id: l.id,
         coordinates: {
-          x:+this.coords[l.id].x.toFixed(4),
-          y:+this.coords[l.id].y.toFixed(4),
+          x: +this.coords[l.id].x.toFixed(4),
+          y: +this.coords[l.id].y.toFixed(4),
           ...(l.coordinates.onInset ? { onInset:l.coordinates.onInset } : {}),
         },
       })),

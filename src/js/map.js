@@ -12,27 +12,45 @@ import { asset } from './paths.js'
    cloud rides its own full-width track, so translateX percentages resolve
    against the map rather than the viewport and behave identically at any
    screen size. Varied durations give the layers different speeds. */
+/* One dial for every cloud and wave at once. 1 = exactly as exported, relative
+   to the map. Nudge this if the whole sky reads too heavy or too sparse; use a
+   per-sprite `scale` for one-offs. */
+const SPRITE_SCALE = 1
+
+/* One pin, both states. Geometry is verbatim from the exported SVGs; only the
+   fills are parameterised. */
+const PIN_SVG = `
+<svg class="poi-shape" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path class="pin-badge" d="M34 4C34 6.20914 35.7909 8 38 8V35C35.7909 35 34 36.7909 34 39H7C7 36.7909 5.20914 35 3 35V8C5.20914 8 7 6.20914 7 4H34Z"/>
+  <path class="pin-panel" d="M31.9893 6.5C32.2154 8.33291 33.6671 9.78458 35.5 10.0107V32.9883C33.667 33.2144 32.2154 34.6671 31.9893 36.5H9.01074C8.78457 34.6671 7.33297 33.2144 5.5 32.9883V10.0107C7.33291 9.78458 8.78458 8.33291 9.01074 6.5H31.9893Z"/>
+  <rect class="pin-inner" x="7.5" y="8.5" width="26" height="26"/>
+</svg>`
+
+
+/* Sizes come from each file's own pixel dimensions rather than hand-tuned
+   percentages, so resizing a cloud means re-exporting the PNG, not editing code.
+   `scale` is an optional per-sprite override. */
 const CLOUDS = [
-  { file:'01.png', x:-18, y:25.5, w:15.0, dur:118, travel:140 },
-  { file:'02.png', x:-10, y:18.5, w:7.4,  dur:96,  travel:126 },
-  { file:'03.png', x:-24, y:41.0, w:8.5,  dur:104, travel:142 },
-  { file:'04.png', x:-13, y:15.0, w:8.5,  dur:132, travel:130 },
-  { file:'05.png', x:-20, y:29.0, w:11.5, dur:110, travel:136 },
-  { file:'06.png', x:-28, y:47.0, w:15.3, dur:142, travel:148 },
-  { file:'07.png', x:-15, y:56.0, w:10.4, dur:100, travel:130 },
-  { file:'08.png', x:-18, y:62.0, w:10.4, dur:124, travel:134 },
+  { file:'01.png', x:-18, y:25.5, dur:118, travel:140 },
+  { file:'02.png', x:-10, y:18.5, dur:96,  travel:126 },
+  { file:'03.png', x:-24, y:41.0, dur:104, travel:142 },
+  { file:'04.png', x:-13, y:15.0, dur:132, travel:130 },
+  { file:'05.png', x:-20, y:29.0, dur:110, travel:136 },
+  { file:'06.png', x:-28, y:47.0, dur:142, travel:148 },
+  { file:'07.png', x:-15, y:56.0, dur:100, travel:130 },
+  { file:'08.png', x:-18, y:62.0, dur:124, travel:134 },
 ]
 
 /* Waves bob vertically and drift a little sideways. Amplitudes are larger
    than they look — at this scale a 6px bob was invisible. */
 const WAVES = [
-  { file:'wave-0001.png', x:13.0, y:66.0, w:7.8, dur:6.5, dy:18, dx:10 },
-  { file:'wave-0002.png', x:30.0, y:19.0, w:4.4, dur:5.0, dy:13, dx:-7 },
-  { file:'wave-0003.png', x:19.5, y:24.0, w:5.2, dur:5.8, dy:15, dx:8 },
-  { file:'wave-0004.png', x:57.5, y:74.0, w:4.4, dur:5.3, dy:13, dx:-9 },
-  { file:'wave-0005.png', x:69.0, y:70.0, w:5.0, dur:6.1, dy:16, dx:7 },
-  { file:'wave-0006.png', x:84.5, y:56.0, w:7.6, dur:6.9, dy:19, dx:-11 },
-  { file:'wave-0007.png', x:24.5, y:33.0, w:3.8, dur:4.8, dy:12, dx:6 },
+  { file:'wave-0001.png', x:13.0, y:66.0, dur:6.5, dy:18, dx:10 },
+  { file:'wave-0002.png', x:30.0, y:19.0, dur:5.0, dy:13, dx:-7 },
+  { file:'wave-0003.png', x:19.5, y:24.0, dur:5.8, dy:15, dx:8 },
+  { file:'wave-0004.png', x:57.5, y:74.0, dur:5.3, dy:13, dx:-9 },
+  { file:'wave-0005.png', x:69.0, y:70.0, dur:6.1, dy:16, dx:7 },
+  { file:'wave-0006.png', x:84.5, y:56.0, dur:6.9, dy:19, dx:-11 },
+  { file:'wave-0007.png', x:24.5, y:33.0, dur:4.8, dy:12, dx:6 },
 ]
 
 export const MapView = {
@@ -55,12 +73,65 @@ export const MapView = {
     if(d.map.backgroundColor)
       document.documentElement.style.setProperty('--sea', d.map.backgroundColor)
 
-    /* one canonical canvas ratio per project — the artwork carries its own
-       margin, so nothing needs cropping or letterboxing */
-    this.el.world.style.aspectRatio = `${d.map.baseSize.w}/${d.map.baseSize.h}`
+    /* The map's own pixel dimensions drive the hero's height — width is 100%,
+       height follows. baseSize is only a placeholder to reserve space before the
+       file loads; once it has, the real image wins, so a stale baseSize can
+       never squash the artwork. */
+    this.el.world.style.aspectRatio =
+      `${d.map.baseSize.w}/${d.map.baseSize.h * this.visible()}`
+    this.syncRatio()
 
     this.renderSprites()
     this.renderInset()
+  },
+
+  /* A sprite's width is its exported width as a fraction of THE MAP's width.
+     Both come out of the same canvas, so a cloud drawn 787px wide beside a
+     3840px map occupies 787/3840 of it — whatever size either is displayed at.
+     (Measuring against grid.artboard instead was wrong by exactly the ratio
+     between the canvas and the artboard, which made everything twice too big.)
+     naturalWidth isn't known until a file loads, so this runs on load. */
+  sizeSprite(img, scale = 1){
+    const apply = () => {
+      const mapW = this.el.base.naturalWidth || TRIP.data.map.baseSize?.w
+      if(!img.naturalWidth || !mapW) return
+      img.parentElement.style.width =
+        (img.naturalWidth / mapW * 100 * scale * SPRITE_SCALE) + '%'
+    }
+    const ready = () => img.complete && this.el.base.complete
+    if(ready()) apply()
+    else {
+      img.addEventListener('load', apply, { once:true })
+      this.el.base.addEventListener('load', apply, { once:true })
+    }
+  },
+
+  /* How much of the image's height the hero shows, from the top. `cropBottom`
+     trims empty space off the bottom of the artwork without re-exporting it:
+     0.15 hides the lowest 15%. Coordinates stay fractions of the FULL image, so
+     cropping never invalidates a calibration — they're just scaled on the way
+     out by vScale(). */
+  visible(){ return 1 - (TRIP.data.map.cropBottom ?? 0) },
+  vScale(){ return 1 / this.visible() },
+
+  /* place a y fraction of the image as a percentage of the visible hero */
+  yPct(v){ return v * this.vScale() * 100 },
+
+  /* adopt the image's true ratio, and say so if the data disagrees */
+  syncRatio(){
+    const img = this.el.base
+    const apply = () => {
+      const { naturalWidth:w, naturalHeight:h } = img
+      if(!w || !h) return
+      this.el.world.style.aspectRatio = `${w}/${h * this.visible()}`
+
+      const dec = TRIP.data.map.baseSize
+      if(dec && (dec.w !== w || dec.h !== h))
+        console.warn(`[japon] map.baseSize says ${dec.w}x${dec.h} but the image is ${w}x${h}. ` +
+                     `Layout has self-corrected, but every pin coordinate is a fraction of the ` +
+                     `image — run "npm run remap" to fix them.`)
+    }
+    img.complete ? apply() : img.addEventListener('load', apply, { once:true })
   },
 
   renderSprites(){
@@ -71,18 +142,23 @@ export const MapView = {
            animation-duration:${c.dur}s;
            animation-delay:-${(c.dur * ((i * 0.137) % 1)).toFixed(1)}s;
            --travel:${c.travel}%">
-        <div class="sprite" style="left:${c.x}%;top:${c.y}%;width:${c.w}%">
+        <div class="sprite" style="left:${c.x}%;top:${this.yPct(c.y / 100).toFixed(3)}%">
           <img src="${asset('assets/cloud/' + c.file)}" alt="">
         </div>
       </div>`).join('')
 
     this.el.waves.innerHTML = WAVES.map(w => `
-      <div class="sprite" style="left:${w.x}%;top:${w.y}%;width:${w.w}%">
+      <div class="sprite" style="left:${w.x}%;top:${this.yPct(w.y / 100).toFixed(3)}%">
         <div class="wave-bob" style="
              animation-duration:${w.dur}s;--dy:${w.dy}px;--dx:${w.dx}px">
           <img src="${asset('assets/wave/' + w.file)}" alt="">
         </div>
       </div>`).join('')
+
+    CLOUDS.forEach((c, i) =>
+      this.sizeSprite(this.el.clouds.querySelectorAll('img')[i], c.scale ?? 1))
+    WAVES.forEach((w, i) =>
+      this.sizeSprite(this.el.waves.querySelectorAll('img')[i], w.scale ?? 1))
   },
 
   renderInset(){
@@ -99,7 +175,7 @@ export const MapView = {
     const ins = TRIP.data.map.inset
     if(!ins) return
     Object.assign(this.el.inset.style, {
-      top:   (ins.y * 100) + '%',
+      top:   this.yPct(ins.y).toFixed(3) + '%',
       width: (ins.w * 100) + '%',
     })
   },
@@ -124,10 +200,15 @@ export const MapView = {
       btn.className = 'poi' + (num ? '' : ' is-inactive')
       btn.dataset.locationId = loc.id
       btn.style.left = (c.x * 100) + '%'
-      btn.style.top  = (c.y * 100) + '%'
+      /* inset pins are relative to the inset box, which isn't cropped */
+      btn.style.top  = (c.onInset ? c.y * 100 : this.yPct(c.y)).toFixed(3) + '%'
       btn.setAttribute('aria-label', num ? `${num}. ${loc.name.en}` : loc.name.en)
-      btn.innerHTML =
-        `<img class="poi-shape" src="${asset('assets/poi/pin.svg')}" alt="">` +
+      /* Inline rather than <img>, so CSS can recolour it on hover. The two
+         supplied states differ only in fills, so this is the hover markup with
+         the colours driven by variables — the inner rect is present in both and
+         simply transparent at rest. The digit stays DOM text because it's
+         generated from the itinerary, not baked into the artwork. */
+      btn.innerHTML = PIN_SVG +
         `<span class="poi-num">${num ?? ''}</span>` +
         `<span class="tip">${loc.name.en}</span>`
       btn.addEventListener('click', e => onSelect(loc.id, e))
