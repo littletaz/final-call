@@ -9,6 +9,7 @@ import { asset } from './paths.js'
 
 export const TRIP = {
   registry: null,
+  id: null,          /* the ?trip= value that selected this one */
   file: null,        /* e.g. trips/japan-2026/trip.json */
   dir: null,         /* e.g. trips/japan-2026 — assets resolve against this */
   data: null,
@@ -41,6 +42,7 @@ export async function loadData(){
   if(!entry) throw new Error('trips/index.json lists no trips')
 
   const data = await getJSON(entry.file)
+  TRIP.id   = entry.id
   TRIP.file = entry.file
   TRIP.dir  = entry.file.replace(/\/[^/]*$/, '')
   TRIP.data = data

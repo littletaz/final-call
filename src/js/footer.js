@@ -94,7 +94,7 @@ export const Footer = {
       <section class="f-ask">
         <h2 class="f-ask-title">${cta.headline ?? 'So\u2026 Are you in?'}</h2>
         <div class="ask-actions">
-          <a class="fc-btn fc-no" href="./no.html">NO</a>
+          <a class="fc-btn fc-no" href="./no.html${TRIP.id ? `?trip=${encodeURIComponent(TRIP.id)}` : ''}">NO</a>
           <a class="fc-btn fc-yes" ${url ? `href="${url}" target="_blank" rel="noopener noreferrer"` : 'aria-disabled="true"'}>YES</a>
         </div>
       </section>`
@@ -153,8 +153,7 @@ export const Footer = {
       <div class="bud-bar">${bar}</div>
       <ul class="bud-legend">${legend}</ul>
 
-      <div class="bud-levers">${['sleep','eat','move'].map(lever).join('')}</div>
-      <p class="bud-note">flights and activities are not choices \u2014 they are what they are</p>`
+      <div class="bud-levers">${['sleep','eat','move'].map(lever).join('')}</div>`
 
     host.querySelectorAll('.bud-opt').forEach(btn =>
       btn.addEventListener('click', () => {

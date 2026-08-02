@@ -27,13 +27,18 @@ wall.messageBoard && setInterval(() => {
   wall.say(i % 2 ? SCRIPT.taunt : SCRIPT.no)
 }, SWAP)
 
+/* Both buttons keep whichever trip you came from, so ?trip= survives the
+   detour. Without it, saying no to Australia would send you back to Japan. */
+const TRIP_ID = new URLSearchParams(location.search).get('trip')
+const back = document.getElementById('back-to-map')
+if(back && TRIP_ID) back.href = `./trip.html?trip=${encodeURIComponent(TRIP_ID)}`
+
 /* the change of heart goes straight to the flight search */
 ;(async () => {
   const btn = document.getElementById('changed-mind')
   try{
     const reg = await (await fetch(asset('trips/index.json'))).json()
-    const id  = new URLSearchParams(location.search).get('trip')
-              || reg.defaultTripId || reg.trips?.[0]?.id
+    const id  = TRIP_ID || reg.defaultTripId || reg.trips?.[0]?.id
     const entry = reg.trips.find(t => t.id === id) || reg.trips[0]
     const trip  = await (await fetch(asset(entry.file))).json()
 
@@ -51,6 +56,8 @@ wall.messageBoard && setInterval(() => {
       const pax  = fs.passengers > 1 ? `/${fs.passengers}adults` : ''
       btn.href = `https://www.kayak.com/flights/${path}${pax}?sort=bestflight_a`
       btn.target = '_blank'; btn.rel = 'noopener noreferrer'
+    } else if(TRIP_ID){
+      btn.href = `./trip.html?trip=${encodeURIComponent(TRIP_ID)}`
     }
   }catch(e){ console.error(e) }   /* the link falls back to the trip page */
 })()

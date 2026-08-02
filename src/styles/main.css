@@ -613,7 +613,6 @@ body{
 /* the chosen one inverts — it's the loudest thing in the block, which is right */
 .bud-opt.on{background:#fff;border-color:#fff;color:#111}
 .bud-opt:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
-.bud-note{margin:4vh 0 0;font-size:14px;font-style:italic;color:rgba(255,255,255,.35)}
 
 /* ============================================================
    THE ASK

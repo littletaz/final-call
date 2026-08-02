@@ -82,7 +82,8 @@ export const FinalCall = {
        the reveal never settled. */
     this.no?.addEventListener('click', () => {
       clearInterval(this.timer)
-      location.href = './no.html'
+      const id = new URLSearchParams(location.search).get('trip')
+      location.href = './no.html' + (id ? `?trip=${encodeURIComponent(id)}` : '')
     })
 
     this.apply()
