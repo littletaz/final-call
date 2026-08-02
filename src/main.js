@@ -5,10 +5,10 @@ import './styles/flapboard.css'
 import { TRIP, loadData } from './js/data.js'
 import { MapView } from './js/map.js'
 import { Cards } from './js/cards.js'
+import { PoiCard } from './js/poicard.js'
 import { Footer } from './js/footer.js'
 import { loadFonts } from './js/fonts.js'
 import { FinalCall } from './js/finalcall.js'
-import { Parallax } from './js/parallax.js'
 import { scrollToEl } from './js/scroll.js'
 
 /* ============================================================
@@ -25,10 +25,9 @@ function setItinerary(id){
 
 function renderAll(){
   Cards.renderSelector(active, setItinerary)
-  Cards.renderCards(active)
+  PoiCard.init(active)
   Footer.render(active)
   FinalCall.update(active)
-  Parallax.refresh()
   MapView.setVariant(active)
   MapView.renderPins(active, goToCard)
   if(Calib?.on) Calib.enableDrag()
@@ -37,13 +36,9 @@ function renderAll(){
 /* set once the calibration module loads; stays null in production */
 let Calib = null
 
+/* a pin opens its card; clicking the same pin again closes it */
 function goToCard(locationId){
-  if(Calib?.on) return         /* clicks place pins, they don't navigate */
-  const target = document.getElementById('card-' + locationId)
-  if(!target) return
-  /* +200ms per card, so reaching the third takes 2s + 600ms */
-  const index = [...document.querySelectorAll('#cards .card')].indexOf(target)
-  scrollToEl(target, 2000 + Math.max(0, index) * 200)
+  PoiCard.toggle(locationId)
 }
 
 /* Dev tools are a separate chunk, fetched only when actually wanted:

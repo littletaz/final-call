@@ -47,13 +47,19 @@ body{
   isolation:isolate;
   background:var(--sea);
 }
-#stage::after{
+/* The texture used to be on the hero only, which put a seam where the map
+   ended. It's on the page now, above everything, so the paper is continuous
+   from the map to the last button. */
+body::after{
   content:"";
-  position:absolute;inset:0;z-index:70;pointer-events:none;
-  background:var(--paper-texture) center top / cover no-repeat;
+  position:fixed;inset:0;z-index:900;
+  pointer-events:none;
+  background:var(--paper-texture) center / cover repeat-y;
   mix-blend-mode:multiply;
   opacity:var(--paper-texture-opacity);
 }
+
+
 #frame{position:relative;width:100%;max-width:var(--artboard);margin:0 auto}
 /* aspect-ratio (contain) or an explicit height (cover) is set from the trip
    data in MapView.applyFit() — no default here, so nothing fights it */
@@ -349,191 +355,109 @@ body{
    A clamped px value keeps the dataviz a consistent distance off the coastline
    at every screen size. */
 /* ============================================================
-   STACKED CITY CARDS
-   Each card is sticky at top:0 with a rising z-index, so it
-   slides over the one before it.
+   POI CARD
+   One place at a time, fixed to the bottom-right of the grid.
+   It doesn't follow the pin: a card that moves is a card you
+   have to find, and anchoring it near a pin means covering the
+   map exactly where you're looking.
    ============================================================ */
-#cards{position:relative;background:var(--sea)}
-
-.card{
-  position:sticky;top:0;
-  /* exactly one screen — the rail scrolls rather than the card growing */
-  height:100vh;height:100dvh;
-  display:flex;align-items:center;
-  background:var(--card-bg);color:var(--card-fg);
-  border-radius:26px 26px 0 0;
-  box-shadow:0 -14px 40px rgba(0,0,0,.22);
-  padding:0;
-  overflow:hidden;                /* clips the watermark and the rail's bleed */
+#poi-card{
+  position:fixed;
+  right:var(--grid-margin);bottom:60px;
+  z-index:540;
+  width:clamp(300px, 26vw, 420px);
+  opacity:0;transform:translateY(14px) scale(.98);
+  transition:opacity .28s ease, transform .28s cubic-bezier(.3,1.1,.4,1);
+  pointer-events:none;
 }
+#poi-card.is-open{opacity:1;transform:none;pointer-events:auto}
 
-/* the stop number, oversized and set behind everything. Deliberately clipped
-   by the card's left edge rather than sitting neatly inside it. */
-.card-index{
+/* the prints, tucked behind and showing past the top edge */
+.pc-photos{position:absolute;inset:0;pointer-events:none}
+.pc-photo{
   position:absolute;
-  left:-2.5%;top:-4%;
-  font-family:var(--display);
-  font-size:min(38vh,340px);
-  line-height:.8;
-  color:#DCDCDC;              /* light, but actually legible */
-  pointer-events:none;user-select:none;
-  z-index:0;
+  left:calc(var(--i) * 7%);
+  bottom:14%;
+  width:88%;
+  margin:0;
+  transform:rotate(var(--tilt, 0deg)) translateY(calc(var(--i) * -6%));
+  border:9px solid #E9E9E9;background:#E9E9E9;
+  overflow:hidden;
 }
+.pc-photo img{display:block;width:100%;height:auto}
 
-.card-inner{
-  position:relative;z-index:2;      /* over the photos */
-  width:100%;
-  padding-inline:var(--grid-margin);
-  pointer-events:none;              /* photos and hotels take their own */
+.pc-body{
+  position:relative;z-index:2;
+  background:#fff;color:#111;
+  border-radius:3px;
+  padding:26px 24px 22px;
+  box-shadow:0 18px 50px rgba(0,0,0,.28);
 }
-.card-inner a,.card-inner button{pointer-events:auto}
-
-/* ---- head: chips left, duration right ---- */
-/* The head sits inside the safe zone (see .c-photos) so a print can never
-   land on it — the dates were unreadable over a photograph. */
-.c-head{
-  display:flex;align-items:center;justify-content:center;
-  gap:12px;margin-bottom:min(14vh,150px);
+.pc-title{
+  font-family:var(--sans);font-weight:500;
+  font-size:clamp(26px,2.4vw,38px);letter-spacing:-.03em;line-height:1;
+  text-align:center;margin:0 0 20px;
 }
-.c-sub{
-  display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0;
-  justify-content:center;
+.pc-stays{display:flex;flex-direction:column;gap:9px}
+.pc-when{
+  margin:18px 0 0;text-align:center;
+  font-size:13px;color:#7A7A70;
+  font-variant-numeric:tabular-nums;
 }
-.chip{
+.pc-nights{font-weight:600;color:#111;margin-left:4px}
+.pc-chips{display:flex;justify-content:center;gap:8px;margin:16px 0 0}
+.pc-chips .chip{
   width:30px;height:30px;flex:none;
   border:1px solid var(--seal);color:var(--seal);
   display:flex;align-items:center;justify-content:center;
   font-size:14px;border-radius:4px;
 }
-/* dates and nights, at the caption's old size — two colours so the duration
-   reads separately from the span */
-.c-when{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
-.when-dates{
-  font-size:14.5px;color:#6E6E64;
-  font-variant-numeric:tabular-nums;
-}
-.when-nights{
-  font-family:var(--sans);font-weight:600;font-size:14.5px;
-  color:var(--seal);letter-spacing:0;line-height:inherit;
-}
-.when-nights.is-spur{color:#9A9A90;font-weight:500}
 
-.c-when{
-  display:flex;align-items:baseline;gap:14px;
-  text-align:right;white-space:nowrap;
+.pc-close{
+  position:absolute;top:8px;right:8px;z-index:3;
+  width:30px;height:30px;padding:0;
+  background:none;border:0;cursor:pointer;
+  font-size:22px;line-height:1;color:#B4B4AC;
+  transition:color .2s;
 }
+.pc-close:hover{color:#111}
+.pc-close:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
 
-/* ---- the title, centred and large ---- */
-.c-title{
-  text-align:center;margin:0 0 min(12vh,130px);
-  font-family:var(--sans);font-weight:500;
-  font-size:clamp(52px,9vw,150px);
-  letter-spacing:-.04em;line-height:.92;
-}
-
-/* ============================================================
-   SCATTERED PHOTOS
-   Positioned from src/js/scatter.js; the card clips them, so a
-   photo placed off the edge reads as continuing past it.
-   ============================================================ */
-/* A band down the middle that no photo may enter. Text over a photograph was
-   the readability problem — this makes it structurally impossible rather than
-   something to keep an eye on. The slots in js/scatter.js are all pushed clear
-   of it; this variable is the single definition of where "clear" is. */
-:root{--safe-x0:26%; --safe-x1:74%}
-.c-photos{position:absolute;inset:0;z-index:1;pointer-events:none}
-
-.photo{
-  position:absolute;margin:0;
-  /* the paper border — a print lying on a table, not a framed image */
-  border:min(0.9vw,13px) solid #E9E9E9;
-  background:#E9E9E9;
-  /* --p is the card's scroll progress, set by js/parallax.js;
-     --depth is how far this photo travels with it */
-  /* vertical only — lateral drift made prints cross the safe zone */
-  transform:
-    translateY(calc(var(--p, 0) * var(--depth, 30) * -1px))
-    rotate(var(--rot, 0deg));
-  will-change:transform;
-}
-.photo img{display:block;width:100%;height:auto}
-.photo-ph{
-  display:flex;align-items:center;justify-content:center;
-  aspect-ratio:4/3;
-  background:repeating-linear-gradient(45deg,#F2F2F2,#F2F2F2 12px,#EAEAEA 12px,#EAEAEA 24px);
-  color:#C9C9C9;font-size:22px;font-weight:600;
-}
-
-/* No entrance animation — the photos are simply there, and the parallax does
-   the work. --p is the card's scroll progress from js/parallax.js; --depth and
-   --depth is per-slot, so each print travels a different distance. Vertical
-   only: lateral drift carried prints across the safe zone. */
-
-/* ---- where we sleep ---- */
-.stays-title{
-  font-family:var(--sans);font-weight:500;
-  font-size:clamp(30px,3.2vw,58px);
-  letter-spacing:-.03em;line-height:1;
-  text-align:center;
-  /* negative margin pulls the hotels up over it, so the cards crop the words —
-     the heading reads as a layer underneath rather than a label above */
-  margin:0 0 -.34em;
-  position:relative;z-index:0;
-}
-.hotels{position:relative;z-index:1}
-.hotels{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
-  padding-right:var(--grid-margin);
-}
-/* A short bar rather than a plate: tier on its own line, then the name and the
-   price on one baseline. No image — at this size it added height without
-   adding information, and the booking link does the persuading. */
+/* the hotel bars, shared with nothing else now */
 .hotel{
   display:block;
   border:1px solid #E4E4DC;border-radius:12px;
-  padding:14px 20px 16px;background:#fff;
-  text-decoration:none;color:inherit;
-  min-width:0;
+  padding:12px 16px 14px;background:#fff;
+  text-decoration:none;color:inherit;min-width:0;
 }
 .hotel .tier{
-  display:block;
-  font-family:var(--sans);font-weight:600;font-size:12px;
+  display:block;font-family:var(--sans);font-weight:600;font-size:11px;
   color:var(--seal);margin-bottom:2px;
 }
-
-/* the price holds its width; the name takes what's left and truncates */
 .hotel-row{
-  display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+  display:flex;align-items:baseline;justify-content:space-between;gap:14px;
   min-width:0;
 }
 .hotel .name{
   flex:1 1 auto;min-width:0;
-  font-family:var(--sans);font-weight:400;font-size:clamp(15px,1.4vw,18px);
+  font-family:var(--sans);font-weight:400;font-size:16px;
   letter-spacing:-.015em;line-height:1.25;color:#111;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .hotel .amount{
   flex:0 0 auto;
-  font-family:var(--sans);font-weight:400;font-size:13.5px;color:#44443E;
+  font-family:var(--sans);font-weight:400;font-size:13px;color:#44443E;
   font-variant-numeric:tabular-nums;white-space:nowrap;
 }
-.hotel .per-night{font-size:11px;color:var(--ph-fg);margin-left:2px}
-.hotel .base{display:none}   /* the split-stay label doesn't fit the short bar */
-
-.hotel.is-link{transition:border-color .2s,box-shadow .2s,transform .2s}
-.hotel.is-link:hover,.hotel.is-link:focus-visible{
-  border-color:var(--seal);
-  box-shadow:0 8px 22px rgba(0,0,0,.08);
-  transform:translateY(-2px);outline:none;
-}
+.hotel .per-night{font-size:10px;color:#9A9A90;margin-left:2px}
+.hotel.is-link{transition:border-color .2s,box-shadow .2s}
+.hotel.is-link:hover{border-color:var(--seal);box-shadow:0 6px 18px rgba(0,0,0,.08)}
 .hotel.is-link:hover .name{text-decoration:underline;text-underline-offset:2px}
-
-.no-stay{color:var(--ph-fg);font-style:italic;font-size:14px}
 
 /* ============================================================
    FOOTER — the cost, then the question
    ============================================================ */
-#footer{position:relative;z-index:600;background:var(--dusk);color:#fff}
+#footer{position:relative;z-index:600;background:var(--sea);color:#fff}
 
 /* dusk: the same world as the hero, later in the day */
 .f-costs{padding:12vh 0 14vh}
@@ -693,31 +617,17 @@ body{
     opacity:.7;height:auto;font-size:9px;margin-top:2px;
   }
 
-  /* ---- cards ---- */
-  .card{border-radius:18px 18px 0 0;padding:5vh 0}
-  .card-inner{padding-inline:6%}
-  .card-index{font-size:min(24vh,180px);left:-4%;top:-1%}
-
-  .c-head{flex-direction:column;gap:14px;margin-bottom:6vh}
-  .c-when{text-align:left}
-  .chip{width:26px;height:26px;font-size:12px}
-  .when-dates,.when-nights{font-size:13px}
-  .when-nights{font-size:20px}
-
-  .c-title{font-size:clamp(40px,13vw,72px);margin-bottom:6vh}
-
-  /* photos run wider and flatter on a narrow screen, or they'd be stamps */
-  .photo{border-width:7px}
-  .c-photos .photo{width:calc(var(--w, 26) * 1.5%)}
-
-  .stays-title{font-size:clamp(26px,8vw,42px);margin-bottom:-.3em}
-  .hotels{
-    display:flex;flex-direction:column;gap:10px;
-    padding-right:6%;
+  /* ---- the poi card ---- */
+  #poi-card{
+    right:6%;left:6%;bottom:16px;
+    width:auto;
   }
-  .hotel{width:auto;padding:12px 16px 14px}
-  .hotel .name{font-size:16px}
-  .hotel .amount{font-size:12.5px}
+  .pc-body{padding:20px 18px 18px}
+  .pc-title{font-size:26px;margin-bottom:16px}
+  .pc-photo{width:82%}
+  .hotel{padding:10px 14px 12px}
+  .hotel .name{font-size:15px}
+  .hotel .amount{font-size:12px}
 
   /* ---- footer ---- */
   .f-costs{padding:8vh 0 9vh}

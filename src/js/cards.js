@@ -1,7 +1,6 @@
 import { MapView } from './map.js'
-import { TRIP, tripAsset, deriveStats, stayTotal, stopDates, eur } from './data.js'
+import { TRIP, deriveStats } from './data.js'
 import { countUp } from './countup.js'
-import { layoutFor } from './scatter.js'
 
 /* ============================================================
    SELECTOR · DATAVIZ · STACKED CITY CARDS
@@ -119,92 +118,8 @@ export const Cards = {
      block rather than a dead anchor. */
   /* On overnight stops the figure is the total for the stay; on day-trip spurs
      there is no stay, so it falls back to the nightly rate. */
-  /* On overnight stops the figure is the total for the stay; on day-trip spurs
-     there is no stay, so it falls back to the nightly rate. */
-  hotel(stay, stop){
-    const t = stayTotal(stay, stop)
-    const amount = t
-      ? `${eur(t.lo)}\u2013${eur(t.hi)}`
-      : `${eur(stay.priceNightEUR[0])}\u2013${eur(stay.priceNightEUR[1])}<span class="per-night">/night</span>`
-
-    const inner = `
-      <span class="tier">${stay.tier[0].toUpperCase() + stay.tier.slice(1)}</span>
-      <span class="hotel-row">
-        <span class="name">${stay.name}</span>
-        <span class="amount">${amount}</span>
-      </span>`
-
-    if(!stay.bookingUrl) return `<div class="hotel">${inner}</div>`
-    return `<a class="hotel is-link" href="${stay.bookingUrl}"
-               target="_blank" rel="noopener noreferrer"
-               title="${stay.name}"
-               aria-label="${stay.name} \u2014 opens booking search in a new tab">
-      ${inner}</a>`
-  },
 
 
-  /* Photos, scattered. Empty slots aren't rendered, so a city with three
-     photos simply uses the first three positions of its layout. */
-  scatter(loc, i){
-    const photos = loc.photos ?? []
-    if(!photos.length) return ''
-    const slots = layoutFor(loc, i)
 
-    return `<div class="c-photos" aria-hidden="true">${
-      photos.slice(0, slots.length).map((ph, n) => {
-        const s = slots[n]
-        return `<figure class="photo" style="
-            left:${s.x}%;top:${s.y}%;width:${s.w}%;
-            --rot:${s.r}deg;--depth:${s.d}">
-          ${ph.src ? `<img src="${tripAsset(ph.src)}" alt="" loading="lazy">`
-                   : `<span class="photo-ph">${n + 1}</span>`}
-        </figure>`
-      }).join('')}</div>`
-  },
 
-  card(stop, i, count, dates){
-    const loc = TRIP.byId[stop.locationId]
-    if(!loc) return ''
-
-    const nights = stop.spur
-      ? `<span class="when-nights is-spur">day trip</span>`
-      : `<span class="when-nights">${stop.nights} night${stop.nights === 1 ? '' : 's'}</span>`
-
-    const d = dates[stop.locationId]
-    const dateLine = (d && stop.nights)
-      ? `<span class="when-dates">${fmt(d.from)} \u2013 ${fmt(d.to)}</span>` : ''
-
-    const stays = loc.stays.slice(0, 3).map(st => this.hotel(st, stop)).join('')
-
-    /* Things to do are deliberately not rendered — they stay in the data for
-       later. The card is the place, not the itinerary. */
-    return `<section class="card" id="card-${loc.id}" style="z-index:${i + 1}">
-      ${this.scatter(loc, i)}
-
-      <div class="card-inner">
-        <header class="c-head">
-          <p class="c-sub">
-            ${loc.kanjiChips.map(k => `<span class="chip">${k}</span>`).join('')}
-            <span class="c-when">${dateLine}${nights}</span>
-          </p>
-        </header>
-
-        <h2 class="c-title">${loc.name.en}</h2>
-
-        <section class="c-stays">
-          <h3 class="stays-title">where we sleep</h3>
-          ${loc.stays.length
-            ? `<div class="hotels">${stays}</div>`
-            : `<p class="no-stay">No stay \u2014 folded into the neighbouring base.</p>`}
-        </section>
-      </div>
-    </section>`
-  },
-
-  renderCards(itinerary){
-    const dates = stopDates(itinerary)
-    this.el.cards.innerHTML = itinerary.stops
-      .map((stop, i) => this.card(stop, i, itinerary.stops.length, dates))
-      .join('')
-  },
 }
