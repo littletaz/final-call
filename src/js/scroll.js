@@ -9,7 +9,10 @@ const REDUCED = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 /* easeInOutQuad */
 const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
 
-export function scrollToEl(el, duration = 230){
+/* Longer than a browser's default smooth scroll on purpose: the cards stack, so
+   a fast jump makes it unclear how far you travelled. Later cards take longer,
+   because they're further away. */
+export function scrollToEl(el, duration = 2000){
   if(!el) return
   const target = el.getBoundingClientRect().top + window.scrollY
 

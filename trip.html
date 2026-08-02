@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Final Call</title>
+<!-- title and description are replaced from the trip data once it loads -->
+  <meta name="description" content="Illustrated trip itineraries.">
+<!-- No fonts here on purpose: each trip declares its own in artDirection.fonts
+     and they're injected at runtime, so a visitor only downloads the faces the
+     trip they're viewing actually uses. See src/js/fonts.js -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed:wght@600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- shown until the data resolves; also carries any load error -->
+<div id="boot">LOADING&hellip;</div>
+
+<!-- ============ HERO ============ -->
+<header id="stage">
+  <div id="frame">
+
+    <div id="world">
+      <img id="basemap" alt="">
+      <!-- second layer, used to crossfade between per-itinerary map variants -->
+      <img id="basemap-alt" alt="" aria-hidden="true">
+      <div class="layer" id="waves"></div>
+      <div id="inset"></div>
+      <div class="layer" id="pois"></div>
+    </div>
+
+
+    <div id="logo"><img alt=""></div>
+    <!-- a div, not a nav: role=radiogroup would fight nav's implicit
+         navigation role, and radio children need a radiogroup parent -->
+    <div id="selector" role="radiogroup" aria-label="Choose an itinerary"></div>
+    <div id="grid-overlay" aria-hidden="true"></div>
+
+  </div>
+
+  <!-- outside #frame on purpose: clouds drift across the whole viewport, not
+       just the 1920px band the map is capped to -->
+  <div id="clouds" aria-hidden="true"></div>
+</header>
+
+<!-- ============ STACKED CITY CARDS ============ -->
+<!-- sticky bar that stays reachable while the cards stack -->
+<div id="to-map"><button type="button" aria-label="Back to the map">Back to the map</button></div>
+
+<!-- Final Call: appears once the hero has scrolled away, hides at the footer.
+     `hidden` until the data resolves, so it can't flash before the link exists. -->
+<aside id="final-call" hidden>
+  <!-- a split-flap board, alternating between the two messages -->
+  <span class="fc-logo"></span>
+
+  <div class="fc-actions">
+    <button class="fc-btn fc-no" type="button">NO</button>
+    <a class="fc-btn fc-yes" href="#" target="_blank" rel="noopener noreferrer">YES</a>
+  </div>
+</aside>
+
+<main id="cards"></main>
+<footer id="footer"></footer>
+
+<!-- ============ DEV TOOLS ============
+     Removed from the DOM in production unless ?calibrate is present -->
+<button id="grid-toggle"  class="dev-btn" type="button" data-dev hidden>GRID</button>
+<button id="calib-toggle" class="dev-btn" type="button" data-dev hidden>CALIBRATE</button>
+
+<aside id="calib" data-dev hidden>
+  <h3>CALIBRATION</h3>
+  <p>Pick a row, then click the map to place that pin. Or drag pins directly.
+     Pins marked &#10697; sit inside the Hong Kong inset.</p>
+  <div id="calib-rows"></div>
+
+  <h4>HONG KONG INSET</h4>
+  <div>
+    <button type="button" data-act="inset-left">&#9664;</button>
+    <button type="button" data-act="inset-right">&#9654;</button>
+    <button type="button" data-act="inset-up">&#9650;</button>
+    <button type="button" data-act="inset-down">&#9660;</button>
+    <button type="button" data-act="inset-bigger">+</button>
+    <button type="button" data-act="inset-smaller">&minus;</button>
+  </div>
+
+  <h4>EXPORT</h4>
+  <div>
+    <button type="button" data-act="copy">COPY JSON</button>
+    <button type="button" data-act="reset">RESET</button>
+  </div>
+  <textarea id="calib-out" readonly aria-label="Exported coordinates"></textarea>
+</aside>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

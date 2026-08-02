@@ -1,0 +1,203 @@
+/* ============================================================
+   FLAPBOARD
+   Geometry taken from the tile artwork (62 x 90), expressed as
+   ratios of --flap-h so one component works at any size.
+
+     housing      #010101, radius 3/90
+     flap faces   inset 2/90, so the housing reads as a frame
+     gradient     #424242 -> #272727 (62.5%) -> #212121
+     top flap     plus a radial glow from the top edge
+     hinge        a 2/90 black band across the middle
+     axle pins    chrome capsules at each side, on the hinge line
+
+   Defaults use :where() so they carry no specificity — a size
+   class always wins, whatever order the stylesheets load in.
+   ============================================================ */
+
+:where(.flapboard){
+  --flap-h:28px;
+}
+.flapboard{
+  --flap-w:calc(var(--flap-h) * .689);
+  --flap-gap:0px;
+  --flap-r:calc(var(--flap-h) * .0333);
+  --flap-inset:calc(var(--flap-h) * .0222);
+  --flap-face:calc(var(--flap-h) * .4667);   /* one half */
+  --flap-hinge:calc(var(--flap-h) * .0222);
+  --flap-speed:105ms;
+
+  display:inline-flex;
+  line-height:1;user-select:none;
+  perspective:calc(var(--flap-h) * 8);
+}
+
+/* Spacing is a margin, not `gap`, because a real board's housings butt into
+   each other — and `gap` silently refuses negative values. --flap-gap is
+   therefore usually negative: -1px on the small board, -2px on the wall. */
+.flap-tile + .flap-tile{margin-left:var(--flap-gap, 0px)}
+
+/* the housing — the flaps sit inset from it, so it reads as a frame */
+.flap-tile{
+  position:relative;
+  /* `flex:none` is load-bearing: the board is an inline-flex row, so without it
+     any overflow makes flex SHRINK every tile — keeping the height and
+     narrowing the width, which silently breaks the 62:90 ratio the whole
+     design is built on. Better to overflow visibly than to distort. */
+  flex:0 0 auto;
+  width:var(--flap-w);height:var(--flap-h);
+  border-radius:var(--flap-r);
+  background:#010101;
+  transform-style:preserve-3d;
+}
+
+/* ---- the faces ----
+   The same treatment on the two static halves and the two moving leaves,
+   so a leaf mid-fold is indistinguishable from the half it replaces. */
+/* Inside a preserve-3d parent, z-index is IGNORED — children paint in depth
+   order. With everything at z=0 the browser z-fights, which showed up as the
+   top half going black at random (the falling leaf's shade overlay winning).
+   Every layer therefore gets an explicit translateZ. */
+.flap-half,.flap-leaf{
+  position:absolute;
+  left:var(--flap-inset);right:var(--flap-inset);
+  height:var(--flap-face);
+  overflow:hidden;
+  background:linear-gradient(#424242 0%, #272727 62.5%, #212121 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);   /* the hairline edge */
+  backface-visibility:hidden;
+}
+
+.flap-top,.flap-front{
+  top:var(--flap-inset);
+  border-radius:var(--flap-r) var(--flap-r) 0 0;
+}
+.flap-bottom,.flap-back{
+  bottom:var(--flap-inset);
+  border-radius:0 0 var(--flap-r) var(--flap-r);
+}
+/* depth 0: the static faces */
+.flap-half{transform:translateZ(0)}
+
+/* light spilling over the top edge — only the upper flap catches it */
+.flap-top::before,.flap-front::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse 62% 100% at 50% 0%,
+             rgba(255,255,255,.2), rgba(255,255,255,0) 100%);
+  pointer-events:none;
+}
+
+/* ---- the glyph ----
+   Each half holds a box the height of the WHOLE tile, anchored to the tile's
+   own top or bottom edge, and crops it with overflow. So both halves lay the
+   character out identically and each shows its portion — the two line up at
+   the hinge by construction rather than by tuned offsets, which is what makes
+   the lower half work at every size.
+
+   The faces are inset from the housing, so the box is pulled back out by that
+   inset to sit against the tile edge. */
+.flap-glyph{
+  position:absolute;left:0;right:0;
+  height:var(--flap-h);
+  line-height:var(--flap-h);
+  /* Fira Sans Condensed: a condensed face fits more character in the tile,
+     which is what a real board uses and why the letters read at small sizes. */
+  font-family:'Fira Sans Condensed', var(--sans, system-ui);
+  font-weight:600;
+  font-size:calc(var(--flap-h) * .78);
+  text-align:center;
+  color:#fff;
+  white-space:pre;
+}
+.flap-top .flap-glyph,.flap-front .flap-glyph{
+  top:calc(var(--flap-inset) * -1);
+}
+
+/* An icon slot. The svg is sized to the cap height of the type around it and
+   centred in the same full-tile box, so it splits across the hinge exactly as
+   a letter does — the crop does the work, not a second set of rules. */
+.flap-glyph.is-icon{
+  display:flex;align-items:center;justify-content:center;
+}
+.flap-glyph.is-icon svg{
+  width:auto;height:calc(var(--flap-h) * .56);
+  display:block;fill:currentColor;
+}
+.flap-bottom .flap-glyph,.flap-back .flap-glyph{
+  bottom:calc(var(--flap-inset) * -1);
+}
+
+/* ---- the hinge ----
+   depth 2: in front of the leaves, so they disappear behind it as they fold */
+.flap-tile::after{
+  content:"";position:absolute;left:0;right:0;
+  top:calc(50% - var(--flap-hinge) / 2);
+  height:var(--flap-hinge);
+  background:#010101;
+  transform:translateZ(2px);
+  pointer-events:none;
+}
+
+/* ---- the axle pins ----
+   Chrome capsules on the hinge line at both edges. They're what makes it read
+   as a mechanism rather than a stack of cards, and they stay put while the
+   leaves turn — so they sit above everything. */
+/* depth 3: the pins sit in front of everything and never move */
+.flap-axle{position:absolute;inset:0;transform:translateZ(3px);pointer-events:none}
+.flap-axle::before,.flap-axle::after{
+  content:"";position:absolute;
+  top:50%;transform:translateY(-50%);
+  width:calc(var(--flap-h) * .0278);
+  height:calc(var(--flap-h) * .0833);
+  border-radius:calc(var(--flap-h) * .0139);
+  background:linear-gradient(#F5F5F7 0%, #909091 41.8%, #2B2A2A 79.8%);
+  box-shadow:0 0 0 max(.5px, calc(var(--flap-h) * .0055)) #000;
+}
+.flap-axle::before{left:calc(var(--flap-h) * .0028)}
+.flap-axle::after {right:calc(var(--flap-h) * .0028)}
+
+/* ---- the fold ----
+   The front leaf carries the outgoing character's top and falls away; the back
+   leaf carries the incoming character's bottom and swings up to meet it. */
+.flap-leaf{transform-style:preserve-3d}
+.flap-front{transform-origin:bottom center;transform:translateZ(1px)}
+.flap-back {transform-origin:top center;transform:translateZ(1px) rotateX(90deg)}
+
+.flap-tile:not(.is-flipping) .flap-leaf{opacity:0}
+
+/* One flap is ONE tick, split between the two leaves: the front falls through
+   the first half, the back rises through the second. Previously each leaf took
+   a full tick and the back was delayed by one — so the fold needed 2 ticks
+   while the JS cleared the class after 1, and the rise never ran at all. The
+   top half folded and the bottom just snapped. */
+.flap-tile.is-flipping .flap-front{
+  animation:flap-fall calc(var(--flap-speed) * .46)
+            cubic-bezier(.36,0,.66,-.06) forwards;
+}
+.flap-tile.is-flipping .flap-back{
+  animation:flap-rise calc(var(--flap-speed) * .46)
+            cubic-bezier(.2,.9,.4,1)
+            calc(var(--flap-speed) * .46) forwards;
+}
+@keyframes flap-fall{
+  from{transform:translateZ(1px) rotateX(0)}
+  to  {transform:translateZ(1px) rotateX(-90deg)}
+}
+@keyframes flap-rise{
+  from{transform:translateZ(1px) rotateX(90deg)}
+  to  {transform:translateZ(1px) rotateX(0)}
+}
+
+/* the falling leaf darkens as it turns away from the light */
+.flap-tile.is-flipping .flap-front::after{
+  content:"";position:absolute;inset:0;
+  background:#000;opacity:0;
+  animation:flap-shade calc(var(--flap-speed) * .46) linear forwards;
+}
+@keyframes flap-shade{from{opacity:0}to{opacity:.55}}
+
+@media(prefers-reduced-motion:reduce){
+  .flap-tile.is-flipping .flap-front,
+  .flap-tile.is-flipping .flap-back,
+  .flap-tile.is-flipping .flap-front::after{animation:none}
+  .flap-tile .flap-leaf{opacity:0}
+}

@@ -1,5 +1,6 @@
 import './styles/tokens.css'
 import './styles/main.css'
+import './styles/flapboard.css'
 
 import { TRIP, loadData } from './js/data.js'
 import { MapView } from './js/map.js'
@@ -7,6 +8,7 @@ import { Cards } from './js/cards.js'
 import { Footer } from './js/footer.js'
 import { loadFonts } from './js/fonts.js'
 import { FinalCall } from './js/finalcall.js'
+import { Parallax } from './js/parallax.js'
 import { scrollToEl } from './js/scroll.js'
 
 /* ============================================================
@@ -23,10 +25,10 @@ function setItinerary(id){
 
 function renderAll(){
   Cards.renderSelector(active, setItinerary)
-  Cards.renderStats(active)
   Cards.renderCards(active)
   Footer.render(active)
   FinalCall.update(active)
+  Parallax.refresh()
   MapView.setVariant(active)
   MapView.renderPins(active, goToCard)
   if(Calib?.on) Calib.enableDrag()
@@ -37,7 +39,11 @@ let Calib = null
 
 function goToCard(locationId){
   if(Calib?.on) return         /* clicks place pins, they don't navigate */
-  scrollToEl(document.getElementById('card-' + locationId))
+  const target = document.getElementById('card-' + locationId)
+  if(!target) return
+  /* +200ms per card, so reaching the third takes 2s + 600ms */
+  const index = [...document.querySelectorAll('#cards .card')].indexOf(target)
+  scrollToEl(target, 2000 + Math.max(0, index) * 200)
 }
 
 /* Dev tools are a separate chunk, fetched only when actually wanted:
@@ -67,7 +73,7 @@ async function initDevTools(){
 function initBackToMap(){
   const bar   = document.getElementById('to-map')
   const stage = document.getElementById('stage')
-  bar.querySelector('button').addEventListener('click', () => scrollToEl(stage))
+  bar.querySelector('button').addEventListener('click', () => scrollToEl(stage, 1400))
 
   new IntersectionObserver(
     ([e]) => bar.classList.toggle('is-visible', !e.isIntersecting),

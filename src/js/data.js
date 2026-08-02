@@ -109,35 +109,96 @@ export function cardBudget(location, stop){
   }
 }
 
-/* Whole-trip budget for the footer. Stays and activities are summed from the
-   itinerary where possible and fall back to the model's base figures. */
-export function tripBudget(itinerary, tierId){
-  const model = TRIP.data.budget
-  const tier  = model.comfortTiers.find(t => t.id === tierId) || model.comfortTiers[0]
+/* ============================================================
+   BUDGET
+   Three levers, each a real choice about the trip.
 
-  let stayLo = 0, stayHi = 0, actLo = 0, actHi = 0
+   `sleep` isn't priced in the data: it picks the cheapest, middle
+   or dearest stay AT EACH STOP and sums the real prices. That's
+   why it can't invert the way tier names did — dearest is dearest
+   by construction, even where a location has no splurge option.
+   ============================================================ */
+
+/* the stays at one stop, cheapest first, with split-stay nights honoured */
+function pricedStays(location, stop){
+  return location.stays
+    .map(st => {
+      const nights = st.nights != null ? st.nights : (stop.nights || 0)
+      return { st, nights, lo: st.priceNightEUR[0] * nights, hi: st.priceNightEUR[1] * nights }
+    })
+    .filter(x => x.nights > 0)
+    .sort((a, b) => a.lo - b.lo)
+}
+
+const RANK = { cheap: 0, middle: 1, dear: 2 }
+
+/* which hotel each sleep option actually means, per stop */
+export function stayChoices(itinerary, sleepId = 'cheap'){
+  const out = []
   for(const stop of itinerary.stops){
     const loc = TRIP.byId[stop.locationId]
     if(!loc) continue
-    const b = cardBudget(loc, stop)
-    if(b.stay){ stayLo += b.stay.lo; stayHi += b.stay.hi }
-    actLo += b.activities.lo; actHi += b.activities.hi
+    const priced = pricedStays(loc, stop)
+    if(!priced.length) continue
+    const i = Math.min(RANK[sleepId] ?? 0, priced.length - 1)
+    out.push({ stop, location: loc, ...priced[i] })
+  }
+  return out
+}
+
+export function tripBudget(itinerary, choice = {}){
+  const model = TRIP.data.budget
+  if(!model?.levers) return { rows: [], total: { lo:0, hi:0 } }
+
+  const pick = (key) => {
+    const lever = model.levers[key]
+    const id = choice[key] ?? lever.default
+    return lever.options.find(o => o.id === id) ?? lever.options[0]
   }
 
-  const rows = model.categories.map(c => {
-    let [lo, hi] = c.baseEUR
-    if(c.id === 'stays'      && stayHi > 0){ lo = stayLo; hi = stayHi }
-    if(c.id === 'activities' && actHi  > 0){ lo = actLo;  hi = actHi  }
-    return { id:c.id, label:c.label, lo:lo * tier.multiplier, hi:hi * tier.multiplier }
-  })
+  const nights = itinerary.stops.reduce((n, s) => n + (s.nights || 0), 0)
+
+  /* stays: the actual sum of the chosen hotels */
+  const stays = stayChoices(itinerary, (choice.sleep ?? model.levers.sleep.default))
+  const stayLo = stays.reduce((n, x) => n + x.lo, 0)
+  const stayHi = stays.reduce((n, x) => n + x.hi, 0)
+
+  /* activities: everything priced in the itinerary, not a choice */
+  let actLo = 0, actHi = 0
+  for(const stop of itinerary.stops){
+    for(const a of TRIP.byId[stop.locationId]?.thingsToDo ?? []){
+      actLo += a.priceEUR?.[0] ?? 0
+      actHi += a.priceEUR?.[1] ?? 0
+    }
+  }
+
+  const eat  = pick('eat')
+  const move = pick('move')
+  const eatMul = model.levers.eat.perNight ? nights : 1
+
+  const rows = [
+    { id:'stays',      label:'Stays',      lo:stayLo,               hi:stayHi },
+    ...(model.fixed ?? []).map(f => ({ id:f.id, label:f.label, lo:f.eur[0], hi:f.eur[1] })),
+    { id:'food',       label:'Food',       lo:eat.eur[0]*eatMul,    hi:eat.eur[1]*eatMul },
+    { id:'transport',  label:'Transport',  lo:move.eur[0],          hi:move.eur[1] },
+    { id:'activities', label:'Activities', lo:actLo,                hi:actHi },
+  ]
 
   return {
-    tier, rows,
+    rows, stays,
+    chosen: { sleep: choice.sleep ?? model.levers.sleep.default, eat: eat.id, move: move.id },
+    nights,
     total: {
       lo: rows.reduce((n, r) => n + r.lo, 0),
       hi: rows.reduce((n, r) => n + r.hi, 0),
     },
   }
+}
+
+/* what a sleep option costs, for the lever's own price label */
+export function sleepOptionCost(itinerary, id){
+  const s = stayChoices(itinerary, id)
+  return { lo: s.reduce((n,x)=>n+x.lo,0), hi: s.reduce((n,x)=>n+x.hi,0) }
 }
 
 /* running arrival/departure dates per stop, when the itinerary is dated */

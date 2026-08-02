@@ -4,94 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Final Call</title>
-<!-- title and description are replaced from the trip data once it loads -->
-  <meta name="description" content="Illustrated trip itineraries.">
-<!-- No fonts here on purpose: each trip declares its own in artDirection.fonts
-     and they're injected at runtime, so a visitor only downloads the faces the
-     trip they're viewing actually uses. See src/js/fonts.js -->
+<meta name="robots" content="noindex">
 </head>
-<body>
-
-<!-- shown until the data resolves; also carries any load error -->
-<div id="boot">LOADING&hellip;</div>
-
-<!-- ============ HERO ============ -->
-<header id="stage">
-  <div id="frame">
-
-    <div id="world">
-      <img id="basemap" alt="">
-      <!-- second layer, used to crossfade between per-itinerary map variants -->
-      <img id="basemap-alt" alt="" aria-hidden="true">
-      <div class="layer" id="waves"></div>
-      <div id="inset"></div>
-      <div class="layer" id="pois"></div>
-    </div>
-
-    <!-- the dataviz sits inside the map frame, over the artwork's lower margin -->
-    <div id="stats"></div>
-
-    <div id="logo"><img alt=""></div>
-    <!-- a div, not a nav: role=radiogroup would fight nav's implicit
-         navigation role, and radio children need a radiogroup parent -->
-    <div id="selector" role="radiogroup" aria-label="Choose an itinerary"></div>
-    <div id="grid-overlay" aria-hidden="true"></div>
-
-  </div>
-
-  <!-- outside #frame on purpose: clouds drift across the whole viewport, not
-       just the 1920px band the map is capped to -->
-  <div id="clouds" aria-hidden="true"></div>
-</header>
-
-<!-- ============ STACKED CITY CARDS ============ -->
-<!-- sticky bar that stays reachable while the cards stack -->
-<div id="to-map"><button type="button">↑ BACK TO MAP</button></div>
-
-<!-- Final Call: appears once the hero has scrolled away, hides at the footer.
-     `hidden` until the data resolves, so it can't flash before the link exists. -->
-<aside id="final-call" hidden>
-  <!-- <img> rather than inline: the file carries 80 generically-named gradient
-       ids (linear-gradient, linear-gradient-2 …) which would be global if
-       inlined and could collide. As an image it gets its own document scope.
-       3.5 KB gzipped, against 13.8 KB for the equivalent 2x PNG. -->
-  <img class="fc-logo" src="/shared/ui/final-call-logo.svg" alt="Final Call"
-       width="216" height="28">
-  <a class="fc-btn" href="#" target="_blank" rel="noopener noreferrer">ARE YOU IN?</a>
-</aside>
-
-<main id="cards"></main>
-<footer id="footer"></footer>
-
-<!-- ============ DEV TOOLS ============
-     Removed from the DOM in production unless ?calibrate is present -->
-<button id="grid-toggle"  class="dev-btn" type="button" data-dev hidden>GRID</button>
-<button id="calib-toggle" class="dev-btn" type="button" data-dev hidden>CALIBRATE</button>
-
-<aside id="calib" data-dev hidden>
-  <h3>CALIBRATION</h3>
-  <p>Pick a row, then click the map to place that pin. Or drag pins directly.
-     Pins marked &#10697; sit inside the Hong Kong inset.</p>
-  <div id="calib-rows"></div>
-
-  <h4>HONG KONG INSET</h4>
-  <div>
-    <button type="button" data-act="inset-left">&#9664;</button>
-    <button type="button" data-act="inset-right">&#9654;</button>
-    <button type="button" data-act="inset-up">&#9650;</button>
-    <button type="button" data-act="inset-down">&#9660;</button>
-    <button type="button" data-act="inset-bigger">+</button>
-    <button type="button" data-act="inset-smaller">&minus;</button>
-  </div>
-
-  <h4>EXPORT</h4>
-  <div>
-    <button type="button" data-act="copy">COPY JSON</button>
-    <button type="button" data-act="reset">RESET</button>
-  </div>
-  <textarea id="calib-out" readonly aria-label="Exported coordinates"></textarea>
-</aside>
-
-<script type="module" src="/src/main.js"></script>
+<body class="l-body">
+  <!-- Placeholder. The departures-board idea goes here. -->
+  <main class="l-empty">
+    <p class="l-empty-label">FINAL CALL</p>
+    <a class="l-empty-link" href="./trip.html?trip=japon-2026">Japon &amp; Hong Kong &rarr;</a>
+  </main>
+  <script type="module" src="/src/landing.js"></script>
 </body>
 </html>

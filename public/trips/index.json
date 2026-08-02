@@ -1,9 +1,9 @@
 {
   "_readme": "Registry of available trips. Each `file` lives in its own folder and every asset path inside it is relative to that folder — so adding a trip is dropping in one directory, and nothing can collide between trips.",
-  "defaultTripId": "japan-2026",
+  "defaultTripId": "japon-2026",
   "trips": [
     {
-      "id": "japan-2026",
+      "id": "japon-2026",
       "title": "Japon & Hong Kong",
       "file": "trips/japon-2026/trip.json",
       "period": "29 Oct – 18 Nov 2026",

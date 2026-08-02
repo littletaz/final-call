@@ -23,6 +23,8 @@
   --paper:#FAEDDC;
   --seal:#CF4736;
   --ink:#1E222B;
+  /* the footer: the same sea, later in the day */
+  --dusk:#3C4453;
 
   --card-bg:#FFFFFF;
   --card-fg:#111111;
@@ -59,7 +61,7 @@
   /* Where the dataviz sits, measured up from the bottom of the map frame.
      A px value (clamped) rather than a percentage, so it doesn't drift as the
      frame's height changes with the window. */
-  --stats-bottom:clamp(100px, 6vw, 180px);
+  --stats-bottom:clamp(40px, 4.6vw, 120px);
 
   /* ---- paper texture over the sea ---- */
   --paper-texture:url('/shared/textures/paper-texture.jpg');

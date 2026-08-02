@@ -1,6 +1,7 @@
 import { MapView } from './map.js'
-import { TRIP, deriveStats, stayTotal, stopDates, eur } from './data.js'
+import { TRIP, tripAsset, deriveStats, stayTotal, stopDates, eur } from './data.js'
 import { countUp } from './countup.js'
+import { layoutFor } from './scatter.js'
 
 /* ============================================================
    SELECTOR · DATAVIZ · STACKED CITY CARDS
@@ -85,7 +86,13 @@ export const Cards = {
     marker.style.transform = `translateY(${y}px)`
   },
 
+  /* #stats is rebuilt by the footer on every render, so the element has to be
+     looked up now rather than cached at init — a stale reference silently
+     renders into a detached node. */
   renderStats(itinerary){
+    const host = document.getElementById('stats')
+    if(!host) return
+    this.el.stats = host
     const s = deriveStats(itinerary)
     const items = [
       ['NIGHTS',  s.nights],
@@ -112,54 +119,53 @@ export const Cards = {
      block rather than a dead anchor. */
   /* On overnight stops the figure is the total for the stay; on day-trip spurs
      there is no stay, so it falls back to the nightly rate. */
+  /* On overnight stops the figure is the total for the stay; on day-trip spurs
+     there is no stay, so it falls back to the nightly rate. */
   hotel(stay, stop){
     const t = stayTotal(stay, stop)
     const amount = t
       ? `${eur(t.lo)}\u2013${eur(t.hi)}`
-      : `${eur(stay.priceNightEUR[0])}\u2013${eur(stay.priceNightEUR[1])} <span class="per-night">/night</span>`
+      : `${eur(stay.priceNightEUR[0])}\u2013${eur(stay.priceNightEUR[1])}<span class="per-night">/night</span>`
 
     const inner = `
-      <span class="hotel-text">
-        <span class="tier">${stay.tier[0].toUpperCase() + stay.tier.slice(1)}</span>
+      <span class="tier">${stay.tier[0].toUpperCase() + stay.tier.slice(1)}</span>
+      <span class="hotel-row">
         <span class="name">${stay.name}</span>
-        ${stay.base ? `<span class="base">${stay.base}</span>` : ''}
         <span class="amount">${amount}</span>
-      </span>
-      <span class="hotel-media">${stay.image
-        ? `<img src="${stay.image}" alt="">` : ''}</span>`
+      </span>`
 
     if(!stay.bookingUrl) return `<div class="hotel">${inner}</div>`
     return `<a class="hotel is-link" href="${stay.bookingUrl}"
                target="_blank" rel="noopener noreferrer"
+               title="${stay.name}"
                aria-label="${stay.name} \u2014 opens booking search in a new tab">
       ${inner}</a>`
   },
 
-  /* A card in the horizontal rail: image, then title / description / price.
-     `note` is the description; it was previously hidden in a hover tooltip. */
-  activity(a){
-    const free = a.priceEUR && a.priceEUR[1] === 0
-    const price = !a.priceEUR ? ''
-      : free ? `<span class="act-price is-free">FREE</span>`
-      : `<span class="act-price">${eur(a.priceEUR[0])}\u2013${eur(a.priceEUR[1])}</span>`
 
-    return `<article class="act">
-      <div class="act-media">${a.image
-        ? `<img src="${a.image}" alt="">`
-        : `<span class="act-media-ph">IMAGE</span>`}</div>
-      <div class="act-meta">
-        <h4 class="act-title">${a.title}</h4>
-        ${price}
-      </div>
-      ${a.note ? `<p class="act-note">${a.note}</p>` : ''}
-    </article>`
+  /* Photos, scattered. Empty slots aren't rendered, so a city with three
+     photos simply uses the first three positions of its layout. */
+  scatter(loc, i){
+    const photos = loc.photos ?? []
+    if(!photos.length) return ''
+    const slots = layoutFor(loc, i)
+
+    return `<div class="c-photos" aria-hidden="true">${
+      photos.slice(0, slots.length).map((ph, n) => {
+        const s = slots[n]
+        return `<figure class="photo" style="
+            left:${s.x}%;top:${s.y}%;width:${s.w}%;
+            --rot:${s.r}deg;--depth:${s.d}">
+          ${ph.src ? `<img src="${tripAsset(ph.src)}" alt="" loading="lazy">`
+                   : `<span class="photo-ph">${n + 1}</span>`}
+        </figure>`
+      }).join('')}</div>`
   },
 
   card(stop, i, count, dates){
     const loc = TRIP.byId[stop.locationId]
     if(!loc) return ''
 
-    /* a spur is a day trip folded into the previous stop's nights */
     const nights = stop.spur
       ? `<span class="when-nights is-spur">day trip</span>`
       : `<span class="when-nights">${stop.nights} night${stop.nights === 1 ? '' : 's'}</span>`
@@ -168,28 +174,22 @@ export const Cards = {
     const dateLine = (d && stop.nights)
       ? `<span class="when-dates">${fmt(d.from)} \u2013 ${fmt(d.to)}</span>` : ''
 
-    const acts = (loc.thingsToDo ?? []).map(a => this.activity(a)).join('')
     const stays = loc.stays.slice(0, 3).map(st => this.hotel(st, stop)).join('')
 
-    /* sticky + rising z-index is what makes each card slide over the last */
+    /* Things to do are deliberately not rendered — they stay in the data for
+       later. The card is the place, not the itinerary. */
     return `<section class="card" id="card-${loc.id}" style="z-index:${i + 1}">
-      <span class="card-index" aria-hidden="true">${i + 1}</span>
+      ${this.scatter(loc, i)}
 
       <div class="card-inner">
         <header class="c-head">
           <p class="c-sub">
             ${loc.kanjiChips.map(k => `<span class="chip">${k}</span>`).join('')}
-            <span class="chip-caption">${loc.chipCaption}</span>
+            <span class="c-when">${dateLine}${nights}</span>
           </p>
-          <h2>${loc.name.en}<span class="jp">${loc.name.jp}</span></h2>
-          <div class="c-when">${dateLine}${nights}</div>
         </header>
 
-        <!-- horizontal rail: bleeds off the right edge so it reads as
-             continuing past the frame rather than ending at it -->
-        <div class="c-rail">
-          <div class="acts" role="list" aria-label="Things to do in ${loc.name.en}">${acts}</div>
-        </div>
+        <h2 class="c-title">${loc.name.en}</h2>
 
         <section class="c-stays">
           <h3 class="stays-title">where we sleep</h3>
