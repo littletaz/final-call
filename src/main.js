@@ -96,9 +96,12 @@ function initBackToMap(){
     await MapView.init()
     Cards.init()
     Footer.init()
-    FinalCall.init()
 
     setItinerary(TRIP.data.defaultItineraryId)
+    /* after the first render: the panel watches .f-ask, which the footer
+       creates — initialising earlier left it watching the whole footer, and
+       that's in view from the start on a short screen */
+    FinalCall.init()
     await initDevTools()
 
     initBackToMap()

@@ -61,14 +61,15 @@ export const FinalCall = {
     mq.addEventListener ? mq.addEventListener('change', onBreak) : mq.addListener(onBreak)
 
 
-    /* Visible from the first frame — the only thing that hides it is the
-       footer, which carries its own, larger version of the same CTA. An
-       observer rather than a scroll handler: no throttling to get wrong. */
-    const footer = document.getElementById('footer')
-    if(footer) new IntersectionObserver(([e]) => {
+    /* Visible from the first frame. The only thing that hides it is the ASK —
+       "So… are you in?" — not the whole footer. The footer starts at the
+       dataviz, which on a short screen is in view almost immediately, so
+       watching it made the panel vanish before anyone had scrolled. */
+    const ask = document.querySelector('.f-ask') || document.getElementById('footer')
+    if(ask) new IntersectionObserver(([e]) => {
       this.atFooter = e.isIntersecting
       this.apply()
-    }, { threshold: 0 }).observe(footer)
+    }, { threshold: 0 }).observe(ask)
 
     /* full size over the hero, compact once you're into the cards */
     const stage = document.getElementById('stage')

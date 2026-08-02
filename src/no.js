@@ -18,7 +18,11 @@ import { asset } from './js/paths.js'
 const SWAP = 5000        /* how long each message holds */
 
 const boot = document.getElementById('boot')
-const wall = new Wall(document.getElementById('wall'), { rows: 5 })
+/* Smaller tiles on a narrow screen — but the message breaks across two rows
+   rather than shrinking to fit, so it stays readable. See SCRIPT in wall.js. */
+const narrow = () => window.matchMedia('(max-width: 900px)').matches
+const tile = () => (narrow() ? 74 : 122)
+const wall = new Wall(document.getElementById('wall'), { rows: 5, tile: tile() })
 
 /* Laid out silently behind the overlay, so the tiles are in place and styled
    before anything is visible. The animation only starts once the overlay has
@@ -88,5 +92,9 @@ if(back && TRIP_ID) back.href = `./trip.html?trip=${encodeURIComponent(TRIP_ID)}
 let t
 addEventListener('resize', () => {
   clearTimeout(t)
-  t = setTimeout(() => { wall.destroy(); wall.build(SCRIPT.no) }, 250)   /* animated: already revealed */
+  t = setTimeout(() => {
+    wall.destroy()
+    wall.tile = tile()          /* the breakpoint changes both size and layout */
+    wall.build(SCRIPT.no)
+  }, 250)   /* animated: already revealed */
 })
