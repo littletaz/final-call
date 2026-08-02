@@ -380,8 +380,11 @@ body::after{
 }
 #poi-overlay.is-open{opacity:1;pointer-events:auto}
 
+/* the page can't move while the sheet is up */
+body.has-poi{overflow:hidden}
+
 #poi-card{
-  --pc-overhang:42%;              /* how far the photos rise above the card */
+  --pc-overhang:0%;               /* photos are off — 42% when they return */
   position:fixed;
   right:var(--grid-margin);bottom:60px;
   z-index:960;
@@ -635,13 +638,22 @@ body::after{
   }
 
   /* ---- the poi card ---- */
+  /* A sheet across the bottom, not a floating card: at this width a card with
+     margins is just a smaller card, and the page behind it is locked anyway. */
   #poi-card{
-    right:6%;left:6%;bottom:16px;
-    width:auto;
+    left:0;right:0;bottom:0;
+    width:auto;max-height:80vh;
+    padding-top:0;
   }
-  .pc-body{padding:20px 18px 18px}
+  .pc-body{
+    border-radius:16px 16px 0 0;
+    padding:22px 6% max(22px, env(safe-area-inset-bottom));
+    max-height:80vh;overflow-y:auto;
+    box-shadow:0 -12px 40px rgba(0,0,0,.3);
+  }
   .pc-title{font-size:26px;margin-bottom:16px}
-  .pc-photo{width:82%}
+  #poi-card.is-open{transform:none}
+  #poi-card{transform:translateY(100%)}
   .hotel{padding:10px 14px 12px}
   .hotel .name{font-size:15px}
   .hotel .amount{font-size:12px}

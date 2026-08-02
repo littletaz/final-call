@@ -11,7 +11,11 @@ import { TRIP, tripAsset, stayTotal, stopDates, eur } from './data.js'
    edge, rather than being the content.
    ============================================================ */
 
-const PHOTOS = 2          /* how many show above the card */
+/* Photos are off. They're meant to sit above the card, cropped by its top
+   edge, but the placement was never right and I can't see the result — so
+   rather than keep guessing, set this to 2 and re-check the .pc-photo rules
+   in main.css when you want them back. */
+const PHOTOS = 0
 /* back to front: angle, and how far along the top edge they sit */
 const TILT = [{ r: 4, x: 14 }, { r: -5, x: -2 }]
 
@@ -100,6 +104,9 @@ export const PoiCard = {
 
     this.el.hidden = false
     if(this.overlay) this.overlay.hidden = false
+    /* Locked while the sheet is up: on a phone it covers the page, so a stray
+       scroll would move something you can't see behind it. */
+    document.body.classList.add('has-poi')
     requestAnimationFrame(() => {
       this.el.classList.add('is-open')
       this.overlay?.classList.add('is-open')
@@ -110,6 +117,7 @@ export const PoiCard = {
 
   close(){
     this.openId = null
+    document.body.classList.remove('has-poi')
     this.el.classList.remove('is-open')
     this.overlay?.classList.remove('is-open')
     document.querySelectorAll('.poi').forEach(p => p.classList.remove('is-current'))
