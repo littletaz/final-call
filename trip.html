@@ -64,10 +64,12 @@
 <!-- One place at a time, opened from a pin. It replaced a stack of
      full-height cards: nine screens of scrolling for information most people
      skim, and it buried the map, which is the thing worth looking at. -->
+<!-- dims the page behind the card -->
+<div id="poi-overlay" hidden aria-hidden="true"></div>
+
 <aside id="poi-card" hidden aria-live="polite">
   <div class="pc-photos" aria-hidden="true"></div>
   <div class="pc-body"></div>
-  <button class="pc-close" type="button" aria-label="Close">&times;</button>
 </aside>
 <footer id="footer"></footer>
 

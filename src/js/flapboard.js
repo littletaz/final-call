@@ -164,7 +164,11 @@ class Board {
        before anyone has read it. */
     this.settleMs = 0
 
-    this.tiles.forEach((t, i) => {
+    /* Scheduling is deferred by a frame. A tile flipped at t=0 has just been
+       inserted and hasn't been laid out, so the class add / reflow / class add
+       that restarts the animation has nothing to restart — which is why the
+       first tile always looked wrong while the rest were fine. */
+    const schedule = () => this.tiles.forEach((t, i) => {
       const target = text[i]
 
       /* A slot that CHANGES always turns, blank or not. Skipping the animation
@@ -191,6 +195,9 @@ class Board {
       this.settleMs = Math.max(this.settleMs, lands + this.tick)
       this.timers.push(setTimeout(() => this.flip(t, target), lands))
     })
+
+    if(typeof requestAnimationFrame === 'function') requestAnimationFrame(schedule)
+    else schedule()
 
     if(onSettle) this.timers.push(setTimeout(onSettle, this.settleMs))
   }

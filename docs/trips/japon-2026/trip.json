@@ -28,65 +28,8 @@
     "pin": "pin.svg",
     "logo": "logo.png",
     "_pathNote": "All paths here are relative to this file's folder.",
-    "waves": [
-      {
-        "file": "waves/wave-0001.png",
-        "x": 0.085,
-        "y": 0.735,
-        "dur": 6.5,
-        "dy": 18,
-        "dx": 10
-      },
-      {
-        "file": "waves/wave-0002.png",
-        "x": 0.7,
-        "y": 0.235,
-        "dur": 5.0,
-        "dy": 13,
-        "dx": -7
-      },
-      {
-        "file": "waves/wave-0003.png",
-        "x": 0.585,
-        "y": 0.15,
-        "dur": 5.8,
-        "dy": 15,
-        "dx": 8
-      },
-      {
-        "file": "waves/wave-0004.png",
-        "x": 0.86,
-        "y": 0.7,
-        "dur": 5.3,
-        "dy": 13,
-        "dx": -9
-      },
-      {
-        "file": "waves/wave-0005.png",
-        "x": 0.3,
-        "y": 0.62,
-        "dur": 6.1,
-        "dy": 16,
-        "dx": 7
-      },
-      {
-        "file": "waves/wave-0006.png",
-        "x": 0.62,
-        "y": 0.545,
-        "dur": 6.9,
-        "dy": 19,
-        "dx": -11
-      },
-      {
-        "file": "waves/wave-0007.png",
-        "x": 0.42,
-        "y": 0.76,
-        "dur": 4.8,
-        "dy": 12,
-        "dx": 6
-      }
-    ],
-    "_wavesNote": "Placed features of the map, like pins: x/y are fractions of the map image, in the same space as pin coordinates. Sized relative to the MAP — each renders at its exported width as a fraction of the map's, times waveScale, so they keep their proportion at any viewport. Drag them in the CALIBRATE panel.",
+    "waves": [],
+    "_wavesNote": "PARKED. Move entries from _wavesParked back into waves to turn them on. x/y are fractions of the map image, same space as pin coordinates — drag them in the CALIBRATE panel.",
     "clouds": [
       {
         "file": "clouds/01.png",
@@ -147,7 +90,65 @@
     ],
     "_cloudsNote": "Weather over the whole viewport, not features of the map: x/y and travel are percentages of the SCREEN, while size stays proportional to the map. x + travel must exceed 100 or the loop reset becomes visible.",
     "_cropNote": "cropBottom can now be 0: the dataviz moved to the footer, so the artwork no longer has to keep clear space at its base. Left at its current value so nothing shifts unexpectedly — set it to 0 (or remove it) when you rework the map framing.",
-    "waveScale": 0.333
+    "waveScale": 0.333,
+    "_wavesParked": [
+      {
+        "file": "waves/wave-0001.png",
+        "x": 0.085,
+        "y": 0.735,
+        "dur": 6.5,
+        "dy": 18,
+        "dx": 10
+      },
+      {
+        "file": "waves/wave-0002.png",
+        "x": 0.7,
+        "y": 0.235,
+        "dur": 5.0,
+        "dy": 13,
+        "dx": -7
+      },
+      {
+        "file": "waves/wave-0003.png",
+        "x": 0.585,
+        "y": 0.15,
+        "dur": 5.8,
+        "dy": 15,
+        "dx": 8
+      },
+      {
+        "file": "waves/wave-0004.png",
+        "x": 0.86,
+        "y": 0.7,
+        "dur": 5.3,
+        "dy": 13,
+        "dx": -9
+      },
+      {
+        "file": "waves/wave-0005.png",
+        "x": 0.3,
+        "y": 0.62,
+        "dur": 6.1,
+        "dy": 16,
+        "dx": 7
+      },
+      {
+        "file": "waves/wave-0006.png",
+        "x": 0.62,
+        "y": 0.545,
+        "dur": 6.9,
+        "dy": 19,
+        "dx": -11
+      },
+      {
+        "file": "waves/wave-0007.png",
+        "x": 0.42,
+        "y": 0.76,
+        "dur": 4.8,
+        "dy": 12,
+        "dx": 6
+      }
+    ]
   },
   "artDirection": {
     "id": "sumi-e-ink-wash",

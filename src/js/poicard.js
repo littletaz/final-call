@@ -11,8 +11,9 @@ import { TRIP, tripAsset, stayTotal, stopDates, eur } from './data.js'
    edge, rather than being the content.
    ============================================================ */
 
-const PHOTOS = 2          /* how many peek out behind */
-const TILT = [-6, 4]      /* their angles, back to front */
+const PHOTOS = 2          /* how many show above the card */
+/* back to front: angle, and how far along the top edge they sit */
+const TILT = [{ r: 4, x: 14 }, { r: -5, x: -2 }]
 
 const fmt = d => d?.toLocaleDateString('en-GB', { day:'numeric', month:'short' }) ?? ''
 
@@ -28,14 +29,17 @@ export const PoiCard = {
     this.itinerary = itinerary
     this.onClose = onClose
 
-    this.el.querySelector('.pc-close')?.addEventListener('click', () => this.close())
+    this.overlay = document.getElementById('poi-overlay')
 
     if(!this.bound){
       this.bound = true
-      /* click anywhere that isn't the card or a pin */
+      /* Anything that isn't a hotel link closes it — including the card itself.
+         The card is a glance, not a place to linger, so the only thing worth
+         protecting from a stray click is the three links that leave the page. */
       document.addEventListener('pointerdown', e => {
         if(!this.openId) return
-        if(e.target.closest('#poi-card') || e.target.closest('.poi')) return
+        if(e.target.closest('.hotel')) return
+        if(e.target.closest('.poi')) return      /* the pin toggles, below */
         this.close()
       })
       document.addEventListener('keydown', e => {
@@ -61,10 +65,12 @@ export const PoiCard = {
       ? 'day trip'
       : `${stop.nights} night${stop.nights === 1 ? '' : 's'}`
 
-    this.photos.innerHTML = (loc.photos ?? []).slice(0, PHOTOS).map((ph, i) => `
-      <figure class="pc-photo" style="--tilt:${TILT[i] ?? 0}deg;--i:${i}">
+    this.photos.innerHTML = (loc.photos ?? []).slice(0, PHOTOS).map((ph, i) => {
+      const t = TILT[i] ?? { r: 0, x: 0 }
+      return `<figure class="pc-photo" style="--tilt:${t.r}deg;left:${t.x}%;z-index:${PHOTOS - i}">
         ${ph.src ? `<img src="${tripAsset(ph.src)}" alt="" loading="lazy">` : ''}
-      </figure>`).join('')
+      </figure>`
+    }).join('')
 
     const stays = loc.stays.slice(0, 3).map(st => {
       const t = stayTotal(st, stop)
@@ -93,7 +99,11 @@ export const PoiCard = {
       <p class="pc-chips">${loc.kanjiChips.map(k => `<span class="chip">${k}</span>`).join('')}</p>`
 
     this.el.hidden = false
-    requestAnimationFrame(() => this.el.classList.add('is-open'))
+    if(this.overlay) this.overlay.hidden = false
+    requestAnimationFrame(() => {
+      this.el.classList.add('is-open')
+      this.overlay?.classList.add('is-open')
+    })
     document.querySelectorAll('.poi').forEach(p =>
       p.classList.toggle('is-current', p.dataset.locationId === locationId))
   },
@@ -101,6 +111,7 @@ export const PoiCard = {
   close(){
     this.openId = null
     this.el.classList.remove('is-open')
+    this.overlay?.classList.remove('is-open')
     document.querySelectorAll('.poi').forEach(p => p.classList.remove('is-current'))
     this.onClose?.()
   },

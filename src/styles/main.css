@@ -5,6 +5,7 @@
 /* custom easing lives in js/scroll.js — native smooth would fight it */
 html{scroll-behavior:auto}
 body{
+  position:relative;          /* the texture is absolute against this */
   background:var(--sea);
   color:#fff;
   font-family:var(--sans);
@@ -52,9 +53,17 @@ body{
    from the map to the last button. */
 body::after{
   content:"";
-  position:fixed;inset:0;z-index:900;
+  /* ABSOLUTE, not fixed: the grain belongs to the paper, so it has to travel
+     with it. Fixed made it sit still while the page moved underneath, which
+     read as a filter over the screen rather than a surface. */
+  position:absolute;
+  top:0;left:0;right:0;
+  height:100%;
+  z-index:900;
   pointer-events:none;
-  background:var(--paper-texture) center / cover repeat-y;
+  /* full width, natural height, tiled down the page — the sheet is 1440x1981,
+     so it repeats roughly every 2.4 screens */
+  background:var(--paper-texture) top center / 100% auto repeat-y;
   mix-blend-mode:multiply;
   opacity:var(--paper-texture-opacity);
 }
@@ -361,33 +370,50 @@ body::after{
    have to find, and anchoring it near a pin means covering the
    map exactly where you're looking.
    ============================================================ */
+/* Above the paper texture (z 900), which sits over everything else. A card
+   that reads through paper grain isn't a card you can read. */
+#poi-overlay{
+  position:fixed;inset:0;z-index:950;
+  background:rgba(0,0,0,.2);
+  opacity:0;transition:opacity .28s ease;
+  pointer-events:none;
+}
+#poi-overlay.is-open{opacity:1;pointer-events:auto}
+
 #poi-card{
+  --pc-overhang:42%;              /* how far the photos rise above the card */
   position:fixed;
   right:var(--grid-margin);bottom:60px;
-  z-index:540;
+  z-index:960;
   width:clamp(300px, 26vw, 420px);
+  padding-top:var(--pc-overhang);
   opacity:0;transform:translateY(14px) scale(.98);
   transition:opacity .28s ease, transform .28s cubic-bezier(.3,1.1,.4,1);
   pointer-events:none;
 }
 #poi-card.is-open{opacity:1;transform:none;pointer-events:auto}
 
-/* the prints, tucked behind and showing past the top edge */
-.pc-photos{position:absolute;inset:0;pointer-events:none}
-.pc-photo{
+/* The prints sit ABOVE the card and are cropped by its top edge — they're
+   pinned to it rather than floating behind, which is what makes the card read
+   as something lying on top of them. */
+.pc-photos{
   position:absolute;
-  left:calc(var(--i) * 7%);
-  bottom:14%;
-  width:88%;
-  margin:0;
-  transform:rotate(var(--tilt, 0deg)) translateY(calc(var(--i) * -6%));
-  border:9px solid #E9E9E9;background:#E9E9E9;
+  top:0;left:-6%;right:-6%;
+  height:calc(var(--pc-overhang) + 12%);
+  pointer-events:none;
+}
+.pc-photo{
+  position:absolute;top:0;
+  width:76%;margin:0;
+  transform:rotate(var(--tilt, 0deg));
+  transform-origin:bottom center;
+  border:7px solid #E9E9E9;background:#E9E9E9;
   overflow:hidden;
 }
 .pc-photo img{display:block;width:100%;height:auto}
 
 .pc-body{
-  position:relative;z-index:2;
+  position:relative;z-index:5;      /* crops the prints */
   background:#fff;color:#111;
   border-radius:3px;
   padding:26px 24px 22px;
@@ -413,15 +439,6 @@ body::after{
   font-size:14px;border-radius:4px;
 }
 
-.pc-close{
-  position:absolute;top:8px;right:8px;z-index:3;
-  width:30px;height:30px;padding:0;
-  background:none;border:0;cursor:pointer;
-  font-size:22px;line-height:1;color:#B4B4AC;
-  transition:color .2s;
-}
-.pc-close:hover{color:#111}
-.pc-close:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
 
 /* the hotel bars, shared with nothing else now */
 .hotel{
