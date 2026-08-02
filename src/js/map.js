@@ -177,11 +177,13 @@ export const MapView = {
         </div>
       </div>`).join('')
 
-    /* waves render at their exported size over `divisor` — see map.waveDivisor */
-    const divisor = TRIP.data.map.waveDivisor ?? 2
+    /* Sized against the MAP, not in fixed pixels: a wave is part of the
+       scene, so it has to keep its proportion to the coastline it sits
+       beside at every viewport. */
+    const ws = TRIP.data.map.waveScale ?? 1
     waves.forEach((w, i) =>
       this.sizeSprite(this.el.waves.querySelectorAll('img')[i],
-                      { mode:'fixed', divisor, scale:w.scale ?? 1 }))
+                      { mode:'map', scale:(w.scale ?? 1) * ws }))
   },
 
   renderInset(){

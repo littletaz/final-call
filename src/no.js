@@ -17,15 +17,38 @@ import { asset } from './js/paths.js'
 
 const SWAP = 5000        /* how long each message holds */
 
+const boot = document.getElementById('boot')
 const wall = new Wall(document.getElementById('wall'), { rows: 5 })
-wall.build(SCRIPT.no)
 
-/* back and forth, forever */
-let i = 0
-wall.messageBoard && setInterval(() => {
-  i++
-  wall.say(i % 2 ? SCRIPT.taunt : SCRIPT.no)
-}, SWAP)
+/* Laid out silently behind the overlay, so the tiles are in place and styled
+   before anything is visible. The animation only starts once the overlay has
+   finished fading — otherwise the first flips happen behind a black screen and
+   you arrive halfway through them. */
+wall.build(SCRIPT.no, { silent: true })
+
+async function reveal(){
+  /* wait for the flap face, or the first frame renders in a fallback and the
+     tiles visibly reflow when Fira arrives */
+  if(document.fonts?.ready) await document.fonts.ready
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+
+  boot?.classList.add('hide')
+
+  const start = () => {
+    wall.say(SCRIPT.no)
+    let i = 0
+    setInterval(() => {
+      i++
+      wall.say(i % 2 ? SCRIPT.taunt : SCRIPT.no)
+    }, SWAP)
+  }
+
+  if(!boot) return start()
+  boot.addEventListener('transitionend', start, { once: true })
+  /* a safety net: if the transition never fires, don't leave a blank board */
+  setTimeout(start, 900)
+}
+reveal()
 
 /* Both buttons keep whichever trip you came from, so ?trip= survives the
    detour. Without it, saying no to Australia would send you back to Japan. */
@@ -65,5 +88,5 @@ if(back && TRIP_ID) back.href = `./trip.html?trip=${encodeURIComponent(TRIP_ID)}
 let t
 addEventListener('resize', () => {
   clearTimeout(t)
-  t = setTimeout(() => { wall.destroy(); wall.build(SCRIPT.no) }, 250)
+  t = setTimeout(() => { wall.destroy(); wall.build(SCRIPT.no) }, 250)   /* animated: already revealed */
 })

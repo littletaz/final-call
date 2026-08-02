@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "validate": "node scripts/validate-trip.mjs",
     "remap": "node scripts/remap-canvas.mjs",
-    "calibrate:apply": "node scripts/apply-calibration.mjs"
+    "calibrate:apply": "node scripts/apply-calibration.mjs",
+    "deploy": "npm run validate && npm run build"
   },
   "devDependencies": {
     "vite": "^6.0.7"

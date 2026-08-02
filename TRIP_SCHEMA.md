@@ -110,45 +110,84 @@ it and report pass/fail per item. Don't output a corrected file unless asked.
 
 ## File shape
 
+One folder per trip under `public/trips/<trip-id>/`, holding `trip.json` and
+every asset it uses. Paths inside the file are **relative to that folder**, so
+two trips can both ship a `pin.svg` without colliding.
+
+```
+public/trips/japon-2026/
+  trip.json
+  map.png  map-hk.png  logo.png  pin.svg
+  img/        photos for the city cards
+  clouds/     drifting sprites
+  waves/      placed sprites (optional)
+  fonts/      if the trip self-hosts one
+```
+
 ```jsonc
 {
-  "schemaVersion": 1,
-  "id": "japon-2026",                    // kebab-case, unique, = filename
+  "id": "japon-2026",              // must match the folder name
   "title": "Japon & Hong Kong",
-  "subtitle": "Three weeks at peak autumn",
-  "defaultItineraryId": "full-21",       // must match an itineraries[].id
+  "subtitle": "…",
+  "defaultItineraryId": "full-21",
 
-  "map": {
-    "assetId": "japan-ink-map-v2",
-    "base": "assets/map/map-japon.png",
-    "baseSize": { "w": 3840, "h": 2556 },   // the image's TRUE pixel size — pin
-                                            // positions are fractions of this
-    "backgroundColor": "#596D88",           // MUST match the artwork's edge colour
-    "cropBottom": 0.12,                     // optional: hide the lowest 12% of
-                                            // the image — see below
-    "inset": {                            // OPTIONAL — a place off the main map
-      "id": "hongkong-inset",
-      "src": "assets/map/map-hk.png",
-      "forLocationId": "hongkong",
-      "y": 0.30, "w": 0.155              // `x` is ignored: the inset is pinned
-                                          // to grid column 1 by CSS
-    },
-    "_calibrated": false                  // leave false; set true after calibrating
+  "artDirection": {
+    "id": "sumi-e-ink-wash",
+    "colors": { "sea": "#596D88", "paper": "#FAEDDC", "seal": "#CF4736", "ink": "#1E222B" },
+    "fonts": { "display": {…}, "sans": {…} }      // see Fonts
   },
 
-  "artDirection": { "id": "...", "colors": {...}, "type": {...} },
-  "grid": { "artboard": 1920, "columns": 8, "margin": 218, "gutter": 20,
-            "columnWidth": 168, "contentWidth": 1484 },
+  "map": {
+    "base": "map.png",
+    "baseSize": { "w": 3840, "h": 3840 },         // must match the real file
+    "backgroundColor": "#596D88",                 // must match the artwork's edge
+    "cropBottom": 0.15,                           // optional, 0–1
+    "pin": "pin.svg",
+    "logo": "logo.png",
+    "inset": { "id": "hongkong", "src": "map-hk.png", "x": 0.1, "y": 0.2125, "w": 0.18 },
+    "clouds": [ { "file": "clouds/01.png", "x": -18, "y": 25.5, "dur": 118, "travel": 140 } ],
+    "waves":  [ { "file": "waves/01.png",  "x": 0.13, "y": 0.66, "dur": 6.5, "dy": 18 } ],
+    "waveDivisor": 2,
+    "_calibrated": true
+  },
 
-  "budget": { /* see below */ },
-  "cta":    { /* see below */ },
-
-  "locations":   [ /* see below */ ],
-  "itineraries": [ /* see below */ ]
+  "locations":   [ … ],
+  "itineraries": [ … ],
+  "budget":      { … },
+  "cta":         { … }
 }
 ```
 
-Copy `artDirection` and `grid` verbatim from an existing trip file. Everything
+### Sprites
+
+**Clouds** drift across the whole viewport, so `x`, `y` and `travel` are
+percentages of the **screen**. `x + travel` must exceed 100 or the loop reset
+happens on screen — the validator checks this.
+
+**Waves** are placed features of the map, like pins: `x` and `y` are fractions
+of the map image, in the same space as pin coordinates. A map with no water
+simply omits the array. They render at their exported width over `waveDivisor`
+(assets are 2× exports, so 2 renders them 1:1).
+
+
+### Fonts
+
+Each trip declares its own faces and **only those are downloaded** — ten trips
+with ten pairings still cost one visitor two font files. Two roles:
+
+- **`display`** → the `--display` variable: numerals, the dataviz, the selector
+- **`sans`** → the `--sans` variable: everything else
+
+There is no serif role. A face comes from either `google` (a Google Fonts
+family+axis string) or `src` (a self-hosted file under `public/`). Prefer
+**woff2** for self-hosted files — about half the size of otf for the same
+outlines, and support is universal.
+
+Always give a `fallback` stack. Fonts are requested after the trip data
+resolves, so text paints in the fallback first and swaps; without one it paints
+in whatever the browser defaults to.
+
+Copy `grid` verbatim from an existing trip file. Everything
 under `map` is specific to the artwork.
 
 ### The canvas
@@ -196,77 +235,68 @@ calibrated values stay correct at any window size.
 
 ## `locations[]`
 
-Every place that appears on the map, **once**. Itineraries reference these by id, so
-a place visited by three itineraries is still written once here.
+A place, written once and referenced by any itinerary that visits it.
 
 ```jsonc
 {
-  "id": "kanazawa",                       // kebab-case, unique within the file
-  "pin": "03",                            // cosmetic only — pins are renumbered
-                                          // per itinerary at runtime
-  "name": { "en": "Kanazawa", "jp": "金沢" },   // jp may be null outside Japan
-  "epithet": "THE GOLD COAST",            // short all-caps card eyebrow
-  "subtitle": "Kenroku-en · Higashi Chaya · Omicho",   // separator is " · "
-  "coordinates": { "x": 0.456, "y": 0.613 },
-    // 0–1, fractions of the map image. GUESS THESE — they get calibrated
-    // in-browser later. Add "onInset": "<inset id>" for a pin inside an inset.
-  "tags": ["city", "gardens", "food"],
-  "intro": "A castle town that was never bombed, so it was never rebuilt…",
-    // 2–3 sentences. NOT currently rendered on the card — kept for the future
-    // landing page. Still worth writing well.
-  "kanjiChips": ["金", "箔"],              // exactly 2, or [] outside Japan
-  "chipCaption": "Gold leaf and garden moss",
-  "hero": null,                            // image path, or null for a placeholder
+  "id": "kanazawa",
+  "name": { "en": "Kanazawa", "jp": "金沢" },
+  "kanjiChips": ["金", "沢"],                 // 1–3, shown beside the dates
+  "chipCaption": "…",                         // no longer rendered; kept for later
+  "subtitle": "…",
+  "intro": "…",                               // for the landing page, unrendered
 
-  "thingsToDo": [                          // objects, never plain strings
-    {
-      "title": "Kenroku-en Garden at opening time",
-      "priceEUR": [3, 5],                  // [lo, hi] per person; [0, 0] = free
-      "note": "Go before the tour groups.", // shown in the hover tooltip
-      "image": null
-    }
+  "coordinates": { "x": 0.4769, "y": 0.4565 },  // fractions of the map image
+  "scatter": 2,                                 // which photo layout, 0–3
+
+  "photos": [ { "src": "img/kanazawa-01.jpg" } ],   // 1–6, see Photos
+
+  "thingsToDo": [                              // kept in the data, NOT rendered
+    { "title": "…", "note": "…", "priceEUR": [8, 12] }
   ],
 
-  "stays": [                               // AT LEAST 3 — the card renders 3
-    { "name": "APA Hotel Kanazawa Ekimae", "tier": "budget", "priceNightEUR": [50, 80],
-      "bookingUrl": "https://www.booking.com/searchresults.html?ss=APA+Hotel+Kanazawa+Ekimae%2C+Kanazawa" },
-    { "name": "Smile Hotel Kanazawa",      "tier": "budget", "priceNightEUR": [50, 80],
-      "bookingUrl": "https://www.booking.com/searchresults.html?ss=Smile+Hotel+Kanazawa%2C+Kanazawa" },
-    { "name": "Kanazawa Machiya Inn Hana", "tier": "mid",    "priceNightEUR": [70, 110],
-      "bookingUrl": "https://www.booking.com/searchresults.html?ss=Kanazawa+Machiya+Inn+Hana%2C+Kanazawa" }
-  ],
-
-  "foodNotes": "Kaiseki dinners — flag no-pork when booking."
+  "stays": [ … ]                               // exactly 3, see Stays
 }
 ```
 
-`tier` is one of `budget` · `mid` · `splurge`.
+### Photos
 
-**`bookingUrl`** makes the hotel card clickable. Prefer a **search** URL over a
-deep link to a specific property page — search results survive a hotel being
-renamed, relisted, or delisted, whereas a property URL rots. Include the city in
-the query so the search doesn't return a same-named hotel elsewhere:
+Beauty shots of the place — **1 to 6**. They fill the slots of the layout named
+by `scatter` in order, so three photos use the first three positions and a
+sparse place still looks arranged rather than half-finished.
 
-```
-https://www.booking.com/searchresults.html?ss=<Hotel+Name>%2C+<City>
-```
+Any aspect ratio; the card crops nothing. **1000px tall** is the current
+convention, though that's about 2× what the layout needs — see ROADMAP.
 
-A stay without one still renders, just as a plain block instead of a link.
+No slot may enter the safe column (x 26–74%), which holds the dates, title and
+hotel list. That's enforced in `src/js/scatter.js`, not by eye.
 
-**Split stays.** If one stop is spent across two bases, give those stays their own
-`nights` and a `base` label. Without this, prices multiply by the whole stop length
-and come out badly wrong:
+### Stays
+
+**Exactly three per location.** The budget's *Where we sleep* lever picks the
+cheapest, middle and dearest at each stop — so three is what makes the three
+options work, and it's why the dearest can never cost less than the middle.
 
 ```jsonc
-{ "name": "APA Hotel Takayama Ekimae", "tier": "budget", "priceNightEUR": [55, 85],
-  "nights": 2, "base": "Takayama" },
-{ "name": "Ryokan Asunaro", "tier": "mid", "priceNightEUR": [190, 210],
-  "nights": 4, "base": "Hirayu Onsen" }
+{
+  "tier": "budget",                    // label only; the ordering is by price
+  "name": "Hotel Trusty Kanazawa",
+  "priceNightEUR": [95, 135],
+  "nights": 2,                         // optional, for a split stay
+  "base": "Takayama",                  // which town, on a split stay
+  "bookingUrl": "https://www.booking.com/searchresults.html?ss=…",
+
+  "isArea": true,                      // NOT a real property — see below
+  "area": "Wakura Onsen",
+  "kind": "ryokan"
+}
 ```
 
-A stay without `nights` inherits the stop's full night count.
+`isArea` marks a **kind of place in an area** rather than a named hotel. Its
+link searches the area instead of a property that doesn't exist, which is
+honest and lands somewhere useful. Replace the name with a real hotel and drop
+the flag when you find one.
 
----
 
 ## `itineraries[]`
 
@@ -313,60 +343,99 @@ journey home counts is a judgement call — say which you chose in a `_flightsNo
 
 ---
 
-## `budget` and `cta`
+## `budget`
+
+Three levers, each a real choice about this trip. A total is shown on arrival
+with the defaults — the controls are for *"but what if we…"*, never a form to
+fill in first.
 
 ```jsonc
 "budget": {
   "currency": "EUR",
-  "categories": [                          // per person
-    { "id": "flights",    "label": "Flights",    "baseEUR": [900, 1100] },
-    { "id": "stays",      "label": "Stays",      "baseEUR": [1250, 1450] },
-    { "id": "transport",  "label": "Transport",  "baseEUR": [450, 550] },
-    { "id": "food",       "label": "Food",       "baseEUR": [700, 850] },
-    { "id": "activities", "label": "Activities", "baseEUR": [350, 450] }
-  ],
-  "comfortTiers": [                        // the footer slider
-    { "id": "shoestring", "label": "Very poor",       "multiplier": 0.55 },
-    { "id": "budget",     "label": "Budget friendly", "multiplier": 0.78 },
-    { "id": "comfort",    "label": "Comfort",         "multiplier": 1.00 },
-    { "id": "midhigh",    "label": "Mid-high",        "multiplier": 1.45 },
-    { "id": "luxury",     "label": "Luxury",          "multiplier": 2.30 }
-  ],
-  "defaultTierId": "comfort"
-},
+  "levers": {
+    "sleep": {
+      "label": "Where we sleep",
+      "options": [                         // ids are fixed: the renderer maps them
+        { "id": "cheap",  "label": "business hotels" },
+        { "id": "middle", "label": "one ryokan night" },
+        { "id": "dear",   "label": "ryokan where there is one" }
+      ],
+      "default": "cheap"
+    },
+    "eat": {
+      "label": "How we eat",
+      "perNight": true,                    // the figures below are per night
+      "options": [
+        { "id": "konbini", "label": "konbini and ramen",            "eur": [18, 26] },
+        { "id": "mixed",   "label": "mostly casual, a few dinners",  "eur": [35, 50] },
+        { "id": "proper",  "label": "eating properly",               "eur": [70, 105] }
+      ],
+      "default": "mixed"
+    },
+    "move": {
+      "label": "Getting around",
+      "options": [ { "id": "local", "label": "local trains", "eur": [300, 380] }, … ],
+      "default": "mixed"
+    }
+  },
+  "fixed": [ { "id": "flights", "label": "Flights", "eur": [900, 1100] } ],
+  "presets": [
+    { "id": "comfort", "label": "Comfortable", "sleep": "cheap", "eat": "mixed", "move": "mixed" }
+  ]
+}
+```
 
+**`sleep` carries no prices.** It picks the cheapest, middle or dearest stay
+*at each stop* and sums the real hotels — so the accommodation line is
+arithmetic on choices already made, not a model. That's also why it can't
+invert: dearest is dearest by construction.
+
+**`eat` and `move` are per-trip**, because a konbini breakfast in Japan is not
+a konbini breakfast in Portugal. Six numbers to author.
+
+**Activities aren't a lever** — every `priceEUR` in `thingsToDo` is summed and
+shown as a fixed line. They swing a few hundred against a few thousand.
+
+## `cta`
+
+```jsonc
 "cta": {
   "headline": "So… are you in?",
-  "buttonLabel": "YES",
   "flightSearch": {
-    "provider": "kayak",                   // kayak | momondo | google
+    "provider": "kayak",                  // kayak | momondo | google
     "passengers": 2,
     "cabin": "economy",
-    "legs": [                              // searched together as multi-city
+    "showLegs": false,                    // per-leg links give the route away
+    "legs": [
       { "from": "PAR", "to": "HKG", "dateFrom": "itineraryStart" },
+      { "from": "HKG", "to": "NGO", "date": "2026-11-01" },
       { "from": "TYO", "to": "PAR", "dateFrom": "itineraryEnd" }
     ]
   }
 }
 ```
 
-`from` / `to` are 3-letter IATA city or airport codes.
+`dateFrom` references the itinerary rather than hardcoding a date, so the link
+follows whichever duration is selected.
 
-`dateFrom` is `"itineraryStart"`, `"itineraryEnd"`, or an explicit `YYYY-MM-DD`.
-The first two follow whichever itinerary is selected, so the link stays correct
-when the visitor switches variants — prefer them over hardcoded dates.
 
-**Provider choice matters for open jaws.** Kayak and Momondo express multi-city as
-a URL path, so all legs are searched at once. Google Flights hides multi-city
-inside an encoded `tfs` protobuf that changes periodically, so `google` searches
-only the **first** leg and the page says so beneath the button. Use `kayak` or
-`momondo` for any trip that doesn't return from where it arrived.
+## Fields the renderer ignores
 
-`stays` and `activities` are **overridden at runtime** by the sums of the actual
-stays and activity prices — `baseEUR` is only a fallback for when those come out
-empty. The other three use `baseEUR` as written.
+Kept in the data because they cost nothing and may be wanted later. Nothing
+breaks if they're absent.
 
----
+| field | where | note |
+|---|---|---|
+| `schemaVersion` | root | for a future migration |
+| `budgetPerPersonEUR` | `itineraries[]` | superseded by the `budget` model |
+| `epithet`, `tags` | `locations[]` | from the earlier card design |
+| `chipCaption` | `locations[]` | replaced by the dates on the card |
+| `foodNotes` | `locations[]` | may feed a per-place food model |
+| `intro` | `locations[]` | written for the landing page |
+| `thingsToDo[]` | `locations[]` | priced and summed, but not displayed |
+| `assetId` | `locations[]` | an authoring cross-reference |
+| `grid` | root | `columns`, `gutter`, `artboard` etc. — copy verbatim |
+| `cta.buttonLabel` | `cta` | the buttons say YES / NO now |
 
 ## Registering the trip
 
@@ -408,13 +477,13 @@ non-zero on failure, so it can go in a pre-commit hook.
 - [ ] Where `dateRange` is set, its span equals that night count
 - [ ] Every spur has `nights: 0`
 - [ ] `defaultItineraryId` matches an existing itinerary
-- [ ] `budget.defaultTierId` is one of the `comfortTiers`
 - [ ] `cta.flightSearch.provider` is `kayak`, `momondo`, or `google`
 - [ ] Every leg has 3-letter `from` / `to` codes and a valid `dateFrom`
 - [ ] Referenced map assets exist in `public/assets/`
 - [ ] `map.baseSize` matches the image's real pixel dimensions
 - [ ] `map.backgroundColor` matches the artwork's edge colour
 - [ ] The artwork has margin on all sides and clear space at the bottom
+- [ ] Each `artDirection.fonts` entry has a `family`, a `google` or `src`, and a `fallback`
 - [ ] The trip is listed in `index.json`
 
 A new map also needs its artwork in `public/assets/map/` and a correct `baseSize`.

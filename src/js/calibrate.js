@@ -113,7 +113,45 @@ export const Calib = {
     this.render(); this.highlight(); this.enableDrag()
   },
 
+  /* Waves are placed features, in the same coordinate space as pins — so they
+     get the same treatment. Without this they'd have to be guessed at in the
+     JSON, which is how the last set ended up in the dataviz. */
+  enableWaveDrag(){
+    const waves = TRIP.data.map.waves ?? []
+    document.querySelectorAll('#waves .sprite').forEach((el, i) => {
+      if(el.dataset.dragBound) return
+      el.dataset.dragBound = '1'
+      el.style.pointerEvents = 'auto'
+      el.style.cursor = 'move'
+      el.addEventListener('pointerdown', ev => {
+        if(!this.on) return
+        ev.preventDefault(); ev.stopPropagation()
+        const box = document.getElementById('world')
+        const visible = 1 - (TRIP.data.map.cropBottom ?? 0)
+        const move = e => {
+          const r = box.getBoundingClientRect()
+          const x = clamp((e.clientX - r.left) / r.width)
+          /* the rendered top is scaled by the crop, so undo it on the way in */
+          const y = clamp(((e.clientY - r.top) / r.height) * visible)
+          waves[i].x = +x.toFixed(4)
+          waves[i].y = +y.toFixed(4)
+          el.style.left = (x * 100).toFixed(3) + '%'
+          el.style.top  = ((y / visible) * 100).toFixed(3) + '%'
+          this.render()
+        }
+        const up = () => {
+          window.removeEventListener('pointermove', move)
+          window.removeEventListener('pointerup', up)
+          this.save()
+        }
+        window.addEventListener('pointermove', move)
+        window.addEventListener('pointerup', up)
+      })
+    })
+  },
+
   enableDrag(){
+    this.enableWaveDrag()
     document.querySelectorAll('.poi').forEach(el => {
       if(el.dataset.dragBound) return
       el.dataset.dragBound = '1'
@@ -179,24 +217,21 @@ export const Calib = {
       _thenReset: 'click RESET below, or these saved values keep overriding the file',
       map: {
         baseSize: { ...TRIP.data.map.baseSize },
-        inset: {
-          y: +this.inset.y.toFixed(4),
-          w: +this.inset.w.toFixed(4),
-        },
+        inset: { ...this.inset, y: +this.inset.y.toFixed(4) },
+        /* waves are placed the same way pins are, so they travel together */
+        waves: (TRIP.data.map.waves ?? []).map(w => ({
+          file: w.file, x: w.x, y: w.y,
+          dur: w.dur, dy: w.dy, dx: w.dx,
+        })),
       },
-      locations: TRIP.data.locations.map(l => ({
-        id: l.id,
-        coordinates: {
-          x: +this.coords[l.id].x.toFixed(4),
-          y: +this.coords[l.id].y.toFixed(4),
-          ...(l.coordinates.onInset ? { onInset:l.coordinates.onInset } : {}),
-        },
+      locations: Object.entries(this.coords).map(([id, c]) => ({
+        id, coordinates: { x: +c.x.toFixed(4), y: +c.y.toFixed(4) },
       })),
     }, null, 2)
   },
 
   save(){
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify({ coords:this.coords, inset:this.inset })) }catch(e){}
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify({ coords:this.coords, inset:this.inset, waves:(TRIP.data.map.waves ?? []) })) }catch(e){}
   },
 
   restore(){
