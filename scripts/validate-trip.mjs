@@ -20,7 +20,6 @@ const PUBLIC = join(ROOT, 'public')
 const inTrip = (tripPath, p) =>
   p.startsWith('shared/') ? join(PUBLIC, p) : join(dirname(tripPath), p)
 
-const TIERS = ['budget', 'mid', 'splurge']
 const ARRIVE = ['flight', 'surface']
 
 let errors = 0, warnings = 0
@@ -82,8 +81,8 @@ function validateTrip(path){
     ids.add(l.id)
 
     if(!l.name?.en) err(name, `${tag}: name.en is required`)
-    for(const k of ['epithet', 'subtitle'])
-      if(!l[k]) warn(name, `${tag}: ${k} is empty`)
+    /* epithet was dropped from the card design; only subtitle is still used */
+    if(!l.subtitle) warn(name, `${tag}: subtitle is empty`)
 
     const c = l.coordinates
     if(!c || typeof c.x !== 'number' || typeof c.y !== 'number')
@@ -100,8 +99,10 @@ function validateTrip(path){
 
     for(const s of l.stays ?? []){
       if(!s.name) err(name, `${tag}: a stay has no name`)
-      if(!TIERS.includes(s.tier))
-        err(name, `${tag}: stay "${s.name}" has tier "${s.tier}" — must be ${TIERS.join(' | ')}`)
+      /* `tier` is only the label printed on the card. The budget's sleep lever
+         picks cheapest / middle / dearest BY PRICE, so the vocabulary is free —
+         what matters is that there are exactly three to choose between. */
+      if(!s.tier) warn(name, `${tag}: stay "${s.name}" has no tier label`)
       const p = s.priceNightEUR
       if(!Array.isArray(p) || p.length !== 2 || typeof p[0] !== 'number' || typeof p[1] !== 'number')
         err(name, `${tag}: stay "${s.name}" priceNightEUR must be [lo, hi]`)
@@ -192,9 +193,15 @@ function validateTrip(path){
     err(name, `defaultItineraryId "${t.defaultItineraryId}" doesn't match any itinerary`)
 
   /* ---------- map + assets ---------- */
+  /* A WARNING, not an error. A trip should be buildable before its artwork
+     exists — the page draws a hatched box naming each missing file, so you can
+     lay out a new trip and see what's still to draw. */
   const checkAsset = (p, label) => {
     if(!p) return false
-    if(!existsSync(inTrip(path, p))){ err(name, `${label} not found: ${p} (relative to the trip folder)`); return false }
+    if(!existsSync(inTrip(path, p))){
+      warn(name, `${label} not found: ${p} — the page will show a placeholder naming it`)
+      return false
+    }
     return true
   }
   checkAsset(t.map?.pin || 'pin.svg', 'map.pin')
@@ -269,8 +276,12 @@ function validateTrip(path){
   else for(const [role, f] of Object.entries(fonts)){
     if(role.startsWith('_')) continue
     if(!f?.family){ err(name, `artDirection.fonts.${role}: family is required`); continue }
-    if(!f.google && !f.src)
-      err(name, `artDirection.fonts.${role} ("${f.family}") has neither google nor src — it will never load`)
+    /* No google and no src is fine IF there's a fallback stack — that's a system
+       font, which needs no loading. Only flag it when there's nothing to fall
+       back to either. */
+    if(!f.google && !f.src && !f.fallback)
+      err(name, `artDirection.fonts.${role} ("${f.family}") has no google, no src `
+        + `and no fallback — nothing will load and nothing will substitute`)
     if(f.src && !existsSync(inTrip(path, f.src)))
       err(name, `artDirection.fonts.${role}: file not found — ${f.src} (relative to the trip folder)`)
     if(f.src && !/\.woff2$/.test(f.src))

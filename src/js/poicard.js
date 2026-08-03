@@ -1,4 +1,5 @@
 import { TRIP, tripAsset, stayTotal, stopDates, eur } from './data.js'
+import { watchImages } from './placeholder.js'
 
 /* ============================================================
    POI CARD
@@ -20,6 +21,8 @@ const TILT = [
   { r: -15, x: 34,  y: 10,  z: 2 },
 ]
 
+const narrow = () => window.matchMedia('(max-width: 860px)').matches
+
 const fmt = d => d?.toLocaleDateString('en-GB', { day:'numeric', month:'short' }) ?? ''
 
 export const PoiCard = {
@@ -35,19 +38,22 @@ export const PoiCard = {
     this.onClose = onClose
 
     this.overlay = document.getElementById('poi-overlay')
+    this.overlay?.addEventListener('pointerdown', () => this.close())
     /* the close button needs its own handler: a pointerdown inside the card
        closes anyway, but a keyboard Enter on the button would not */
     this.el.querySelector('.pc-close')?.addEventListener('click', () => this.close())
 
     if(!this.bound){
       this.bound = true
-      /* Anything that isn't a hotel link closes it — including the card itself.
-         The card is a glance, not a place to linger, so the only thing worth
-         protecting from a stray click is the three links that leave the page. */
+      /* On a wide screen the card is a glance, so anything outside the hotel
+         links closes it. On a phone it's a sheet under your thumb — a tap
+         anywhere in it would close it by accident, so there it takes the
+         overlay or the close button. */
       document.addEventListener('pointerdown', e => {
         if(!this.openId) return
         if(e.target.closest('.hotel')) return
         if(e.target.closest('.poi')) return      /* the pin toggles, below */
+        if(narrow() && e.target.closest('#poi-card')) return
         this.close()
       })
       document.addEventListener('keydown', e => {
@@ -80,6 +86,7 @@ export const PoiCard = {
         ${ph.src ? `<img src="${tripAsset(ph.src)}" alt="" loading="lazy">` : ''}
       </figure>`
     }).join('')
+    watchImages(this.photos, img => img.getAttribute('src')?.split('/').pop())
 
     const stays = loc.stays.slice(0, 3).map(st => {
       const t = stayTotal(st, stop)
@@ -105,7 +112,9 @@ export const PoiCard = {
         ${dates ? `<span class="pc-dates">${fmt(dates.from)} to ${fmt(dates.to)}</span>` : ''}
         <span class="pc-nights">${nights}</span>
       </p>
-      <p class="pc-chips">${loc.kanjiChips.map(k => `<span class="chip">${k}</span>`).join('')}</p>`
+      ${(loc.kanjiChips ?? []).length
+        ? `<p class="pc-chips">${loc.kanjiChips.map(k => `<span class="chip">${k}</span>`).join('')}</p>`
+        : ''}`
 
     this.el.hidden = false
     if(this.overlay) this.overlay.hidden = false

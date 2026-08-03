@@ -10,9 +10,9 @@
   background:#000;color:#fff;
   font-family:var(--sans, system-ui);
   position:relative;
-  /* the board fills what's left of the viewport, so anything past the fold is
-     board and there's nothing to hide */
-  overflow-x:hidden;
+  /* No scrolling: the board is sized to fill the viewport and anything past the
+     fold is more of the same board, so there is nothing below to reach. */
+  overflow:hidden;
 
   --dep-w:48px;                    /* one flap */
   --dep-h:70px;
@@ -141,7 +141,7 @@
   .dep-labels{font-size:11px;margin-bottom:18px}
 }
 @media(max-width:900px){
-  .dep-page{overflow-x:auto;--dep-title:34px;--dep-icon-w:54px}
+  .dep-page{--dep-title:34px;--dep-icon-w:54px}
   .dep-stack{margin-top:8vh}
   .dep-head{gap:12px;margin-bottom:32px}
 }

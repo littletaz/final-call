@@ -110,19 +110,21 @@ class Board {
     this.tiles = Array.from({ length: len }, () => {
       const tile = document.createElement('span')
       tile.className = 'flap-tile'
+      /* Only the two static halves and the axle up front. The folding leaves
+         are made the first time a flap actually turns — on a wall, most never
+         do, and building them for every tile was 40% of the elements for
+         nothing. */
       tile.innerHTML =
         '<span class="flap-half flap-top"><span class="flap-glyph"></span></span>' +
         '<span class="flap-half flap-bottom"><span class="flap-glyph"></span></span>' +
-        '<span class="flap-leaf flap-front"><span class="flap-glyph"></span></span>' +
-        '<span class="flap-leaf flap-back"><span class="flap-glyph"></span></span>' +
         '<span class="flap-axle"></span>'          /* the two side pins */
       this.el.appendChild(tile)
       return {
         tile,
         top:    tile.querySelector('.flap-top .flap-glyph'),
         bottom: tile.querySelector('.flap-bottom .flap-glyph'),
-        front:  tile.querySelector('.flap-front .flap-glyph'),
-        back:   tile.querySelector('.flap-back .flap-glyph'),
+        front:  null,
+        back:   null,
         char:   ' ',
       }
     })
@@ -246,10 +248,24 @@ class Board {
     t.tile.classList.remove('is-flipping')
   }
 
+  /* The moving parts, made on demand. A tile that never turns never gets them. */
+  addLeaves(t){
+    if(t.front) return
+    const axle = t.tile.querySelector('.flap-axle')
+    const frag = document.createElement('template')
+    frag.innerHTML =
+      '<span class="flap-leaf flap-front"><span class="flap-glyph"></span></span>' +
+      '<span class="flap-leaf flap-back"><span class="flap-glyph"></span></span>'
+    t.tile.insertBefore(frag.content, axle)
+    t.front = t.tile.querySelector('.flap-front .flap-glyph')
+    t.back  = t.tile.querySelector('.flap-back .flap-glyph')
+  }
+
   /* One fold. The static top switches to the incoming character straight away
      because the falling front leaf hides it; the static bottom only catches up
      once the back leaf has landed on it. */
   flip(t, next){
+    this.addLeaves(t)
     const prev = t.char
     this.paint(t.front,  prev)
     this.paint(t.back,   next)

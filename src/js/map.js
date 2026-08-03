@@ -1,4 +1,5 @@
 import { TRIP, tripAsset } from './data.js'
+import { onMissing, watchImages, FALLBACK_PIN } from './placeholder.js'
 
 /* ============================================================
    MAP
@@ -28,6 +29,7 @@ export const MapView = {
   async init(){
     this.el.world  = document.getElementById('world')
     this.el.base   = document.getElementById('basemap')
+    onMissing(this.el.base, TRIP.data.map.base || 'map.png')
     this.el.alt    = document.getElementById('basemap-alt')
     this.el.inset  = document.getElementById('inset')
     this.el.clouds = document.getElementById('clouds')
@@ -37,7 +39,9 @@ export const MapView = {
     const d = TRIP.data
     this.el.base.src = tripAsset(d.map.base)
     this.el.base.dataset.src = tripAsset(d.map.base)
-    document.querySelector('#logo img').src = tripAsset(d.map.logo || 'logo.png')
+    const logo = document.querySelector('#logo img')
+    onMissing(logo, d.map.logo || 'logo.png')
+    logo.src = tripAsset(d.map.logo || 'logo.png')
 
     if(d.map.backgroundColor)
       document.documentElement.style.setProperty('--sea', d.map.backgroundColor)
@@ -66,8 +70,11 @@ export const MapView = {
         console.warn(`[final-call] ${path} has no .pin-panel — hover states won't work. ` +
                      `A pin needs .pin-badge, .pin-panel and .pin-inner.`)
     } catch(e){
-      console.error(`[final-call] couldn't load the pin (${path}):`, e.message)
-      this.pinSvg = '<svg viewBox="0 0 42 42"><circle class="pin-panel" cx="21" cy="21" r="15"/></svg>'
+      /* A trip can be built before its pin is drawn — the fallback carries the
+         same three classes, so hover states keep working and the page tells you
+         what's missing instead of showing nothing. */
+      console.warn(`[final-call] missing asset: ${path} — using the fallback pin`)
+      this.pinSvg = FALLBACK_PIN
     }
   },
 
@@ -160,6 +167,7 @@ export const MapView = {
         </div>
       </div>`).join('')
 
+    watchImages(this.el.clouds, img => img.getAttribute('src')?.split('/').pop())
     clouds.forEach((c, i) =>
       this.sizeSprite(this.el.clouds.querySelectorAll('img')[i],
                       { mode:'map', scale:c.scale ?? 1 }))
@@ -180,6 +188,7 @@ export const MapView = {
     /* Sized against the MAP, not in fixed pixels: a wave is part of the
        scene, so it has to keep its proportion to the coastline it sits
        beside at every viewport. */
+    watchImages(this.el.waves, img => img.getAttribute('src')?.split('/').pop())
     const ws = TRIP.data.map.waveScale ?? 1
     waves.forEach((w, i) =>
       this.sizeSprite(this.el.waves.querySelectorAll('img')[i],
@@ -190,6 +199,7 @@ export const MapView = {
     const ins = TRIP.data.map.inset
     if(!ins){ this.el.inset.hidden = true; return }
     this.el.inset.innerHTML = `<img src="${tripAsset(ins.src)}" alt="${ins.id} inset map">`
+    onMissing(this.el.inset.querySelector('img'), ins.src)
     this.placeInset()
   },
 

@@ -38,6 +38,10 @@
 
 /* the housing — the flaps sit inset from it, so it reads as a frame */
 .flap-tile{
+  /* A wall is hundreds of these. `contain` tells the browser a tile's layout
+     and paint can't affect anything outside it, so a single flap turning
+     doesn't invalidate its neighbours. */
+  contain:layout paint style;
   position:relative;
   /* `flex:none` is load-bearing: the board is an inline-flex row, so without it
      any overflow makes flex SHRINK every tile — keeping the height and
@@ -158,7 +162,10 @@
 /* ---- the fold ----
    The front leaf carries the outgoing character's top and falls away; the back
    leaf carries the incoming character's bottom and swings up to meet it. */
+/* will-change only while turning: held permanently on hundreds of tiles it
+   forces a compositing layer each, which is what makes a big wall crawl. */
 .flap-leaf{transform-style:preserve-3d}
+.flap-tile.is-flipping .flap-leaf{will-change:transform}
 .flap-front{transform-origin:bottom center;transform:translateZ(1px)}
 .flap-back {transform-origin:top center;transform:translateZ(1px) rotateX(90deg)}
 

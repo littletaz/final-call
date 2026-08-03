@@ -1,0 +1,184 @@
+{
+  "id": "australia-2027",
+  "title": "Australia & New Zealand",
+  "subtitle": "Sydney to Fiordland, three weeks, no car required",
+  "defaultItineraryId": "full-21",
+  "schemaVersion": 1,
+
+  "artDirection": {
+    "id": "placeholder-generic",
+    "colors": { "sea": "#4A6FA5", "paper": "#F5F0E6", "seal": "#B5533C", "ink": "#22262B" },
+    "fonts": {
+      "display": { "family": "Georgia", "src": null, "google": null, "fallback": "Georgia, 'Times New Roman', serif" },
+      "sans": { "family": "Arial", "src": null, "google": null, "fallback": "Arial, Helvetica, sans-serif" }
+    }
+  },
+
+  "grid": {
+    "columns": 12,
+    "gutter": 24,
+    "artboard": { "w": 1440, "h": 1024 }
+  },
+
+  "map": {
+    "base": "map.png",
+    "baseSize": { "w": 3840, "h": 2760 },
+    "backgroundColor": "#4A6FA5",
+    "pin": "pin.svg",
+    "logo": "logo.png",
+    "_calibrated": false
+  },
+
+  "locations": [
+    {
+      "id": "sydney",
+      "name": { "en": "Sydney" },
+      "subtitle": "Harbour, NYE, and the mountains behind it",
+      "intro": "The anchor of the whole trip — NYE fireworks on the harbour, a coastal walk with zero planning required, and the Blue Mountains a train ride away.",
+      "coordinates": { "x": 0.5, "y": 0.2 },
+      "scatter": 0,
+      "photos": [ { "src": "img/sydney-01.jpg" } ],
+      "thingsToDo": [
+        { "title": "NYE Harbour fireworks (public vantage point)", "note": "Free to watch from public foreshore spots; arrive hours early for a good one. Paid vantage tickets/harbourview dining cost extra and aren't included here.", "priceEUR": [0, 0] },
+        { "title": "Bondi to Coogee coastal walk", "note": "Self-guided, flat, ~2-3 hours, no transport booking needed.", "priceEUR": [0, 0] },
+        { "title": "Blue Mountains day tour (Scenic World + Echo Point/Three Sisters, hotel pickup)", "note": "Peak-season (late Dec/early Jan) pricing. NSW's bushfire danger period overlaps these dates — keep this day flexible if possible and check RFS conditions morning-of.", "priceEUR": [95, 165] }
+      ],
+      "stays": [
+        { "tier": "budget", "name": "Kith Hotel Darling Harbour", "priceNightEUR": [140, 190], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Kith+Hotel+Darling+Harbour+Sydney" },
+        { "tier": "middle", "name": "Novotel Sydney on Darling Harbour", "priceNightEUR": [230, 300], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Novotel+Sydney+on+Darling+Harbour" },
+        { "tier": "dear", "name": "Hyatt Regency Sydney", "priceNightEUR": [380, 470], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Hyatt+Regency+Sydney" }
+      ]
+    },
+    {
+      "id": "port-stephens",
+      "name": { "en": "Port Stephens" },
+      "subtitle": "Dolphins and dunes, no long-haul travel required",
+      "intro": "A coach ride from Sydney rather than a flight — near-guaranteed dolphin sightings and sandboarding on Stockton's dunes.",
+      "coordinates": { "x": 0.8, "y": 0.5 },
+      "scatter": 1,
+      "photos": [ { "src": "img/port-stephens-01.jpg" } ],
+      "thingsToDo": [
+        { "title": "Dolphin watching cruise, Nelson Bay", "note": "~90 min, runs Nov-Apr only — these dates fall right in season. ~100 resident dolphins in the bay, near-guaranteed sightings.", "priceEUR": [27, 30] },
+        { "title": "Sandboarding & 4WD dune tour, Stockton Sand Dunes", "note": "Southern hemisphere's largest moving coastal sand mass.", "priceEUR": [16, 25] }
+      ],
+      "stays": [
+        { "tier": "budget", "name": "Seabreeze Hotel", "priceNightEUR": [120, 160], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Seabreeze+Hotel+Nelson+Bay" },
+        { "tier": "middle", "name": "Oaks Port Stephens Pacific Blue Resort", "priceNightEUR": [190, 250], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Oaks+Port+Stephens+Pacific+Blue+Resort" },
+        { "tier": "dear", "name": "Anchorage Hotel & Spa", "priceNightEUR": [280, 370], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Anchorage+Hotel+and+Spa+Port+Stephens" }
+      ]
+    },
+    {
+      "id": "queenstown",
+      "name": { "en": "Queenstown" },
+      "subtitle": "Fiordland, hikes, and a town that needs no car",
+      "intro": "Every big South Island scene — Milford Sound, Doubtful Sound, the Routeburn — reachable by coach or boat tour from a single base.",
+      "coordinates": { "x": 0.5, "y": 0.8 },
+      "scatter": 2,
+      "photos": [ { "src": "img/queenstown-01.jpg" } ],
+      "thingsToDo": [
+        { "title": "Milford Sound coach & cruise day trip", "note": "Full day, ~4-5hrs each way by coach. January is Fiordland's wettest month — pack proper rain gear; cruises run in all weather and the waterfalls are best when it's pouring.", "priceEUR": [110, 150] },
+        { "title": "Doubtful Sound overnight cruise", "note": "Shared cabin, includes 2 meals + kayaking. Far quieter than Milford (~100-150 visitors/day vs 1000+). Dolphins and fur seals are a near-sure thing; Fiordland crested penguins breed July-Nov so January sightings would be a bonus, not the expected highlight.", "priceEUR": [400, 490] },
+        { "title": "Routeburn Track day walk from Glenorchy", "note": "Track itself is free; this covers the shuttle transfer to/from the trailhead. Summer is the best season for this hike — clear paths, longest daylight.", "priceEUR": [30, 45] },
+        { "title": "Arrowtown self-guided visit", "note": "Historic gold-mining town, easy day trip, food and history rather than a paid attraction.", "priceEUR": [0, 0] }
+      ],
+      "stays": [
+        { "tier": "budget", "name": "Ramada Queenstown Central", "priceNightEUR": [150, 200], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Ramada+Queenstown+Central" },
+        { "tier": "middle", "name": "Scenic Suites Queenstown", "priceNightEUR": [230, 290], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Scenic+Suites+Queenstown" },
+        { "tier": "dear", "name": "QT Queenstown", "priceNightEUR": [360, 470], "bookingUrl": "https://www.booking.com/searchresults.html?ss=QT+Queenstown" }
+      ]
+    },
+    {
+      "id": "christchurch",
+      "name": { "en": "Christchurch" },
+      "subtitle": "Closing the loop: city, penguins, and Hector's dolphins",
+      "intro": "The trip's final stretch — Antarctic wildlife without leaving the city, and Akaroa's Hector's dolphins a coach ride away.",
+      "coordinates": { "x": 0.2, "y": 0.5 },
+      "scatter": 3,
+      "photos": [ { "src": "img/christchurch-01.jpg" } ],
+      "thingsToDo": [
+        { "title": "International Antarctic Centre", "note": "Penguins, huskies, storm simulator, Hägglund ride.", "priceEUR": [35, 45] },
+        { "title": "Akaroa day tour with harbour cruise", "note": "Guided day tour including transport (no driving needed) and a Hector's dolphin / seal / penguin harbour cruise. Hector's dolphins are the world's smallest and rarest, endemic to NZ's South Island.", "priceEUR": [140, 190] }
+      ],
+      "stays": [
+        { "tier": "budget", "name": "Grand Riccarton Hotel", "priceNightEUR": [110, 150], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Grand+Riccarton+Hotel+Christchurch" },
+        { "tier": "middle", "name": "Hotel 115", "priceNightEUR": [160, 210], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Hotel+115+Christchurch" },
+        { "tier": "dear", "name": "The Observatory Hotel Christchurch", "priceNightEUR": [240, 310], "bookingUrl": "https://www.booking.com/searchresults.html?ss=The+Observatory+Hotel+Christchurch" }
+      ]
+    }
+  ],
+
+  "itineraries": [
+    {
+      "id": "full-21",
+      "days": 21,
+      "label": "Sydney, Port Stephens, Queenstown & Christchurch",
+      "dateRange": { "start": "2026-12-30", "end": "2027-01-19" },
+      "periodDisplay": "30 Dec – 19 Jan",
+      "flights": 3,
+      "_flightsNote": "Counting the 3 flights taken within the itinerary (into Sydney, into Queenstown, into Christchurch). The return flight home is excluded from this count as a judgement call — 'flights taken during the trip' rather than 'flights taken total'.",
+
+      "stops": [
+        { "locationId": "sydney", "nights": 5, "arriveBy": "flight" },
+        { "locationId": "port-stephens", "nights": 5, "arriveBy": "surface" },
+        { "locationId": "queenstown", "nights": 8, "arriveBy": "flight" },
+        { "locationId": "christchurch", "nights": 2, "arriveBy": "flight" }
+      ]
+    }
+  ],
+
+  "budget": {
+    "currency": "EUR",
+    "levers": {
+      "sleep": {
+        "label": "Where we sleep",
+        "options": [
+          { "id": "cheap", "label": "budget hotels" },
+          { "id": "middle", "label": "mid-range comfort" },
+          { "id": "dear", "label": "the nicest option at each stop" }
+        ],
+        "default": "cheap"
+      },
+      "eat": {
+        "label": "How we eat",
+        "perNight": true,
+        "options": [
+          { "id": "konbini", "label": "self-catering & cheap eats", "eur": [20, 30] },
+          { "id": "mixed", "label": "casual, a few nice dinners", "eur": [40, 60] },
+          { "id": "proper", "label": "eating well most nights", "eur": [75, 110] }
+        ],
+        "default": "mixed"
+      },
+      "move": {
+        "label": "Getting around",
+        "options": [
+          { "id": "coach", "label": "buses & scheduled transfers", "eur": [550, 750] },
+          { "id": "mixed", "label": "coach + a few private transfers", "eur": [950, 1350] },
+          { "id": "private", "label": "private transfers throughout", "eur": [1900, 2600] }
+        ],
+        "default": "coach"
+      }
+    },
+    "fixed": [
+      { "id": "flights", "label": "Flights", "eur": [1900, 2600] }
+    ],
+    "presets": [
+      { "id": "comfort", "label": "Comfortable", "sleep": "cheap", "eat": "mixed", "move": "coach" }
+    ]
+  },
+
+  "cta": {
+    "headline": "So… are you in?",
+    "flightSearch": {
+      "provider": "kayak",
+      "passengers": 4,
+      "cabin": "economy",
+      "showLegs": false,
+      "legs": [
+        { "from": "PAR", "to": "SYD", "dateFrom": "itineraryStart" },
+        { "from": "SYD", "to": "ZQN", "date": "2027-01-09" },
+        { "from": "ZQN", "to": "CHC", "date": "2027-01-17" },
+        { "from": "CHC", "to": "PAR", "dateFrom": "itineraryEnd" }
+      ]
+    }
+  }
+}

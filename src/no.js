@@ -21,7 +21,17 @@ const boot = document.getElementById('boot')
 /* Smaller tiles on a narrow screen — but the message breaks across two rows
    rather than shrinking to fit, so it stays readable. See SCRIPT in wall.js. */
 const narrow = () => window.matchMedia('(max-width: 900px)').matches
-const tile = () => (narrow() ? 74 : 122)
+
+/* Bigger flaps on a bigger screen, so the tile COUNT stays roughly flat. Left
+   at 122px a 4K display builds ~800 tiles, and the cost is per tile — not per
+   pixel — so scaling up is free where scaling out is not. */
+const tile = () => {
+  if(narrow()) return 74
+  const w = window.innerWidth
+  if(w >= 2600) return 190
+  if(w >= 1900) return 150
+  return 122
+}
 /* No fixed row count: the wall fills the viewport, so the message stays where
    it is and rows are simply added above and below it. */
 const wall = new Wall(document.getElementById('wall'), { tile: tile() })

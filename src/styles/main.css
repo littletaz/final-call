@@ -625,6 +625,10 @@ body.has-poi{overflow:hidden}
 
 
 @media(max-width:860px){
+  /* the hero grows to fit the selector below the map */
+  #stage{height:auto;min-height:0}
+  #frame{position:relative}
+
   /* ---- hero: the map gets the room the dataviz used to take ----
      The dataviz is dropped entirely (four numbers can't earn their space on a
      phone), the map is scaled up 20%, and the crop is disabled in map.js so the
@@ -644,22 +648,24 @@ body.has-poi{overflow:hidden}
 
   /* horizontal, stripped back: no panel, no tab, no dashed rule — just the
      three durations, because there isn't room for furniture */
+  /* In flow between the map and the dataviz, not floating over the artwork.
+     Its width comes from the GRID — the same margin the rest of the page uses —
+     rather than the viewport, so it lines up with everything below it. */
   #selector{
-    position:absolute;
-    top:auto;bottom:3%;left:0;right:0;
+    position:static;
     transform:none;
     width:auto;max-width:none;
-    padding:0 6%;
+    margin:5vh var(--grid-margin) 0;
+    padding:14px 0;
     --sel-row:auto;
   }
-  /* The 9-slice frame is drawn for a tall panel; behind one horizontal row its
-     cut corners and pattern stroke read as clutter. A plain plate instead —
-     the tab and the dashed rule go entirely. */
-  .sel-tab,.sel-track{display:none}
-  .sel-panel{
-    border:1px solid #304363;
-    border-image:none;
+  /* The panel is absolute against #selector, which is now full grid width — so
+     its plate covered the map. The plate belongs on .sel-options, which is only
+     as big as the row itself. */
+  .sel-tab,.sel-track,.sel-panel{display:none}
+  .sel-options{
     background:#2F4362;
+    border:1px solid #304363;
     border-radius:4px;
   }
   .sel-options{
@@ -669,7 +675,10 @@ body.has-poi{overflow:hidden}
   #selector button{
     display:flex;flex-direction:column;align-items:center;
     height:auto;gap:1px;
-    padding:6px 4px;
+    position:relative;
+    /* the bottom padding is the date's space — reserved whether it shows or not,
+       so every option is the same height */
+    padding:10px 4px 22px;
   }
   .sel-dot{
     position:static;transform:none;
@@ -680,12 +689,17 @@ body.has-poi{overflow:hidden}
   #selector button[aria-checked="true"] .sel-dot{opacity:1;background:var(--seal)}
   .sel-num{font-size:30px;line-height:1}
   .sel-lbl{font-size:9px;letter-spacing:.14em;opacity:.7}
+  /* Absolute, and its space reserved by the button's padding. In flow it went
+     from height:0 to height:auto when selected, which grew the button and
+     shifted the numeral, the label and the dot with it. */
   .sel-period{
-    position:static;opacity:0;height:0;overflow:hidden;
+    position:absolute;left:0;right:0;bottom:6px;
+    height:auto;overflow:visible;
+    text-align:center;
+    font-size:9px;
+    opacity:0;
   }
-  #selector button[aria-checked="true"] .sel-period{
-    opacity:.7;height:auto;font-size:9px;margin-top:2px;
-  }
+  #selector button[aria-checked="true"] .sel-period{opacity:.7}
 
   /* ---- the poi card ---- */
   /* A sheet across the bottom, not a floating card: at this width a card with
@@ -718,7 +732,7 @@ body.has-poi{overflow:hidden}
   .hotel .amount{font-size:12px}
 
   /* ---- footer ---- */
-  .f-costs{padding:8vh 0 9vh}
+  .f-costs{padding:0 0 9vh}
   .f-inner{padding-inline:6%}
   #stats{margin-bottom:8vh;column-gap:2%}
   #stats .val{font-size:clamp(28px,9vw,52px)}
@@ -932,7 +946,7 @@ body.is-calibrating .poi{cursor:move}
   #grid-toggle{right:auto;left:14px}
   #calib-toggle{right:auto;left:98px}
   /* ---- footer ---- */
-  .f-costs{padding:8vh 0 9vh}
+  .f-costs{padding:0 0 9vh}
   .f-inner{padding-inline:6%}
   #stats{margin-bottom:8vh;column-gap:2%}
   #stats .val{font-size:clamp(28px,9vw,52px)}
@@ -949,3 +963,16 @@ body.is-calibrating .poi{cursor:move}
 }
 
 
+
+/* ============================================================
+   MISSING ART
+   Anything that failed to load is swapped for a hatched box naming
+   the file (see js/placeholder.js). The outline is here so it reads
+   as deliberately absent rather than badly cropped.
+   ============================================================ */
+img.is-missing{
+  outline:2px dashed var(--seal);
+  outline-offset:-2px;
+  object-fit:contain !important;
+  background:#1E222B;
+}

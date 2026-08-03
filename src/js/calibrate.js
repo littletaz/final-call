@@ -8,7 +8,10 @@ import { MapView } from './map.js'
    into the data files. None of this is needed at runtime once the
    coordinates are committed.
    ============================================================ */
-const STORE_KEY = 'japon-calib-v6'
+/* Scoped PER TRIP. One shared key meant a calibration saved while working on
+   Japan was restored over whatever trip you opened next — silently moving its
+   pins, or crashing on a trip with no inset to assign into. */
+const storeKey = () => `final-call-calib-v7:${TRIP.id ?? 'unknown'}`
 const clamp = v => Math.max(0, Math.min(1, v))
 
 export const Calib = {
@@ -31,7 +34,7 @@ export const Calib = {
     /* seed from the data files, then let any saved session win */
     for(const l of TRIP.data.locations)
       this.coords[l.id] = { x:l.coordinates.x, y:l.coordinates.y }
-    this.inset = { ...TRIP.data.map.inset }
+    this.inset = TRIP.data.map.inset ? { ...TRIP.data.map.inset } : null
     this.restore()
 
     this.el.toggle.addEventListener('click', () => this.toggle())
@@ -52,7 +55,8 @@ export const Calib = {
       const c = this.coords[l.id]
       if(c){ l.coordinates.x = c.x; l.coordinates.y = c.y }
     }
-    if(this.inset) Object.assign(TRIP.data.map.inset, this.inset)
+    /* Not every trip has an inset — only assign into one that exists. */
+    if(this.inset && TRIP.data.map.inset) Object.assign(TRIP.data.map.inset, this.inset)
   },
 
   toggle(){
@@ -184,6 +188,7 @@ export const Calib = {
     const act = e.target.dataset.act
     if(!act) return
     const S = 0.004, i = this.inset
+    if(!TRIP.data.map.inset) return      /* nothing to nudge */
     if(act === 'inset-left')    i.x -= S
     if(act === 'inset-right')   i.x += S
     if(act === 'inset-up')      i.y -= S
@@ -198,7 +203,7 @@ export const Calib = {
       return
     }
     if(act === 'reset'){
-      localStorage.removeItem(STORE_KEY)
+      localStorage.removeItem(storeKey())
       location.reload()
       return
     }
@@ -217,7 +222,11 @@ export const Calib = {
       _thenReset: 'click RESET below, or these saved values keep overriding the file',
       map: {
         baseSize: { ...TRIP.data.map.baseSize },
-        inset: { ...this.inset, y: +this.inset.y.toFixed(4) },
+        /* omitted entirely on a trip with no inset, rather than exported as an
+           empty object the apply script would then write back */
+        ...(TRIP.data.map.inset
+          ? { inset: { ...this.inset, y: +Number(this.inset.y ?? 0).toFixed(4) } }
+          : {}),
         /* waves are placed the same way pins are, so they travel together */
         waves: (TRIP.data.map.waves ?? []).map(w => ({
           file: w.file, x: w.x, y: w.y,
@@ -231,12 +240,12 @@ export const Calib = {
   },
 
   save(){
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify({ coords:this.coords, inset:this.inset, waves:(TRIP.data.map.waves ?? []) })) }catch(e){}
+    try{ localStorage.setItem(storeKey(), JSON.stringify({ coords:this.coords, inset:this.inset, waves:(TRIP.data.map.waves ?? []) })) }catch(e){}
   },
 
   restore(){
     try{
-      const s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null')
+      const s = JSON.parse(localStorage.getItem(storeKey()) || 'null')
       if(s?.coords) Object.assign(this.coords, s.coords)
       if(s?.inset)  this.inset = s.inset
     }catch(e){}
