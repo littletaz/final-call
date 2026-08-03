@@ -3,16 +3,48 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Final Call</title>
-<meta name="robots" content="noindex">
+<title>Final Call — Departures</title>
+<meta name="description" content="Illustrated trip itineraries.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed:wght@600&display=swap" rel="stylesheet">
+<style>
+  /* Inline, so the page is black before any stylesheet arrives — the styles are
+     imported by a JS module, which leaves a moment with unstyled markup. */
+  html,body{margin:0;background:#0A0A0A}
+  #boot{
+    position:fixed;inset:0;z-index:999;
+    display:flex;align-items:center;justify-content:center;
+    background:#0A0A0A;
+    font:600 11px/1 ui-sans-serif,system-ui,sans-serif;
+    letter-spacing:.42em;color:rgba(255,255,255,.3);
+    transition:opacity .5s ease;
+  }
+  #boot.hide{opacity:0;pointer-events:none}
+</style>
 </head>
-<body class="l-body">
-  <!-- Placeholder. The departures-board idea goes here. 
-  <main class="l-empty">
-    <p class="l-empty-label">FINAL CALL</p>
-    <a class="l-empty-link" href="./trip.html?trip=japon-2026">Japon &amp; Hong Kong &rarr;</a>
-  </main>
-  -->
-  <script type="module" src="/src/landing.js"></script>
+<body class="dep-page">
+
+<div id="boot">LOADING&hellip;</div>
+
+<header class="dep-head">
+  <span class="dep-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M2.5 19h19v1.6h-19V19Z" fill="currentColor"/>
+      <path d="M21.4 9.3a1.3 1.3 0 0 0-1.6-.9l-5 1.35-6.3-5.9-1.5.4 3.8 6.6-4.5 1.2-1.8-1.4-1.15.3.95 3.3.05.2 1.1 1.9 15.05-4.05a1.3 1.3 0 0 0 .9-1.6l-.05-1.25Z" fill="currentColor"/>
+    </svg>
+  </span>
+  <h1 class="dep-title">DEPARTURES</h1>
+</header>
+
+<div class="dep-labels" aria-hidden="true">
+  <span class="dep-label dep-label--time">TIME</span>
+  <span class="dep-label dep-label--dest">DESTINATION</span>
+  <span class="dep-label dep-label--status">STATUS</span>
+</div>
+
+<main class="dep-board" id="board" aria-label="Departures"></main>
+
+<script type="module" src="/src/landing.js"></script>
 </body>
 </html>

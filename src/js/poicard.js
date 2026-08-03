@@ -12,10 +12,13 @@ import { TRIP, tripAsset, stayTotal, stopDates, eur } from './data.js'
    ============================================================ */
 
 const PHOTOS = 2          /* how many show below the card */
-/* Inside the card at the top, angled and cropped by its edges — so they read
-   as prints tucked under the header rather than decoration floating outside.
-   `x` is how far along, `r` the angle. */
-const TILT = [{ r: -4, x: -8 }, { r: 5, x: 30 }]
+/* Pinned to the bottom of the card and cropped by it — the wrapper's overflow
+   does the cropping, so the prints can hang past every edge and simply
+   disappear. Placed by hand, front to back. */
+const TILT = [
+  { r: 13,  x: -14, y: -21, z: 3 },
+  { r: -15, x: 34,  y: 10,  z: 2 },
+]
 
 const fmt = d => d?.toLocaleDateString('en-GB', { day:'numeric', month:'short' }) ?? ''
 
@@ -71,8 +74,9 @@ export const PoiCard = {
       : `${stop.nights} night${stop.nights === 1 ? '' : 's'}`
 
     this.photos.innerHTML = (loc.photos ?? []).slice(0, PHOTOS).map((ph, i) => {
-      const t = TILT[i] ?? { r: 0, x: 0 }
-      return `<figure class="pc-photo" style="--tilt:${t.r}deg;left:${t.x}%;z-index:${i + 1}">
+      const t = TILT[i] ?? { r: 0, x: 0, y: 0, z: 1 }
+      return `<figure class="pc-photo" style="
+              --tilt:${t.r}deg;left:${t.x}%;bottom:${t.y}%;z-index:${t.z}">
         ${ph.src ? `<img src="${tripAsset(ph.src)}" alt="" loading="lazy">` : ''}
       </figure>`
     }).join('')

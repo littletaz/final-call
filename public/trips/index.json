@@ -1,5 +1,5 @@
 {
-  "_readme": "Registry of available trips. Each `file` lives in its own folder and every asset path inside it is relative to that folder — so adding a trip is dropping in one directory, and nothing can collide between trips.",
+  "_readme": "Registry of trips. Each `file` lives in its own folder and every asset path inside it is relative to that folder, so adding a trip is dropping in one directory. The departures board on the landing page uses `month`, `boardLabel` (short — one word reads best in the column) and `status` (boarding | ontime | closed).",
   "defaultTripId": "japon-2026",
   "trips": [
     {
@@ -7,7 +7,12 @@
       "title": "Japon & Hong Kong",
       "file": "trips/japon-2026/trip.json",
       "period": "29 Oct – 18 Nov 2026",
-      "cover": "trips/japon-2026/map.png"
+      "cover": "trips/japon-2026/map.png",
+      "month": "OCT",
+      "status": "boarding",
+      "boardLabel": "JAPAN"
     }
-  ]
+  ],
+  "boardRows": 9,
+  "_boardRowsNote": "How many rows the departures board shows in total. Any beyond the registered trips read as ??? / UNDEFINED — a board with room for more is the point, so keep this comfortably above the trip count."
 }

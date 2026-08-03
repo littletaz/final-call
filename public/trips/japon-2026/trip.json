@@ -17,10 +17,9 @@
       "id": "hongkong-inset",
       "src": "map-hk.png",
       "forLocationId": "hongkong",
-      "x": 0.1,
-      "y": 0.2954,
-      "w": 0.18,
-      "_yNote": "A fraction of the map image. cropBottom is 0, so this is also the rendered top."
+      "x": 0.027,
+      "y": 0.3,
+      "w": 0.155
     },
     "_calibrated": true,
     "backgroundColor": "#596D88",
@@ -48,42 +47,42 @@
       {
         "file": "clouds/03.png",
         "x": -24,
-        "y": 41.0,
+        "y": 41,
         "dur": 104,
         "travel": 142
       },
       {
         "file": "clouds/04.png",
         "x": -13,
-        "y": 15.0,
+        "y": 15,
         "dur": 132,
         "travel": 130
       },
       {
         "file": "clouds/05.png",
         "x": -20,
-        "y": 29.0,
+        "y": 29,
         "dur": 110,
         "travel": 136
       },
       {
         "file": "clouds/06.png",
         "x": -28,
-        "y": 47.0,
+        "y": 47,
         "dur": 142,
         "travel": 148
       },
       {
         "file": "clouds/07.png",
         "x": -15,
-        "y": 56.0,
+        "y": 56,
         "dur": 100,
         "travel": 130
       },
       {
         "file": "clouds/08.png",
         "x": -18,
-        "y": 62.0,
+        "y": 62,
         "dur": 124,
         "travel": 134
       }
@@ -103,7 +102,7 @@
         "file": "waves/wave-0002.png",
         "x": 0.7,
         "y": 0.327,
-        "dur": 5.0,
+        "dur": 5,
         "dy": 13,
         "dx": -7
       },
@@ -148,7 +147,7 @@
         "dx": 6
       }
     ],
-    "_remapNote": "Re-canvassed from 3840x3840 to 3840x2760 with the crop removed. Both are 3840 wide and the artwork wasn't redrawn, so a pixel row is unchanged and y simply scales by 3840/2760 = 1.3913. x is untouched. Checked against the landmass before applying, but worth a pass in the CALIBRATE panel."
+    "_calibratedNote": "Placed by hand in the CALIBRATE panel against the 3840x2760 artwork, so these are measured rather than derived. x/y are fractions of the map image; the Hong Kong pin is a fraction of the inset box instead."
   },
   "artDirection": {
     "id": "sumi-e-ink-wash",
@@ -343,9 +342,8 @@
       "epithet": "THE GATEWAY",
       "subtitle": "Kowloon · HK Island · Lantau",
       "coordinates": {
-        "x": 0.508,
-        "y": 0.5163,
-        "onInset": "hongkong-inset"
+        "x": 0.1921,
+        "y": 0.4337
       },
       "tags": [
         "city",
@@ -458,7 +456,7 @@
       "epithet": "THE DEEP ALPS",
       "subtitle": "Takayama · Kamikochi · Shin-Hotaka",
       "coordinates": {
-        "x": 0.4769,
+        "x": 0.4832,
         "y": 0.6345
       },
       "tags": [
@@ -577,8 +575,8 @@
       "epithet": "THE GOLD COAST",
       "subtitle": "Kenroku-en · Higashi Chaya · Omicho",
       "coordinates": {
-        "x": 0.4547,
-        "y": 0.5897
+        "x": 0.4552,
+        "y": 0.6104
       },
       "tags": [
         "city",
@@ -687,8 +685,8 @@
       "epithet": "THE QUIET SPUR",
       "subtitle": "Wakura Onsen · Nanao",
       "coordinates": {
-        "x": 0.4757,
-        "y": 0.5573
+        "x": 0.4676,
+        "y": 0.5556
       },
       "tags": [
         "coast",
@@ -781,8 +779,8 @@
       "epithet": "THE BACK ROADS",
       "subtitle": "Ohara · Kurama · Arashiyama",
       "coordinates": {
-        "x": 0.4372,
-        "y": 0.68
+        "x": 0.4363,
+        "y": 0.6779
       },
       "tags": [
         "temples",
@@ -896,8 +894,8 @@
       "epithet": "THE FAR SIDE",
       "subtitle": "Tottori Dunes · Mt. Daisen",
       "coordinates": {
-        "x": 0.3863,
-        "y": 0.6792
+        "x": 0.3438,
+        "y": 0.6715
       },
       "tags": [
         "coast",
@@ -994,8 +992,8 @@
       "epithet": "THE ART ISLAND",
       "subtitle": "Chichu · Benesse · Art House Project",
       "coordinates": {
-        "x": 0.3787,
-        "y": 0.7189
+        "x": 0.3877,
+        "y": 0.7118
       },
       "tags": [
         "islands",
@@ -1094,8 +1092,8 @@
       "epithet": "THE BRIDGE RIDE",
       "subtitle": "Onomichi · Imabari · the islands",
       "coordinates": {
-        "x": 0.3507,
-        "y": 0.7279
+        "x": 0.3594,
+        "y": 0.7246
       },
       "tags": [
         "islands",
@@ -1197,8 +1195,8 @@
       "epithet": "THE LANDING",
       "subtitle": "Ryogoku · Meiji Jingu Gaien · Shibuya",
       "coordinates": {
-        "x": 0.5582,
-        "y": 0.6532
+        "x": 0.5575,
+        "y": 0.6437
       },
       "tags": [
         "city",
@@ -1300,8 +1298,8 @@
       "epithet": "THE MOUNTAIN MONASTERY",
       "subtitle": "Danjo Garan · Okunoin · Shukubo",
       "coordinates": {
-        "x": 0.436,
-        "y": 0.7182
+        "x": 0.4306,
+        "y": 0.7262
       },
       "tags": [
         "mountains",
@@ -1407,8 +1405,8 @@
       "epithet": "THE PILGRIM'S TRAIL",
       "subtitle": "Yunomine Onsen · Hongu Taisha · Nakahechi",
       "coordinates": {
-        "x": 0.4424,
-        "y": 0.7116
+        "x": 0.4462,
+        "y": 0.7101
       },
       "tags": [
         "mountains",
@@ -1520,8 +1518,8 @@
       "epithet": "THE SACRED CASCADE",
       "subtitle": "Nachi Taisha · Seiganto-ji · Japan's tallest waterfall",
       "coordinates": {
-        "x": 0.4489,
-        "y": 0.7368
+        "x": 0.452,
+        "y": 0.7432
       },
       "tags": [
         "nature",
@@ -1617,8 +1615,8 @@
       "epithet": "THE MERCHANT CITY",
       "subtitle": "Dotonbori · Kuromon Market · Osaka Castle",
       "coordinates": {
-        "x": 0.4278,
-        "y": 0.7043
+        "x": 0.43,
+        "y": 0.7013
       },
       "tags": [
         "city",

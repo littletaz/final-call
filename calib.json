@@ -1,0 +1,113 @@
+{
+  "_target": "public/trips/japon-2026/trip.json",
+  "_apply": "npm run calibrate:apply -- public/trips/japon-2026/trip.json calib.json",
+  "_thenReset": "click RESET below, or these saved values keep overriding the file",
+  "map": {
+    "baseSize": {
+      "w": 3840,
+      "h": 2760
+    },
+    "inset": {
+      "id": "hongkong-inset",
+      "src": "assets/map/map-hk.png",
+      "forLocationId": "hongkong",
+      "x": 0.02699999999999996,
+      "y": 0.3,
+      "w": 0.155
+    },
+    "waves": []
+  },
+  "locations": [
+    {
+      "id": "hongkong",
+      "coordinates": {
+        "x": 0.508,
+        "y": 0.5163
+      }
+    },
+    {
+      "id": "japan-alps",
+      "coordinates": {
+        "x": 0.4832,
+        "y": 0.6345
+      }
+    },
+    {
+      "id": "kanazawa",
+      "coordinates": {
+        "x": 0.4552,
+        "y": 0.6104
+      }
+    },
+    {
+      "id": "noto",
+      "coordinates": {
+        "x": 0.4676,
+        "y": 0.5556
+      }
+    },
+    {
+      "id": "kyoto-edges",
+      "coordinates": {
+        "x": 0.4363,
+        "y": 0.6779
+      }
+    },
+    {
+      "id": "sanin-coast",
+      "coordinates": {
+        "x": 0.3438,
+        "y": 0.6715
+      }
+    },
+    {
+      "id": "naoshima",
+      "coordinates": {
+        "x": 0.3877,
+        "y": 0.7118
+      }
+    },
+    {
+      "id": "shimanami",
+      "coordinates": {
+        "x": 0.3594,
+        "y": 0.7246
+      }
+    },
+    {
+      "id": "tokyo",
+      "coordinates": {
+        "x": 0.5575,
+        "y": 0.6437
+      }
+    },
+    {
+      "id": "koyasan",
+      "coordinates": {
+        "x": 0.4306,
+        "y": 0.7262
+      }
+    },
+    {
+      "id": "kumano-kodo",
+      "coordinates": {
+        "x": 0.4462,
+        "y": 0.7101
+      }
+    },
+    {
+      "id": "nachi",
+      "coordinates": {
+        "x": 0.452,
+        "y": 0.7432
+      }
+    },
+    {
+      "id": "osaka",
+      "coordinates": {
+        "x": 0.43,
+        "y": 0.7013
+      }
+    }
+  ]
+}

@@ -408,52 +408,44 @@ body.has-poi{overflow:hidden}
 }
 #poi-card.is-open{opacity:1;pointer-events:auto}
 
+/* The wrapper crops everything. That's the whole trick: the prints are
+   absolutely placed against it and can hang past any edge, and overflow:hidden
+   decides what's seen — rather than me positioning them to line up with an
+   edge I can't see. */
 .pc-body{
   position:relative;
   height:100%;
-  display:flex;flex-direction:column;
   background:#fff;color:#111;
   border-radius:3px;
-  overflow:hidden;                 /* this is what crops the prints */
+  overflow:hidden;
   box-shadow:0 18px 50px rgba(0,0,0,.28);
 }
 
-/* The prints sit at the TOP, inside the card, cropped by its rounded edges —
-   they're part of it, not something behind it. */
+/* the words, from the top */
+.pc-content{
+  position:relative;z-index:2;
+  margin-top:80px;
+  padding:0 24px;
+}
+
+/* the prints, along the bottom */
 .pc-photos{
-  position:relative;
-  flex:1 1 auto;min-height:0;
-  overflow:hidden;
-  background:#F4F4F0;
+  position:absolute;z-index:1;
+  left:0;right:0;bottom:0;
+  height:42%;
+  pointer-events:none;
 }
 .pc-photo{
-  position:absolute;top:-6%;
-  width:74%;margin:0;
+  /* left, bottom, rotation and depth all come from the markup — see TILT in
+     js/poicard.js. Only the size and frame live here. */
+  position:absolute;
+  width:78%;margin:0;
   aspect-ratio:3/2;
   transform:rotate(var(--tilt, 0deg));
-  border:8px solid #fff;background:#E9E9E9;
-  box-shadow:0 6px 18px rgba(0,0,0,.16);
+  border:10px solid #F7F7F7;
   overflow:hidden;
 }
 .pc-photo img{display:block;width:100%;height:100%;object-fit:cover}
-
-/* the words, below the prints */
-.pc-content{
-  flex:0 0 auto;
-  padding:22px 24px 24px;
-}
-
-.pc-close{
-  position:absolute;top:12px;right:12px;z-index:10;
-  width:32px;height:32px;padding:0;
-  display:flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,.86);border:0;border-radius:2px;
-  color:#111;cursor:pointer;
-  transition:background .2s;
-}
-.pc-close:hover{background:#fff}
-.pc-close:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
-.pc-close svg{display:block}
 
 .pc-title{
   font-family:var(--sans);font-weight:500;
@@ -690,9 +682,11 @@ body.has-poi{overflow:hidden}
     border-radius:16px 16px 0 0;
     box-shadow:0 -12px 40px rgba(0,0,0,.3);
   }
-  .pc-photos{flex:0 0 auto;height:24vh}
-  .pc-photo{width:56%;top:-4%}
-  .pc-content{padding:20px 6% max(22px, env(safe-area-inset-bottom))}
+  /* on the sheet the prints are in flow, so it can never exceed the viewport */
+  .pc-photos{position:relative;height:24vh;margin-top:18px}
+  /* bottom comes from the markup and would win anyway — only the size differs */
+  .pc-photo{width:62%}
+  .pc-content{margin-top:44px;padding:0 6%}
   .pc-title{font-size:26px;margin-bottom:16px}
   .hotel{padding:10px 14px 12px}
   .hotel .name{font-size:15px}

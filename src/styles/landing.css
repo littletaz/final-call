@@ -1,16 +1,91 @@
-.l-body{
+/* ============================================================
+   LANDING — a departures board
+   The board is the page. Rows are flap boards of 38 slots; the
+   column labels sit above them at matching offsets, positioned
+   in the same slot units so they can't drift apart.
+   ============================================================ */
+
+.dep-page{
   margin:0;min-height:100vh;
   background:#0A0A0A;color:#fff;
-  font-family:var(--sans);
+  font-family:var(--sans, system-ui);
+  /* one flap width, used to place the labels over their columns */
+  --dep-slot:calc(var(--dep-tile, 46px) * .689 - 2px);
+  padding:0 0 12vh;
+}
+
+/* ---- header ---- */
+.dep-head{
+  display:flex;align-items:center;gap:26px;
+  padding:7vh var(--dep-pad, 6%) 0;
+}
+.dep-icon{
+  width:clamp(52px,4.6vw,86px);aspect-ratio:1;
+  flex:none;
   display:flex;align-items:center;justify-content:center;
+  background:#F5D311;color:#000;
+  border-radius:clamp(8px,.8vw,16px);
 }
-.l-empty{text-align:center}
-.l-empty-label{
-  margin:0 0 18px;font-weight:700;
-  font-size:10px;letter-spacing:.42em;color:rgba(255,255,255,.3);
+.dep-icon svg{width:66%;height:66%;display:block}
+.dep-title{
+  margin:0;font-weight:300;
+  font-size:clamp(38px,5.2vw,96px);
+  letter-spacing:-.01em;line-height:1;
 }
-.l-empty-link{
-  font-size:clamp(24px,3vw,40px);font-weight:500;letter-spacing:-.02em;
-  color:#fff;text-decoration:none;
+
+/* ---- column labels ---- */
+.dep-labels{
+  position:relative;
+  margin:8vh var(--dep-pad, 6%) 14px;
+  height:1.2em;
+  font-size:clamp(11px,1.05vw,19px);
+  color:rgba(255,255,255,.62);
 }
-.l-empty-link:hover{color:var(--seal)}
+.dep-label{position:absolute;top:0;white-space:nowrap}
+/* the same slot offsets the rows use — see AT in landing.js */
+.dep-label--time  {left:calc(var(--dep-slot) * 1)}
+.dep-label--dest  {left:calc(var(--dep-slot) * 6)}
+.dep-label--status{left:calc(var(--dep-slot) * 19)}
+
+/* ---- the board ---- */
+.dep-board{
+  margin:0 var(--dep-pad, 6%);
+  border:1px solid rgba(255,255,255,.16);
+  background:#000;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.dep-board::-webkit-scrollbar{display:none}
+
+.dep-row{
+  --flap-h:var(--dep-tile, 46px);
+  --flap-gap:-2px;
+  display:flex;
+  margin-top:-2px;
+  text-decoration:none;color:inherit;
+  transition:filter .2s;
+}
+.dep-row:first-child{margin-top:0}
+.dep-row:not(.is-empty){cursor:pointer}
+.dep-row:not(.is-empty):hover{filter:brightness(1.25)}
+.dep-row:focus-visible{outline:2px solid #F5D311;outline-offset:-2px}
+
+/* ---- status colours, applied to a slot range by tint() ---- */
+.dep-row .flap-tile.is-boarding .flap-glyph{color:#4BC24B}
+.dep-row .flap-tile.is-ontime   .flap-glyph{color:#E3E34A}
+.dep-row .flap-tile.is-closed   .flap-glyph{color:#D6402C}
+.dep-row .flap-tile.is-none     .flap-glyph{color:#4A4A4A}
+/* an empty row is unlit throughout, not just in the status column */
+.dep-row.is-empty .flap-glyph{color:#3C3C3C}
+
+/* Tile size is set here rather than in JS: the board scrolls sideways if it
+   doesn't fit, so the flaps keep their proportions instead of being squeezed. */
+.dep-page{--dep-tile:34px}
+@media(min-width:1100px){ .dep-page{--dep-tile:44px} }
+@media(min-width:1600px){ .dep-page{--dep-tile:58px} }
+@media(min-width:2200px){ .dep-page{--dep-tile:74px} }
+@media(max-width:860px){
+  .dep-page{--dep-tile:26px;--dep-pad:4%}
+  .dep-head{gap:16px;padding-top:5vh}
+  .dep-labels{margin-top:5vh}
+}

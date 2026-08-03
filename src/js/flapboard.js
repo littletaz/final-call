@@ -21,6 +21,9 @@
    `set()` takes an `onSettle` callback and records `settleMs`, so a
    sequence can wait for the board to actually land.
 
+   `tint(from, to, class)` marks a slot range, for boards where
+   one field needs a different colour from the rest.
+
    `glyphs` maps a character to markup, so a slot can hold an icon:
      Flapboard.mount(el, 'FUCK*YOU!', { glyphs: { '*': ICON_SVG } })
    The icon flips like any other flap, splitting across the hinge.
@@ -259,6 +262,16 @@ class Board {
 
   random(){
     return this.charset[Math.floor(Math.random() * this.charset.length)]
+  }
+
+  /* Colour a range of slots. A departures row is one board carrying three
+     fields, and the status has to read green or red while the rest stays white
+     — so the colour belongs to a slot range, not the whole board. */
+  tint(from, to, className){
+    this.tiles.forEach((t, i) => {
+      t.tile.classList.toggle(className, i >= from && i < to)
+    })
+    return this
   }
 
   /* Occasional single flaps, long after the board has settled — a real board
