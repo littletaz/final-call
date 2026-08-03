@@ -7,11 +7,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   server: { port: 5173, open: true },
   build: {
-    /* Built into docs/ rather than dist/, and COMMITTED. GitHub Pages set to
-       "Deploy from a branch" serves the repo as-is, so the built output has to
-       be in it — the source HTML points at /src/main.js, which only exists
-       before a build. Run `npm run build` and commit docs/ before pushing. */
-    outDir: 'docs',
+    /* dist/, gitignored. The build happens in GitHub Actions and is published
+       straight to Pages, so nothing built ever enters the repo — which is why
+       there's no duplicate copy of public/ to keep in sync.
+       The workflow uploads this exact path; if you change it, change
+       .github/workflows/deploy.yml too. */
+    outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
       // index.html is the LANDING, so the site root opens it. A trip lives at
