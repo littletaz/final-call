@@ -22,7 +22,9 @@ const boot = document.getElementById('boot')
    rather than shrinking to fit, so it stays readable. See SCRIPT in wall.js. */
 const narrow = () => window.matchMedia('(max-width: 900px)').matches
 const tile = () => (narrow() ? 74 : 122)
-const wall = new Wall(document.getElementById('wall'), { rows: 5, tile: tile() })
+/* No fixed row count: the wall fills the viewport, so the message stays where
+   it is and rows are simply added above and below it. */
+const wall = new Wall(document.getElementById('wall'), { tile: tile() })
 
 /* Laid out silently behind the overlay, so the tiles are in place and styled
    before anything is visible. The animation only starts once the overlay has

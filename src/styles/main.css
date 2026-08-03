@@ -380,48 +380,81 @@ body::after{
 }
 #poi-overlay.is-open{opacity:1;pointer-events:auto}
 
-/* the page can't move while the sheet is up */
+/* The page can't move while the card is up. `scrollbar-gutter: stable` on html
+   is what stops the fix being worse than the bug: overflow:hidden removes the
+   scrollbar, the viewport widens by its width, and everything on the page
+   shifts. Reserving the gutter permanently means locking changes nothing. */
+html{scrollbar-gutter:stable}
 body.has-poi{overflow:hidden}
 
+/* Fixed heights, not a percentage of the viewport: the card holds a title,
+   three hotels and a date, and that content wants a set amount of room. A vh
+   height makes it gangly on a tall screen and cramped on a short one. */
 #poi-card{
-  --pc-overhang:0%;               /* photos are off — 42% when they return */
   position:fixed;
-  right:var(--grid-margin);bottom:60px;
+  right:var(--grid-margin);
+  top:50%;
+  transform:translateY(-50%);
   z-index:960;
   width:clamp(300px, 26vw, 420px);
-  padding-top:var(--pc-overhang);
-  opacity:0;transform:translateY(14px) scale(.98);
-  transition:opacity .28s ease, transform .28s cubic-bezier(.3,1.1,.4,1);
+  height:600px;                    /* 1440-ish */
+  max-height:calc(100vh - 60px);
+  opacity:0;
   pointer-events:none;
+  transition:opacity .28s ease;
 }
-#poi-card.is-open{opacity:1;transform:none;pointer-events:auto}
-
-/* The prints sit ABOVE the card and are cropped by its top edge — they're
-   pinned to it rather than floating behind, which is what makes the card read
-   as something lying on top of them. */
-.pc-photos{
-  position:absolute;
-  top:0;left:-6%;right:-6%;
-  height:calc(var(--pc-overhang) + 12%);
-  pointer-events:none;
+@media(min-width:1600px){
+  #poi-card{height:775px}
 }
-.pc-photo{
-  position:absolute;top:0;
-  width:76%;margin:0;
-  transform:rotate(var(--tilt, 0deg));
-  transform-origin:bottom center;
-  border:7px solid #E9E9E9;background:#E9E9E9;
-  overflow:hidden;
-}
-.pc-photo img{display:block;width:100%;height:auto}
+#poi-card.is-open{opacity:1;pointer-events:auto}
 
 .pc-body{
-  position:relative;z-index:5;      /* crops the prints */
+  position:relative;
+  height:100%;
+  display:flex;flex-direction:column;
   background:#fff;color:#111;
   border-radius:3px;
-  padding:26px 24px 22px;
+  overflow:hidden;                 /* this is what crops the prints */
   box-shadow:0 18px 50px rgba(0,0,0,.28);
 }
+
+/* The prints sit at the TOP, inside the card, cropped by its rounded edges —
+   they're part of it, not something behind it. */
+.pc-photos{
+  position:relative;
+  flex:1 1 auto;min-height:0;
+  overflow:hidden;
+  background:#F4F4F0;
+}
+.pc-photo{
+  position:absolute;top:-6%;
+  width:74%;margin:0;
+  aspect-ratio:3/2;
+  transform:rotate(var(--tilt, 0deg));
+  border:8px solid #fff;background:#E9E9E9;
+  box-shadow:0 6px 18px rgba(0,0,0,.16);
+  overflow:hidden;
+}
+.pc-photo img{display:block;width:100%;height:100%;object-fit:cover}
+
+/* the words, below the prints */
+.pc-content{
+  flex:0 0 auto;
+  padding:22px 24px 24px;
+}
+
+.pc-close{
+  position:absolute;top:12px;right:12px;z-index:10;
+  width:32px;height:32px;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.86);border:0;border-radius:2px;
+  color:#111;cursor:pointer;
+  transition:background .2s;
+}
+.pc-close:hover{background:#fff}
+.pc-close:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
+.pc-close svg{display:block}
+
 .pc-title{
   font-family:var(--sans);font-weight:500;
   font-size:clamp(26px,2.4vw,38px);letter-spacing:-.03em;line-height:1;
@@ -640,20 +673,27 @@ body.has-poi{overflow:hidden}
   /* ---- the poi card ---- */
   /* A sheet across the bottom, not a floating card: at this width a card with
      margins is just a smaller card, and the page behind it is locked anyway. */
+  /* A sheet across the bottom, with the prints inside it rather than hanging
+     out — so it reads taller and can never exceed the viewport. */
+  /* a sheet across the bottom, prints on top, words below — same order as the
+     desktop card, just filling the width and capped at the viewport */
   #poi-card{
-    left:0;right:0;bottom:0;
-    width:auto;max-height:80vh;
-    padding-top:0;
+    left:0;right:0;bottom:0;top:auto;
+    width:auto;height:auto;
+    max-height:100vh;max-height:100dvh;
+    transform:translateY(100%);
+    transition:opacity .28s ease, transform .3s cubic-bezier(.3,1,.4,1);
   }
+  #poi-card.is-open{transform:translateY(0)}
   .pc-body{
+    height:auto;
     border-radius:16px 16px 0 0;
-    padding:22px 6% max(22px, env(safe-area-inset-bottom));
-    max-height:80vh;overflow-y:auto;
     box-shadow:0 -12px 40px rgba(0,0,0,.3);
   }
+  .pc-photos{flex:0 0 auto;height:24vh}
+  .pc-photo{width:56%;top:-4%}
+  .pc-content{padding:20px 6% max(22px, env(safe-area-inset-bottom))}
   .pc-title{font-size:26px;margin-bottom:16px}
-  #poi-card.is-open{transform:none}
-  #poi-card{transform:translateY(100%)}
   .hotel{padding:10px 14px 12px}
   .hotel .name{font-size:15px}
   .hotel .amount{font-size:12px}

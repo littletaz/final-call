@@ -18,10 +18,7 @@
   --flap-gap:-2px;                  /* housings butt into each other */
   margin-top:-2px;
   flex:none;
-  /* scenery sits back, so the message reads as the only thing lit */
-  opacity:.5;
 }
-.wall-row.is-message{opacity:1}
 
 /* the message row's hinge is a touch heavier — on a real board the line
    you're looking for is the one catching the light */
@@ -31,7 +28,7 @@
   box-shadow:0 0 calc(var(--flap-h) * .06) rgba(0,0,0,.9);
 }
 .wall-row.is-message .flap-glyph{color:#fff}
-.wall-row:not(.is-message) .flap-glyph{color:#9A9A9A}
+.wall-row:not(.is-message) .flap-glyph{color:#fff}
 
 /* the vignette, as a 1.2 KB image rather than a gradient: the artwork is a
    blurred rectangle, flatter along the sides than a radial-gradient can be */

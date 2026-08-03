@@ -11,13 +11,11 @@ import { TRIP, tripAsset, stayTotal, stopDates, eur } from './data.js'
    edge, rather than being the content.
    ============================================================ */
 
-/* Photos are off. They're meant to sit above the card, cropped by its top
-   edge, but the placement was never right and I can't see the result — so
-   rather than keep guessing, set this to 2 and re-check the .pc-photo rules
-   in main.css when you want them back. */
-const PHOTOS = 0
-/* back to front: angle, and how far along the top edge they sit */
-const TILT = [{ r: 4, x: 14 }, { r: -5, x: -2 }]
+const PHOTOS = 2          /* how many show below the card */
+/* Inside the card at the top, angled and cropped by its edges — so they read
+   as prints tucked under the header rather than decoration floating outside.
+   `x` is how far along, `r` the angle. */
+const TILT = [{ r: -4, x: -8 }, { r: 5, x: 30 }]
 
 const fmt = d => d?.toLocaleDateString('en-GB', { day:'numeric', month:'short' }) ?? ''
 
@@ -28,12 +26,15 @@ export const PoiCard = {
   init(itinerary, onClose){
     this.el     = document.getElementById('poi-card')
     this.photos = this.el?.querySelector('.pc-photos')
-    this.body   = this.el?.querySelector('.pc-body')
+    this.body   = this.el?.querySelector('.pc-content')
     if(!this.el) return
     this.itinerary = itinerary
     this.onClose = onClose
 
     this.overlay = document.getElementById('poi-overlay')
+    /* the close button needs its own handler: a pointerdown inside the card
+       closes anyway, but a keyboard Enter on the button would not */
+    this.el.querySelector('.pc-close')?.addEventListener('click', () => this.close())
 
     if(!this.bound){
       this.bound = true
@@ -71,7 +72,7 @@ export const PoiCard = {
 
     this.photos.innerHTML = (loc.photos ?? []).slice(0, PHOTOS).map((ph, i) => {
       const t = TILT[i] ?? { r: 0, x: 0 }
-      return `<figure class="pc-photo" style="--tilt:${t.r}deg;left:${t.x}%;z-index:${PHOTOS - i}">
+      return `<figure class="pc-photo" style="--tilt:${t.r}deg;left:${t.x}%;z-index:${i + 1}">
         ${ph.src ? `<img src="${tripAsset(ph.src)}" alt="" loading="lazy">` : ''}
       </figure>`
     }).join('')

@@ -136,6 +136,17 @@ class Board {
   clear(){
     this.timers.forEach(clearTimeout)
     this.timers = []
+    /* A pending rAF hasn't created its timers yet, so clearing the timers alone
+       let a previous set() schedule itself AFTER the new one — two sequences
+       running at once, which showed up as a couple of tiles turning, a pause,
+       then everything snapping into step. */
+    if(this.raf != null){
+      cancelAnimationFrame(this.raf)
+      this.raf = null
+    }
+    /* Cancelling also kills the timers that were going to strip .is-flipping,
+       which would leave those tiles stuck mid-fold. */
+    this.tiles.forEach(t => t.tile.classList.remove('is-flipping'))
   }
 
   set(text, { immediate = false, onSettle = null } = {}){
@@ -196,8 +207,9 @@ class Board {
       this.timers.push(setTimeout(() => this.flip(t, target), lands))
     })
 
-    if(typeof requestAnimationFrame === 'function') requestAnimationFrame(schedule)
-    else schedule()
+    if(typeof requestAnimationFrame === 'function'){
+      this.raf = requestAnimationFrame(() => { this.raf = null; schedule() })
+    } else schedule()
 
     if(onSettle) this.timers.push(setTimeout(onSettle, this.settleMs))
   }

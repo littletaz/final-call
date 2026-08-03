@@ -10,17 +10,17 @@
     "base": "map.png",
     "baseSize": {
       "w": 3840,
-      "h": 3840
+      "h": 2760
     },
-    "cropBottom": 0.15,
+    "cropBottom": 0,
     "inset": {
       "id": "hongkong-inset",
       "src": "map-hk.png",
       "forLocationId": "hongkong",
       "x": 0.1,
-      "y": 0.2125,
+      "y": 0.2954,
       "w": 0.18,
-      "_yNote": "y is a fraction of the FULL map image; the renderer divides by the visible fraction (1 - cropBottom = 0.85), so 0.2125 lands at top:25% on screen. Inset pins are positioned inside the box, so they move with it."
+      "_yNote": "A fraction of the map image. cropBottom is 0, so this is also the rendered top."
     },
     "_calibrated": true,
     "backgroundColor": "#596D88",
@@ -89,13 +89,12 @@
       }
     ],
     "_cloudsNote": "Weather over the whole viewport, not features of the map: x/y and travel are percentages of the SCREEN, while size stays proportional to the map. x + travel must exceed 100 or the loop reset becomes visible.",
-    "_cropNote": "cropBottom can now be 0: the dataviz moved to the footer, so the artwork no longer has to keep clear space at its base. Left at its current value so nothing shifts unexpectedly — set it to 0 (or remove it) when you rework the map framing.",
     "waveScale": 0.333,
     "_wavesParked": [
       {
         "file": "waves/wave-0001.png",
         "x": 0.085,
-        "y": 0.735,
+        "y": 1,
         "dur": 6.5,
         "dy": 18,
         "dx": 10
@@ -103,7 +102,7 @@
       {
         "file": "waves/wave-0002.png",
         "x": 0.7,
-        "y": 0.235,
+        "y": 0.327,
         "dur": 5.0,
         "dy": 13,
         "dx": -7
@@ -111,7 +110,7 @@
       {
         "file": "waves/wave-0003.png",
         "x": 0.585,
-        "y": 0.15,
+        "y": 0.2087,
         "dur": 5.8,
         "dy": 15,
         "dx": 8
@@ -119,7 +118,7 @@
       {
         "file": "waves/wave-0004.png",
         "x": 0.86,
-        "y": 0.7,
+        "y": 0.9739,
         "dur": 5.3,
         "dy": 13,
         "dx": -9
@@ -127,7 +126,7 @@
       {
         "file": "waves/wave-0005.png",
         "x": 0.3,
-        "y": 0.62,
+        "y": 0.8626,
         "dur": 6.1,
         "dy": 16,
         "dx": 7
@@ -135,7 +134,7 @@
       {
         "file": "waves/wave-0006.png",
         "x": 0.62,
-        "y": 0.545,
+        "y": 0.7583,
         "dur": 6.9,
         "dy": 19,
         "dx": -11
@@ -143,12 +142,13 @@
       {
         "file": "waves/wave-0007.png",
         "x": 0.42,
-        "y": 0.76,
+        "y": 1,
         "dur": 4.8,
         "dy": 12,
         "dx": 6
       }
-    ]
+    ],
+    "_remapNote": "Re-canvassed from 3840x3840 to 3840x2760 with the crop removed. Both are 3840 wide and the artwork wasn't redrawn, so a pixel row is unchanged and y simply scales by 3840/2760 = 1.3913. x is untouched. Checked against the landmass before applying, but worth a pass in the CALIBRATE panel."
   },
   "artDirection": {
     "id": "sumi-e-ink-wash",
@@ -459,7 +459,7 @@
       "subtitle": "Takayama · Kamikochi · Shin-Hotaka",
       "coordinates": {
         "x": 0.4769,
-        "y": 0.4565
+        "y": 0.6345
       },
       "tags": [
         "mountains",
@@ -578,7 +578,7 @@
       "subtitle": "Kenroku-en · Higashi Chaya · Omicho",
       "coordinates": {
         "x": 0.4547,
-        "y": 0.4243
+        "y": 0.5897
       },
       "tags": [
         "city",
@@ -688,7 +688,7 @@
       "subtitle": "Wakura Onsen · Nanao",
       "coordinates": {
         "x": 0.4757,
-        "y": 0.4009
+        "y": 0.5573
       },
       "tags": [
         "coast",
@@ -782,7 +782,7 @@
       "subtitle": "Ohara · Kurama · Arashiyama",
       "coordinates": {
         "x": 0.4372,
-        "y": 0.4892
+        "y": 0.68
       },
       "tags": [
         "temples",
@@ -897,7 +897,7 @@
       "subtitle": "Tottori Dunes · Mt. Daisen",
       "coordinates": {
         "x": 0.3863,
-        "y": 0.4886
+        "y": 0.6792
       },
       "tags": [
         "coast",
@@ -995,7 +995,7 @@
       "subtitle": "Chichu · Benesse · Art House Project",
       "coordinates": {
         "x": 0.3787,
-        "y": 0.5172
+        "y": 0.7189
       },
       "tags": [
         "islands",
@@ -1095,7 +1095,7 @@
       "subtitle": "Onomichi · Imabari · the islands",
       "coordinates": {
         "x": 0.3507,
-        "y": 0.5237
+        "y": 0.7279
       },
       "tags": [
         "islands",
@@ -1198,7 +1198,7 @@
       "subtitle": "Ryogoku · Meiji Jingu Gaien · Shibuya",
       "coordinates": {
         "x": 0.5582,
-        "y": 0.4699
+        "y": 0.6532
       },
       "tags": [
         "city",
@@ -1301,7 +1301,7 @@
       "subtitle": "Danjo Garan · Okunoin · Shukubo",
       "coordinates": {
         "x": 0.436,
-        "y": 0.5167
+        "y": 0.7182
       },
       "tags": [
         "mountains",
@@ -1408,7 +1408,7 @@
       "subtitle": "Yunomine Onsen · Hongu Taisha · Nakahechi",
       "coordinates": {
         "x": 0.4424,
-        "y": 0.512
+        "y": 0.7116
       },
       "tags": [
         "mountains",
@@ -1521,7 +1521,7 @@
       "subtitle": "Nachi Taisha · Seiganto-ji · Japan's tallest waterfall",
       "coordinates": {
         "x": 0.4489,
-        "y": 0.5301
+        "y": 0.7368
       },
       "tags": [
         "nature",
@@ -1618,7 +1618,7 @@
       "subtitle": "Dotonbori · Kuromon Market · Osaka Castle",
       "coordinates": {
         "x": 0.4278,
-        "y": 0.5067
+        "y": 0.7043
       },
       "tags": [
         "city",
