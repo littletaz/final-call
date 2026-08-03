@@ -23,7 +23,13 @@ export const Cards = {
   /* A single-choice filter, so it's a radiogroup rather than a list of buttons:
      arrow keys move between options, and only the selected one is a tab stop.
      Shows duration + when, never the variant's internal nickname. */
+  /* Rebuilt only when the trip changes. Picking a duration used to re-render
+     the whole thing, which recreated every element — that's what made the
+     numerals flicker. Now only the state changes. */
   renderSelector(active, onPick){
+    if(this.built && this.el.selector.querySelector('button')) return this.syncSelector(active)
+    this.built = true
+
     const items = TRIP.data.itineraries
     const activeIndex = Math.max(0, items.findIndex(it => it.id === active.id))
 
@@ -72,6 +78,18 @@ export const Cards = {
   /* The marker is one element that slides, rather than a pseudo-element on each
      option pinned with magic offsets. Its position is measured from the chosen
      button, so it stays aligned whatever the type size or spacing. */
+  /* Only the state: which option is checked, which is focusable, and where the
+     marker sits. Nothing is created or destroyed. */
+  syncSelector(active){
+    const buttons = [...this.el.selector.querySelectorAll('button')]
+    buttons.forEach(b => {
+      const on = b.dataset.itinerary === active.id
+      b.setAttribute('aria-checked', String(on))
+      b.tabIndex = on ? 0 : -1
+    })
+    this.positionMarker()
+  },
+
   /* The marker lives inside .sel-track, which starts half a row down so the
      dashed rule spans dot-to-dot rather than the full height. So the offset is
      measured against the track, not the options box. */

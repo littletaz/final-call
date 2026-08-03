@@ -11,26 +11,31 @@ import { asset } from './js/paths.js'
    the work: BOARDING for the one that's live, ON TIME for what's
    planned, CLOSED for a trip that's been, ??? for the rest.
 
-   A row is ONE board of 38 slots carrying three fields at fixed
+   A row is ONE board of 35 slots carrying three fields at fixed
    offsets, so the columns line up down the whole board without
    three separate boards to keep in step. The status colour comes
-   from tint(), which marks a slot range.
+   from tint(), which marks a slot range; the gaps between fields
+   are `frozen` slots that stay blank and never turn.
    ============================================================ */
 
-const COLS = 38
-/* Where each field starts, and how wide it may be. Taken from the mockup: the
-   status text ends around two thirds across, leaving empty board to the right —
-   which is what makes it read as a board with room for more. */
+const COLS = 35
+
+/* Where each field starts and how wide it may be, plus the slots that stay
+   blank. The separators aren't decoration — they're what stops the columns
+   running into each other on a board with no gridlines. */
 const AT = {
-  time:   { at: 1,  w: 4  },
+  time:   { at: 1,  w: 3  },
   dest:   { at: 6,  w: 12 },
-  status: { at: 19, w: 9  },
+  status: { at: 20, w: 14 },
 }
+const FROZEN = [0, 4, 5, 18, 19, 34]
+
 const STATUS = {
-  boarding: { text: 'BOARDING',  cls: 'is-boarding' },
-  ontime:   { text: 'ON TIME',   cls: 'is-ontime'   },
-  closed:   { text: 'CLOSED',    cls: 'is-closed'   },
-  none:     { text: 'UNDEFINED', cls: 'is-none'     },
+  boarding: { text: 'BOARDING',     cls: 'is-boarding' },
+  ontime:   { text: 'ON TIME',      cls: 'is-ontime'   },
+  closing:  { text: 'GATE CLOSING', cls: 'is-closing'  },
+  closed:   { text: 'CLOSE',        cls: 'is-closed'   },
+  none:     { text: 'UNDEFINED',    cls: 'is-none'     },
 }
 
 /* Lay three fields into one fixed-width line. Each is clipped to its own
@@ -45,27 +50,53 @@ function row({ month = '???', dest = '???', status = 'none' }){
   return slots.join('')
 }
 
+/* the icon is a file, so it can be swapped without touching the markup */
+const icon = document.querySelector('.dep-icon')
+if(icon) fetch(asset('shared/ui/departures.svg')).then(r => r.text()).then(svg => { icon.innerHTML = svg })
+
 const list = document.getElementById('board')
 const boot = document.getElementById('boot')
 
+/* How many rows to fill the rest of the viewport. Measured rather than guessed:
+   the header scales with the flaps, so the space below it isn't a constant.
+
+   Rounded UP and then one more. A board that stops short leaves a black gap
+   below the last row, which reads as broken; one that runs a few pixels past
+   the fold reads as a board that continues. Overshooting is the safe error. */
+function rowsThatFit(){
+  const h = parseFloat(getComputedStyle(document.body).getPropertyValue('--dep-h')) || 70
+  const top = list.getBoundingClientRect().top
+  const inner = window.innerHeight - top - 18   /* 1px border + 8px padding, twice */
+  return Math.max(2, Math.ceil(inner / (h + 8)) + 1)
+}
+
 ;(async () => {
-  let reg = { trips: [], boardRows: 9 }
+  let reg = { trips: [] }
   try {
     reg = await (await fetch(asset('trips/index.json'))).json()
   } catch (e) {
     console.error(e)
   }
 
-  const trips = reg.trips ?? []
-  const total = Math.max(reg.boardRows ?? 9, trips.length)
+  /* Trips that have been and gone sit above the live ones — they turn like any
+     other row but have nothing to link to. */
+  const extras = (reg.boardExtras ?? []).map(x => ({ ...x, past: true }))
+  const trips = [...extras, ...(reg.trips ?? [])]
 
-  /* Built silently, then turned once the overlay has faded — otherwise the
-     first flips happen behind a black screen and you arrive mid-sequence. */
+  /* The count is measured AFTER the font and the icon have landed. Both change
+     the header's height, and measuring first gave a board sized for a layout
+     that no longer existed. */
+  if(document.fonts?.ready) await document.fonts.ready
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+
+  const total = Math.max(rowsThatFit(), trips.length)
+
   const rows = Array.from({ length: total }, (_, i) => {
     const trip = trips[i]
-    const el = document.createElement(trip ? 'a' : 'div')
-    el.className = 'dep-row' + (trip ? '' : ' is-empty')
-    if(trip){
+    const linkable = trip && !trip.past
+    const el = document.createElement(linkable ? 'a' : 'div')
+    el.className = 'dep-row' + (trip ? (trip.past ? ' is-past' : '') : ' is-empty')
+    if(linkable){
       el.href = `./trip.html?trip=${encodeURIComponent(trip.id)}`
       el.setAttribute('aria-label', `${trip.title}, ${trip.period}`)
     }
@@ -78,19 +109,44 @@ const boot = document.getElementById('boot')
       status,
     })
     const board = Flapboard.mount(el, ' '.repeat(COLS), {
-      length: COLS, tick: 95, stagger: 22, cycles: 5,
+      length: COLS, tick: 95, stagger: 22, cycles: 5, frozen: FROZEN,
     })
     board.tint(AT.status.at, AT.status.at + STATUS[status].text.length, STATUS[status].cls)
-    return { board, text, delay: i * 260 }
+
+    /* An undefined row doesn't turn. There's nothing to reveal, and a screen of
+       flaps churning their way to UNDEFINED pulls attention off the trips that
+       actually say something. */
+    return { board, text, animate: !!trip, delay: i * 260 }
   })
 
-  if(document.fonts?.ready) await document.fonts.ready
-  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+  /* the empty rows are simply there, from the first frame */
+  rows.filter(r => !r.animate).forEach(r => r.board.set(r.text, { immediate: 'silent' }))
   boot?.classList.add('hide')
 
-  /* row by row, top to bottom, like a board waking up */
-  const start = () => rows.forEach(r => setTimeout(() => r.board.set(r.text), r.delay))
+  const start = () => rows
+    .filter(r => r.animate)
+    .forEach(r => setTimeout(() => r.board.set(r.text), r.delay))
   if(!boot) return start()
   boot.addEventListener('transitionend', start, { once: true })
   setTimeout(start, 900)
+
+  /* A taller window needs more rows. Added rather than rebuilt, so the trips
+     don't re-animate every time the window is dragged. */
+  let t
+  addEventListener('resize', () => {
+    clearTimeout(t)
+    t = setTimeout(() => {
+      const want = rowsThatFit()
+      for(let i = list.children.length; i < want; i++){
+        const el = document.createElement('div')
+        el.className = 'dep-row is-empty'
+        list.appendChild(el)
+        const b = Flapboard.mount(el, ' '.repeat(COLS), {
+          length: COLS, tick: 95, stagger: 22, cycles: 5, frozen: FROZEN,
+        })
+        b.tint(AT.status.at, AT.status.at + STATUS.none.text.length, STATUS.none.cls)
+        b.set(row({}), { immediate: 'silent' })
+      }
+    }, 300)
+  })
 })()

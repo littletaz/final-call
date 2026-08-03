@@ -13,6 +13,17 @@
       "boardLabel": "JAPAN"
     }
   ],
-  "boardRows": 9,
-  "_boardRowsNote": "How many rows the departures board shows in total. Any beyond the registered trips read as ??? / UNDEFINED — a board with room for more is the point, so keep this comfortably above the trip count."
+  "boardExtras": [
+    {
+      "month": "AUG",
+      "boardLabel": "LOS ANGELES",
+      "status": "closed"
+    },
+    {
+      "month": "OCT",
+      "boardLabel": "HONG KONG",
+      "status": "closed"
+    }
+  ],
+  "_boardExtrasNote": "Rows shown above the real trips on the departures board. Trips that have been and gone, so they have no file and nothing to link to — set dressing that makes the board look like it has a history. They turn like any other row."
 }

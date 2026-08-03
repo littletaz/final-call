@@ -27,23 +27,23 @@
 
 <div id="boot">LOADING&hellip;</div>
 
-<header class="dep-head">
-  <span class="dep-icon" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none">
-      <path d="M2.5 19h19v1.6h-19V19Z" fill="currentColor"/>
-      <path d="M21.4 9.3a1.3 1.3 0 0 0-1.6-.9l-5 1.35-6.3-5.9-1.5.4 3.8 6.6-4.5 1.2-1.8-1.4-1.15.3.95 3.3.05.2 1.1 1.9 15.05-4.05a1.3 1.3 0 0 0 .9-1.6l-.05-1.25Z" fill="currentColor"/>
-    </svg>
-  </span>
-  <h1 class="dep-title">DEPARTURES</h1>
-</header>
+<!-- One stack, anchored so the board's bottom sits 100px below the fold. The
+     gaps between title, labels and board are margins inside it, so they hold
+     whatever the board's height turns out to be. -->
+<div class="dep-stack">
+  <header class="dep-head">
+    <span class="dep-icon" aria-hidden="true"></span>
+    <h1 class="dep-title">DEPARTURES</h1>
+  </header>
 
-<div class="dep-labels" aria-hidden="true">
-  <span class="dep-label dep-label--time">TIME</span>
-  <span class="dep-label dep-label--dest">DESTINATION</span>
-  <span class="dep-label dep-label--status">STATUS</span>
+  <div class="dep-labels" aria-hidden="true">
+    <span class="dep-label dep-label--time">TIME</span>
+    <span class="dep-label dep-label--dest">DESTINATION</span>
+    <span class="dep-label dep-label--status">STATUS</span>
+  </div>
+
+  <main class="dep-board" id="board" aria-label="Departures"></main>
 </div>
-
-<main class="dep-board" id="board" aria-label="Departures"></main>
 
 <script type="module" src="/src/landing.js"></script>
 </body>

@@ -28,6 +28,7 @@ function renderAll(){
   PoiCard.init(active)
   Footer.render(active)
   FinalCall.update(active)
+  FinalCall.watchAsk()        /* the footer was just rebuilt — re-observe it */
   MapView.setVariant(active)
   MapView.renderPins(active, goToCard)
   if(Calib?.on) Calib.enableDrag()

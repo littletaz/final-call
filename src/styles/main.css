@@ -328,7 +328,9 @@ body::after{
   grid-row:1;grid-column:1;
   font-family:var(--display);
   font-size:38px;line-height:.9;
-  transition:font-size .22s;
+  /* colour only — a numeral that changes size on selection reflows its row, and
+     the rows above and below shift with it */
+  transition:color .22s;
 }
 .sel-lbl{
   grid-row:1;grid-column:2;
@@ -421,6 +423,20 @@ body.has-poi{overflow:hidden}
   box-shadow:0 18px 50px rgba(0,0,0,.28);
 }
 
+/* The glyph is already centred inside its 44x44 viewBox, so the button is 44x44
+   with no padding — the hit area and the artwork are the same box. */
+.pc-close{
+  position:absolute;top:6px;right:6px;z-index:10;
+  width:44px;height:44px;padding:0;
+  display:block;
+  background:none;border:0;cursor:pointer;
+  color:#111;opacity:.55;
+  transition:opacity .2s;
+}
+.pc-close:hover{opacity:1}
+.pc-close:focus-visible{outline:2px solid var(--seal);outline-offset:-4px;opacity:1}
+.pc-close svg{display:block;width:100%;height:100%}
+
 /* the words, from the top */
 .pc-content{
   position:relative;z-index:2;
@@ -505,7 +521,7 @@ body.has-poi{overflow:hidden}
 #footer{position:relative;z-index:600;background:var(--sea);color:#fff}
 
 /* dusk: the same world as the hero, later in the day */
-.f-costs{padding:12vh 0 14vh}
+.f-costs{padding:0 0 14vh}
 .f-inner{
   max-width:var(--artboard);margin:0 auto;
   padding-inline:var(--grid-margin);
@@ -621,8 +637,8 @@ body.has-poi{overflow:hidden}
      Anything positioned as a % of #world — pins, the inset — scales with it
      for free. --map-w has to be told, though: it drives sprite sizes and would
      otherwise leave the clouds 20% small against a bigger map. */
-  :root{--map-w:120vw}
-  #world{width:120%;margin-left:-10%}
+  :root{--map-w:140vw}
+  #world{width:140%;margin-left:-10%}
 
   #stats{grid-template-columns:repeat(4,1fr);column-gap:2%;margin-top:4vh;padding-top:4vh}
 
@@ -636,7 +652,16 @@ body.has-poi{overflow:hidden}
     padding:0 6%;
     --sel-row:auto;
   }
-  .sel-panel,.sel-tab,.sel-track{display:none}
+  /* The 9-slice frame is drawn for a tall panel; behind one horizontal row its
+     cut corners and pattern stroke read as clutter. A plain plate instead —
+     the tab and the dashed rule go entirely. */
+  .sel-tab,.sel-track{display:none}
+  .sel-panel{
+    border:1px solid #304363;
+    border-image:none;
+    background:#2F4362;
+    border-radius:4px;
+  }
   .sel-options{
     display:flex;justify-content:center;align-items:flex-end;
     gap:7%;padding-left:0;
@@ -770,7 +795,10 @@ body.has-poi{overflow:hidden}
 #final-call{
   position:fixed;
   top:24px;right:24px;
-  z-index:520;
+  /* Above the footer (600) and the paper texture (900), below the POI overlay
+     (950) so an open card still dims it. At 520 it slid behind the budget
+     block, which read as vanishing early rather than being covered. */
+  z-index:930;
   width:fit-content;
   padding:var(--fc-pad, 10px);
   background:#464646;

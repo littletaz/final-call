@@ -24,6 +24,9 @@
    `tint(from, to, class)` marks a slot range, for boards where
    one field needs a different colour from the rest.
 
+   `frozen` is a list of slots that stay blank and never turn —
+   separators between columns.
+
    `glyphs` maps a character to markup, so a slot can hold an icon:
      Flapboard.mount(el, 'FUCK*YOU!', { glyphs: { '*': ICON_SVG } })
    The icon flips like any other flap, splitting across the hinge.
@@ -83,6 +86,10 @@ class Board {
        once is noise and a lot of animation; a scattered few reads as a board
        idling, and costs a fraction as much. */
     this.flipChance = opts.flipChance ?? 1
+    /* Slots that stay blank and never turn — column separators on a board where
+       the fields need visual space between them. A real board has blank flaps
+       there; they just don't do anything. */
+    this.frozen = new Set(opts.frozen ?? [])
     /* Slots that render markup instead of a character. Keyed by the character
        used in the text, so 'FUCK*YOU!' with glyphs {'*': '<svg…>'} puts an icon
        in the middle slot and everything else behaves normally. The markup is

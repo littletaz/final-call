@@ -62,14 +62,9 @@ export const FinalCall = {
 
 
     /* Visible from the first frame. The only thing that hides it is the ASK —
-       "So… are you in?" — not the whole footer. The footer starts at the
-       dataviz, which on a short screen is in view almost immediately, so
-       watching it made the panel vanish before anyone had scrolled. */
-    const ask = document.querySelector('.f-ask') || document.getElementById('footer')
-    if(ask) new IntersectionObserver(([e]) => {
-      this.atFooter = e.isIntersecting
-      this.apply()
-    }, { threshold: 0 }).observe(ask)
+       "So… are you in?" — not the whole footer, which starts at the dataviz and
+       is in view almost immediately on a short screen. */
+    this.watchAsk()
 
     /* full size over the hero, compact once you're into the cards */
     const stage = document.getElementById('stage')
@@ -89,6 +84,21 @@ export const FinalCall = {
 
     this.apply()
     this.startCycle()
+  },
+
+  /* Footer.render() replaces the footer's innerHTML, which destroys the element
+     this was observing — leaving the observer pointed at a detached node that
+     could never fire again. So it re-binds whenever the footer is rebuilt. */
+  watchAsk(){
+    const ask = document.querySelector('.f-ask')
+    if(!ask || ask === this.watched) return
+    this.watched = ask
+    this.askObserver?.disconnect()
+    this.askObserver = new IntersectionObserver(([e]) => {
+      this.atFooter = e.isIntersecting
+      this.apply()
+    }, { threshold: 0 })
+    this.askObserver.observe(ask)
   },
 
   /* Whole-pixel tiles at every viewport — CSS can't round, so this is done
