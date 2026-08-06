@@ -236,24 +236,34 @@ body::after{
   padding:calc(var(--sel-pad) + 16px) var(--sel-pad) var(--sel-pad);
 }
 
-/* The frame is a 9-slice, not a background image. That matters because the
-   corners are cut and the edges carry a pattern stroke: a background would
-   stretch both as the panel resizes. border-image keeps the corners at their
-   exported size and repeats the edges instead.
+/* A 9-slice frame IF the trip supplies one, otherwise a flat plate in its own
+   colours. The images are per-trip art direction, so their paths come from the
+   data as --sel-panel-img / --sel-tab-img (see applyUiArt in main.js) rather
+   than being hardcoded here.
 
-   The artwork is a 2x export, so border-image-slice (in source pixels) is
-   double border-width (in CSS pixels). `round` rather than `stretch` so the
-   stroke pattern tiles whole repeats instead of being smeared. */
+   9-slice, not a background image: the corners are cut and the edges carry a
+   pattern stroke, and a background would stretch both as the panel resizes.
+   The artwork is a 2x export, so border-image-slice (source pixels) is double
+   border-width (CSS pixels). `round` tiles whole repeats instead of smearing. */
 .sel-panel{
   position:absolute;inset:0;
+  background:#2F4362;
+  border:1px solid #304363;
+  border-radius:4px;
+}
+.has-sel-art .sel-panel{
+  background:none;
   border:8px solid transparent;
-  border-image:url('/shared/ui/panel.png') 17 round;
+  border-radius:0;
+  border-image:var(--sel-panel-img) 17 round;
   border-image-slice:17 fill;   /* `fill` keeps the textured centre */
 }
 
 /* Same technique for the tab. Its corners are narrower than they are tall, so
    the slice is asymmetric: 25 top/bottom, 12 left/right. */
-.sel-tab{
+.sel-tab{display:none}
+.has-sel-art .sel-tab{
+  display:block;
   position:absolute;top:0;left:50%;
   transform:translate(-50%,-50%);
   margin:0;
@@ -263,7 +273,7 @@ body::after{
   font-size:11px;letter-spacing:.16em;white-space:nowrap;
   border-style:solid;
   border-width:12px 6px;
-  border-image:url('/shared/ui/tab.png') 25 12 round;
+  border-image:var(--sel-tab-img) 25 12 round;
   border-image-slice:25 12 fill;
 }
 
@@ -662,7 +672,9 @@ body.has-poi{overflow:hidden}
   /* The panel is absolute against #selector, which is now full grid width — so
      its plate covered the map. The plate belongs on .sel-options, which is only
      as big as the row itself. */
-  .sel-tab,.sel-track,.sel-panel{display:none}
+  /* the frame is drawn for a tall panel; behind one horizontal row its cut
+     corners read as clutter, so the plate moves onto the row itself */
+  .sel-track,.sel-panel{display:none}
   .sel-options{
     background:#2F4362;
     border:1px solid #304363;

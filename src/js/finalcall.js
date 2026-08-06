@@ -133,7 +133,13 @@ export const FinalCall = {
   /* Called on every itinerary change: the search follows the active variant,
      and an undated one has nothing to link to. */
   update(itinerary){
-    if(!this.btn) return
+    /* Silent here once cost an afternoon: init() had been moved after the first
+       render, so this bailed and the YES button kept its placeholder href. */
+    if(!this.btn){
+      console.warn('[final-call] FinalCall.update() before init() — the YES link '
+        + 'will keep its placeholder href')
+      return
+    }
     const url = flightSearchUrl(itinerary)
     const label = TRIP.data?.cta?.buttonLabel
 

@@ -1,12 +1,14 @@
 import './styles/tokens.css'
 import './styles/main.css'
 import './styles/flapboard.css'
+import './styles/pitch.css'
 
-import { TRIP, loadData } from './js/data.js'
+import { TRIP, tripAsset, loadData } from './js/data.js'
 import { MapView } from './js/map.js'
 import { Cards } from './js/cards.js'
 import { PoiCard } from './js/poicard.js'
 import { Footer } from './js/footer.js'
+import { Pitch } from './js/pitch.js'
 import { loadFonts } from './js/fonts.js'
 import { FinalCall } from './js/finalcall.js'
 import { scrollToEl } from './js/scroll.js'
@@ -18,6 +20,18 @@ import { scrollToEl } from './js/scroll.js'
    ============================================================ */
 let active = null
 
+/* The selector's frames are a trip's own art direction, so they live in its
+   folder and are named in its data. A trip that doesn't supply them gets a flat
+   plate instead — see --sel-panel-img in styles/main.css. */
+function applyUiArt(ui){
+  const root = document.documentElement
+  const set = (prop, file) =>
+    root.style.setProperty(prop, file ? `url('${tripAsset(file)}')` : 'none')
+  set('--sel-panel-img', ui?.selectorPanel)
+  set('--sel-tab-img',   ui?.selectorTab)
+  root.classList.toggle('has-sel-art', !!ui?.selectorPanel)
+}
+
 function setItinerary(id){
   active = TRIP.data.itineraries.find(i => i.id === id) || TRIP.data.itineraries[0]
   renderAll()
@@ -26,6 +40,7 @@ function setItinerary(id){
 function renderAll(){
   Cards.renderSelector(active, setItinerary)
   PoiCard.init(active)
+  Pitch.render(active)        /* the argument changes with the itinerary */
   Footer.render(active)
   FinalCall.update(active)
   FinalCall.watchAsk()        /* the footer was just rebuilt — re-observe it */
@@ -88,6 +103,7 @@ function initBackToMap(){
 
     /* first, so the faces are already in flight while the rest renders */
     loadFonts(t.artDirection?.fonts)
+    applyUiArt(t.artDirection?.ui)
 
     document.title = t.subtitle ? `${t.title} — ${t.subtitle}` : t.title
     document.querySelector('meta[name="description"]')
@@ -97,12 +113,14 @@ function initBackToMap(){
     await MapView.init()
     Cards.init()
     Footer.init()
+    Pitch.init()
+    /* Before the first render: init only grabs elements from the static shell,
+       and update() bails silently if they aren't there yet — which is exactly
+       what left the YES button on its placeholder href. The ask observer is a
+       separate call, because THAT does need the footer to exist. */
+    FinalCall.init()
 
     setItinerary(TRIP.data.defaultItineraryId)
-    /* after the first render: the panel watches .f-ask, which the footer
-       creates — initialising earlier left it watching the whole footer, and
-       that's in view from the start on a short screen */
-    FinalCall.init()
     await initDevTools()
 
     initBackToMap()

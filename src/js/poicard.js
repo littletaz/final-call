@@ -1,4 +1,4 @@
-import { TRIP, tripAsset, stayTotal, stopDates, eur } from './data.js'
+import { TRIP, tripAsset, stayTotal, stopDates, bookingUrl, eur } from './data.js'
 import { watchImages } from './placeholder.js'
 
 /* ============================================================
@@ -99,8 +99,10 @@ export const PoiCard = {
           <span class="name">${st.name}</span>
           <span class="amount">${amount}</span>
         </span>`
-      return st.bookingUrl
-        ? `<a class="hotel is-link" href="${st.bookingUrl}" target="_blank"
+      const url = bookingUrl(st, stop, stopDates(this.itinerary),
+                            TRIP.data?.cta?.roomAdults ?? 2)
+      return url
+        ? `<a class="hotel is-link" href="${url}" target="_blank"
               rel="noopener noreferrer" title="${st.name}">${inner}</a>`
         : `<div class="hotel">${inner}</div>`
     }).join('')

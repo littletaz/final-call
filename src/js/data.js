@@ -216,4 +216,33 @@ export function stopDates(itinerary){
   return out
 }
 
+/* A booking link carrying the actual dates, so the search opens on the right
+   nights instead of today's. `group_adults` is separate from the flight
+   passenger count on purpose — the flights are booked individually, the room
+   is shared.
+
+   A stay with its own `nights` (a stop split across two bases) is checked in on
+   the stop's arrival date for that many nights. The LENGTH is always right; the
+   position within the stop is a guess, since the data doesn't say which half
+   comes first. */
+export function bookingUrl(stay, stop, dates, adults = 2){
+  if(!stay.bookingUrl) return null
+  const d = dates?.[stop.locationId]
+  if(!d?.from) return stay.bookingUrl
+
+  const iso = x => x.toISOString().slice(0, 10)
+  const nights = stayNights(stay, stop)
+  const checkin = d.from
+  const checkout = new Date(checkin)
+  checkout.setDate(checkout.getDate() + Math.max(1, nights))
+
+  const u = new URL(stay.bookingUrl)
+  u.searchParams.set('checkin', iso(checkin))
+  u.searchParams.set('checkout', iso(checkout))
+  u.searchParams.set('group_adults', String(adults))
+  u.searchParams.set('group_children', '0')
+  u.searchParams.set('no_rooms', '1')
+  return u.toString()
+}
+
 export const eur = n => '\u20AC' + Math.round(n).toLocaleString('en-US')

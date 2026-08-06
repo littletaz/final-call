@@ -164,6 +164,27 @@ function validateTrip(path){
         warn(name, `${tag}: "${s.locationId}" has 0 nights but isn't marked spur:true`)
     }
 
+    /* The pitch is optional — an itinerary can exist before its argument is
+       written, same as a trip can exist before its map is drawn. But if it's
+       there, its shape is checked: exactly 3 arguments, and nothing numeric
+       masquerading as story (a stray "3 nights" here reads as a schedule, not
+       a claim — that's what this used to say before it was rewritten). */
+    if(!it.pitch){
+      warn(name, `${tag}: no pitch — the itinerary has no argument slides yet`)
+    } else {
+      const slide = (label, obj) => {
+        if(!obj?.headline) err(name, `${tag}: pitch.${label} needs a headline`)
+        if(!obj?.body)      warn(name, `${tag}: pitch.${label} has no body`)
+      }
+      slide('mood', it.pitch.mood)
+      slide('gem',  it.pitch.gem)
+      if(!Array.isArray(it.pitch.arguments) || it.pitch.arguments.length !== 3)
+        err(name, `${tag}: pitch.arguments must have exactly 3 entries `
+          + `(found ${it.pitch.arguments?.length ?? 0})`)
+      else
+        it.pitch.arguments.forEach((a, i) => slide(`arguments[${i}]`, a))
+    }
+
     /* the rule that's easiest to get wrong */
     const nights = it.stops.reduce((n, s) => n + (s.nights || 0), 0)
     if(typeof it.days !== 'number')
@@ -205,6 +226,10 @@ function validateTrip(path){
     return true
   }
   checkAsset(t.map?.pin || 'pin.svg', 'map.pin')
+  /* optional: the selector falls back to a flat plate without them */
+  const ui = t.artDirection?.ui
+  if(ui?.selectorPanel) checkAsset(ui.selectorPanel, 'artDirection.ui.selectorPanel')
+  if(ui?.selectorTab)   checkAsset(ui.selectorTab,   'artDirection.ui.selectorTab')
   checkAsset(t.map?.logo || 'logo.png', 'map.logo')
 
   /* sprites moved into the data, so they're worth checking */
@@ -318,19 +343,50 @@ function validateTrip(path){
     if(fs.provider === 'google' && (fs.legs?.length ?? 0) > 1)
       warn(name, 'provider "google" can only search the first leg — use kayak or momondo for multi-city')
 
-    if(!Array.isArray(fs.legs) || !fs.legs.length)
-      err(name, 'cta.flightSearch.legs must be a non-empty array')
-    else fs.legs.forEach((l, i) => {
-      const at = `cta.flightSearch.legs[${i}]`
-      for(const k of ['from', 'to']){
-        if(!l[k]) err(name, `${at}: ${k} is required`)
-        else if(!/^[A-Z]{3}$/.test(l[k])) err(name, `${at}: ${k} "${l[k]}" should be a 3-letter IATA code`)
+    /* Legs may live on the trip (a fallback) or on each itinerary. Validate
+       whichever exist, and check each set runs forwards in time — a search whose
+       dates go backwards is rejected by the provider, which is invisible from
+       here because the button still looks fine. */
+    const legSets = [
+      ['cta.flightSearch', fs.legs, null],
+      ...t.itineraries.map(it => [`${it.id}.flightSearch`, it.flightSearch?.legs, it]),
+    ].filter(([, legs]) => Array.isArray(legs) && legs.length)
+
+    if(!legSets.length)
+      err(name, 'no flight legs anywhere — set cta.flightSearch.legs or '
+        + 'itineraries[].flightSearch.legs')
+
+    for(const [where, legs, it] of legSets){
+      legs.forEach((l, i) => {
+        const at = `${where}.legs[${i}]`
+        for(const k of ['from', 'to']){
+          if(!l[k]) err(name, `${at}: ${k} is required`)
+          else if(!/^[A-Z]{3}$/.test(l[k])) err(name, `${at}: ${k} "${l[k]}" should be a 3-letter IATA code`)
+        }
+        const ref = l.dateFrom ?? l.date
+        if(!ref) err(name, `${at}: needs dateFrom ("itineraryStart" | "itineraryEnd") or an explicit date`)
+        else if(!['itineraryStart', 'itineraryEnd'].includes(ref) && !/^\d{4}-\d{2}-\d{2}$/.test(ref))
+          err(name, `${at}: "${ref}" must be itineraryStart, itineraryEnd, or YYYY-MM-DD`)
+      })
+
+      /* resolve against this itinerary's dates and check the order */
+      if(it?.dateRange){
+        const pick = r => r === 'itineraryStart' ? it.dateRange.start
+                        : r === 'itineraryEnd'   ? it.dateRange.end : r
+        const dates = legs.map(l => pick(l.dateFrom ?? l.date)).filter(Boolean)
+        for(let i = 1; i < dates.length; i++){
+          if(dates[i] < dates[i - 1]){
+            err(name, `${where}: leg ${i + 1} (${dates[i]}) is before leg ${i} `
+              + `(${dates[i - 1]}) — the search would be rejected`)
+            break
+          }
+        }
       }
-      const ref = l.dateFrom ?? l.date
-      if(!ref) err(name, `${at}: needs dateFrom ("itineraryStart" | "itineraryEnd") or an explicit date`)
-      else if(!['itineraryStart', 'itineraryEnd'].includes(ref) && !/^\d{4}-\d{2}-\d{2}$/.test(ref))
-        err(name, `${at}: "${ref}" must be itineraryStart, itineraryEnd, or YYYY-MM-DD`)
-    })
+
+      if(legs.length > 3)
+        warn(name, `${where}: ${legs.length} legs — providers handle 2-3 reliably, `
+          + `more is worth opening by hand to confirm it still resolves`)
+    }
 
     if(fs.passengers != null && (!Number.isInteger(fs.passengers) || fs.passengers < 1))
       err(name, 'cta.flightSearch.passengers must be a positive integer')

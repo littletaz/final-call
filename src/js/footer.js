@@ -39,14 +39,33 @@ const PROVIDERS = {
   },
 }
 
+/* Legs come from the ITINERARY first, falling back to the trip.
+   They have to: only the first and last legs follow the itinerary's dates, so a
+   trip-level list with hardcoded middle legs produced an impossible sequence
+   the moment you switched duration — coast-12 flew Paris to Hong Kong (a city
+   it doesn't visit) and came home a month before its own connecting flight. */
 function resolveLegs(search, itinerary){
   const dr = itinerary.dateRange || {}
   const pick = ref =>
     ref === 'itineraryStart' ? dr.start :
     ref === 'itineraryEnd'   ? dr.end   : ref
-  return (search.legs ?? [])
+  const legs = itinerary.flightSearch?.legs ?? search.legs ?? []
+  const out = legs
     .map(l => ({ from:l.from, to:l.to, date: pick(l.dateFrom ?? l.date) }))
     .filter(l => l.from && l.to && l.date)
+
+  /* A search whose dates run backwards is rejected outright, so it's worth
+     saying so here rather than letting the button quietly go nowhere. */
+  for(let i = 1; i < out.length; i++){
+    if(out[i].date < out[i - 1].date){
+      console.warn(`[final-call] ${itinerary.id}: flight legs are out of order — `
+        + `${out[i-1].from}-${out[i-1].to} on ${out[i-1].date} then `
+        + `${out[i].from}-${out[i].to} on ${out[i].date}. `
+        + `Give this itinerary its own flightSearch.legs.`)
+      break
+    }
+  }
+  return out
 }
 
 export function flightSearchUrl(itinerary){

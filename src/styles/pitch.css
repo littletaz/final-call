@@ -1,0 +1,177 @@
+/* ============================================================
+   PITCH
+   Three stacked slides: each sticks while the next rides over it.
+   The middle one holds three cards you turn over.
+   ============================================================ */
+
+#pitch{position:relative;z-index:610}
+#pitch[hidden]{display:none}
+
+.p-slide{
+  position:sticky;top:0;
+  min-height:100vh;min-height:100svh;
+  display:flex;align-items:center;
+  background:var(--sea);
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.p-inner{
+  width:100%;
+  max-width:var(--artboard);
+  margin:0 auto;
+  padding:0 var(--grid-margin);
+}
+
+/* arriving: a small lift, nothing precious */
+.p-slide .p-inner{
+  opacity:0;transform:translateY(26px);
+  transition:opacity .5s ease, transform .6s cubic-bezier(.2,.9,.3,1.2);
+}
+.p-slide.is-in .p-inner{opacity:1;transform:none}
+
+.p-headline{
+  margin:0;
+  font-family:var(--display);
+  font-size:clamp(40px,6.4vw,110px);
+  line-height:1.02;letter-spacing:-.02em;
+  color:#fff;
+  max-width:16ch;
+}
+.p-body{
+  margin:clamp(20px,2.6vw,38px) 0 0;
+  font-family:var(--sans);font-weight:300;
+  font-size:clamp(17px,1.5vw,26px);
+  line-height:1.5;color:rgba(255,255,255,.82);
+  max-width:44ch;
+}
+
+/* ---- the three cards ---- */
+.p-title{
+  margin:0 0 clamp(28px,3.4vw,56px);
+  font-family:var(--display);
+  font-size:clamp(34px,4.6vw,78px);
+  line-height:1.05;letter-spacing:-.02em;color:#fff;
+}
+.rc-row{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:clamp(14px,1.6vw,26px);
+}
+
+/* The card is the button; .rc-inner is what turns. Perspective lives on the
+   button so each card gets its own vanishing point — one shared perspective on
+   the row makes the outer two look sheared. */
+.rc{
+  position:relative;
+  perspective:1100px;
+  aspect-ratio:3/4;
+  padding:0;border:0;background:none;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.rc-inner{
+  position:absolute;inset:0;
+  transform-style:preserve-3d;
+  /* a resting tilt, so a row of three doesn't read as a spreadsheet */
+  transform:rotate(var(--rest, 0deg));
+  transition:transform .25s cubic-bezier(.3,1.4,.5,1);
+}
+.rc:nth-child(1){--rest:-1.6deg}
+.rc:nth-child(2){--rest:1.1deg}
+.rc:nth-child(3){--rest:-.7deg}
+
+/* the invitation: it leans in before you've touched it */
+@media(hover:hover){
+  .rc:not(.is-open):hover .rc-inner{
+    transform:rotate(var(--rest)) translateY(-10px) scale(1.03);
+  }
+}
+.rc:not(.is-open):active .rc-inner{
+  transform:rotate(var(--rest)) translateY(-2px) scale(.97);
+  transition-duration:.09s;
+}
+
+/* THE TURN.
+   A keyframe rather than a transition, so it can overshoot and settle —
+   a transition can only ease toward its target, never past it. The scale
+   bump is squash-and-stretch: the card lifts as it turns and lands heavy. */
+.rc.is-open .rc-inner{
+  animation:rc-turn .78s cubic-bezier(.3,.8,.3,1) forwards;
+}
+@keyframes rc-turn{
+  0%   { transform:rotate(var(--rest)) rotateY(0deg)    scale(1) }
+  22%  { transform:rotate(calc(var(--rest) * 2)) rotateY(52deg)  scale(1.07) }
+  55%  { transform:rotate(0deg) rotateY(150deg) scale(1.09) }
+  74%  { transform:rotate(1.5deg) rotateY(196deg) scale(1.01) }   /* past it */
+  88%  { transform:rotate(-.8deg) rotateY(172deg) scale(.985) }   /* back */
+  100% { transform:rotate(var(--rest)) rotateY(180deg) scale(1) }
+}
+
+.rc-face{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  padding:clamp(18px,1.7vw,30px);
+  border-radius:6px;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+  text-align:left;
+}
+.rc-front{
+  background:var(--paper);color:var(--ink);
+  justify-content:space-between;
+  box-shadow:0 14px 34px rgba(0,0,0,.26);
+}
+.rc-back{
+  transform:rotateY(180deg);
+  background:var(--seal);color:#fff;
+  justify-content:center;
+  box-shadow:0 14px 34px rgba(0,0,0,.3);
+}
+
+.rc-num{
+  font-family:var(--display);
+  font-size:clamp(30px,3.2vw,54px);line-height:1;
+  color:var(--seal);
+}
+.rc-headline{
+  font-family:var(--sans);font-weight:600;
+  font-size:clamp(17px,1.5vw,25px);
+  line-height:1.22;letter-spacing:-.015em;
+}
+.rc-hint{
+  position:absolute;left:0;right:0;bottom:clamp(12px,1.2vw,20px);
+  text-align:center;
+  font-family:var(--sans);font-weight:700;
+  font-size:10px;letter-spacing:.24em;text-transform:uppercase;
+  color:rgba(30,34,43,.34);
+  animation:rc-nudge 2.6s ease-in-out infinite;
+}
+.rc.is-open .rc-hint{opacity:0}
+@keyframes rc-nudge{
+  0%,88%,100%{transform:translateY(0)}
+  93%{transform:translateY(-3px)}
+}
+.rc-body{
+  font-family:var(--sans);font-weight:300;
+  font-size:clamp(16px,1.35vw,22px);
+  line-height:1.45;
+}
+
+@media(prefers-reduced-motion:reduce){
+  .rc-inner,.rc.is-open .rc-inner{animation:none;transition:none}
+  .rc.is-open .rc-inner{transform:rotateY(180deg)}
+  .rc-hint{animation:none}
+  .p-slide .p-inner{transition:none;opacity:1;transform:none}
+}
+
+@media(max-width:860px){
+  .p-slide{min-height:auto;padding:12vh 0;position:relative}
+  .p-inner{padding:0 6%}
+  .p-headline{font-size:clamp(34px,9vw,54px);max-width:none}
+  .p-body{font-size:17px}
+  .p-title{font-size:clamp(30px,8vw,46px);margin-bottom:26px}
+  /* stacked: three flip cards in a narrow column are cramped and the tilt
+     turns into clutter */
+  .rc-row{grid-template-columns:1fr;gap:14px}
+  .rc{aspect-ratio:auto;min-height:190px}
+  .rc:nth-child(n){--rest:0deg}
+}

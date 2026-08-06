@@ -171,6 +171,11 @@
         "google": "Elms+Sans:ital,wght@0,300..700;1,400",
         "fallback": "ui-sans-serif,system-ui,'Helvetica Neue',Arial,sans-serif"
       }
+    },
+    "ui": {
+      "selectorPanel": "ui/panel.png",
+      "selectorTab": "ui/tab.png",
+      "_note": "Optional 9-slice frames for the itinerary selector, in this trip's own folder because they are its art direction, not the product's. Omit them and the selector falls back to a flat plate in artDirection.colors — see --sel-panel-img in styles/main.css."
     }
   },
   "grid": {
@@ -299,37 +304,15 @@
     "flightSearch": {
       "_readme": "Every flight in the trip, in order. `mode` controls how they're offered: 'multiCity' builds one search across all legs (Kayak/Momondo only), 'perLeg' renders one link per leg. 'both' shows the combined search with per-leg links beneath, which is the safest default since a multi-city URL can't be verified without opening it.",
       "provider": "kayak",
-      "passengers": 2,
+      "passengers": 1,
       "cabin": "economy",
-      "legs": [
-        {
-          "from": "PAR",
-          "to": "HKG",
-          "dateFrom": "itineraryStart",
-          "label": "Out"
-        },
-        {
-          "from": "HKG",
-          "to": "NGO",
-          "date": "2026-11-01",
-          "label": "Hong Kong → Japan"
-        },
-        {
-          "from": "OKJ",
-          "to": "TYO",
-          "date": "2026-11-16",
-          "label": "Inland Sea → Tokyo"
-        },
-        {
-          "from": "TYO",
-          "to": "PAR",
-          "dateFrom": "itineraryEnd",
-          "label": "Home"
-        }
-      ],
       "mode": "both",
-      "showLegs": false
-    }
+      "showLegs": false,
+      "_legsNote": "Legs live on each ITINERARY (itineraries[].flightSearch.legs), because only the first and last follow the itinerary dates — a shared list with hardcoded middle legs produced an impossible sequence the moment you switched duration. A trip-level `legs` here would still work as a fallback for an itinerary that defines none.",
+      "_passengersNote": "One ticket: the flights are booked and paid for separately. The ROOM is still for two — see cta.roomAdults."
+    },
+    "roomAdults": 2,
+    "_roomAdultsNote": "How many share a room, used for the Booking.com links. Separate from flightSearch.passengers because you fly on your own tickets and share a twin."
   },
   "locations": [
     {
@@ -1725,6 +1708,31 @@
         3900,
         4650
       ],
+      "pitch": {
+        "_note": "The argument for THIS itinerary — three stacked slides between the map and the dataviz. Not a highlight reel: mood sets the feeling, arguments makes exactly three distinct claims (not the same point three ways), gem is ONE vivid moment, held singular on purpose. Numbers describing the EXPERIENCE stay ('seventy kilometres of bridges'); numbers describing the ITINERARY go (nights, days, stop counts) — those read as a schedule, not a story, and belong on the map and in the popover instead.",
+        "mood": {
+          "headline": "The colour is moving south with you.",
+          "body": "Larches turning gold in the mountains, then ginkgo lighting up gold in Tokyo by the time you get there. You're not visiting in autumn — you're chasing the same wave of colour down the country."
+        },
+        "arguments": [
+          {
+            "headline": "Hong Kong isn't a stopover.",
+            "body": "It's a country in its own right, before Japan even starts."
+          },
+          {
+            "headline": "There's a stretch of this with no signal at all.",
+            "body": "Alpine trail, hot water, cold stars — nothing scheduled, nothing to check."
+          },
+          {
+            "headline": "Built to dodge the queue, not join it.",
+            "body": "A castle town never rebuilt. A coastline still finding its feet after 2024, with almost nobody on the train."
+          }
+        ],
+        "gem": {
+          "headline": "You cross the sea on a bicycle.",
+          "body": "Seventy kilometres of bridges, island to island across the Inland Sea — citrus groves and fishing harbours passing on both sides, salt air the whole way."
+        }
+      },
       "stops": [
         {
           "locationId": "hongkong",
@@ -1776,7 +1784,36 @@
           "arriveBy": "flight"
         }
       ],
-      "periodDisplay": "29 Oct – 18 Nov"
+      "periodDisplay": "29 Oct – 18 Nov",
+      "flightSearch": {
+        "legs": [
+          {
+            "from": "PAR",
+            "to": "HKG",
+            "dateFrom": "itineraryStart",
+            "label": "Out"
+          },
+          {
+            "from": "HKG",
+            "to": "NGO",
+            "date": "2026-11-01",
+            "label": "Hong Kong → the Alps"
+          },
+          {
+            "from": "OKJ",
+            "to": "TYO",
+            "date": "2026-11-16",
+            "label": "Inland Sea → Tokyo"
+          },
+          {
+            "from": "TYO",
+            "to": "PAR",
+            "dateFrom": "itineraryEnd",
+            "label": "Home"
+          }
+        ],
+        "_note": "Four legs. If the Kayak link fails to resolve, the domestic OKJ→TYO hop is the one to drop — it is a cheap short flight you would book separately anyway, and removing it leaves a clean 3-leg open jaw (PAR→HKG, HKG→NGO, TYO→PAR) that matches the shape of the other two itineraries."
+      }
     },
     {
       "id": "koyasan-17",
@@ -1821,7 +1858,29 @@
           "arriveBy": "surface"
         }
       ],
-      "periodDisplay": "22 Oct – 7 Nov"
+      "periodDisplay": "22 Oct – 7 Nov",
+      "flightSearch": {
+        "legs": [
+          {
+            "from": "PAR",
+            "to": "HKG",
+            "dateFrom": "itineraryStart",
+            "label": "Out"
+          },
+          {
+            "from": "HKG",
+            "to": "KIX",
+            "date": "2026-10-25",
+            "label": "Hong Kong → Koyasan"
+          },
+          {
+            "from": "KIX",
+            "to": "PAR",
+            "dateFrom": "itineraryEnd",
+            "label": "Home"
+          }
+        ]
+      }
     },
     {
       "id": "coast-12",
@@ -1879,7 +1938,24 @@
         }
       ],
       "periodDisplay": "1–12 Oct",
-      "_mapNote": "Optional per-itinerary artwork. Same dimensions as map.base, so pins, crop and inset stay valid; the two are crossfaded. Uncomment when the asset exists: \"map\": { \"base\": \"map-coast.png\" }"
+      "_mapNote": "Optional per-itinerary artwork. Same dimensions as map.base, so pins, crop and inset stay valid; the two are crossfaded. Uncomment when the asset exists: \"map\": { \"base\": \"map-coast.png\" }",
+      "flightSearch": {
+        "legs": [
+          {
+            "from": "PAR",
+            "to": "KMQ",
+            "dateFrom": "itineraryStart",
+            "label": "Out"
+          },
+          {
+            "from": "TYO",
+            "to": "PAR",
+            "dateFrom": "itineraryEnd",
+            "label": "Home"
+          }
+        ],
+        "_note": "No Hong Kong on this one, and Okayama→Tokyo is a surface leg here — so it is an open jaw: into Komatsu for Kanazawa, home from Tokyo."
+      }
     }
   ]
 }
