@@ -251,8 +251,12 @@ body::after{
   border:1px solid #304363;
   border-radius:4px;
 }
+/* The plate STAYS as the base and the frame sits on top. If the declared image
+   404s, border-image quietly does nothing — and with `background: none` here
+   that left an invisible 8px border and no panel at all, which is worse than
+   never declaring the art. Keeping the plate means a missing file degrades to
+   the default rather than to nothing. */
 .has-sel-art .sel-panel{
-  background:none;
   border:8px solid transparent;
   border-radius:0;
   border-image:var(--sel-panel-img) 17 round;

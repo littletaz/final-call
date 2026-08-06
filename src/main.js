@@ -27,6 +27,16 @@ function applyUiArt(ui){
   const root = document.documentElement
   const set = (prop, file) =>
     root.style.setProperty(prop, file ? `url('${tripAsset(file)}')` : 'none')
+  /* Declared art that never arrives is silent — border-image just does nothing.
+     Warn, so a missing file reads as a missing file rather than a design choice. */
+  if(ui?.selectorPanel){
+    const probe = new Image()
+    probe.onerror = () => console.warn(
+      '[final-call] missing asset: ' + ui.selectorPanel +
+      ' — the selector falls back to a plain plate. Expected at ' +
+      'public/trips/<trip-id>/' + ui.selectorPanel)
+    probe.src = tripAsset(ui.selectorPanel)
+  }
   set('--sel-panel-img', ui?.selectorPanel)
   set('--sel-tab-img',   ui?.selectorTab)
   root.classList.toggle('has-sel-art', !!ui?.selectorPanel)
