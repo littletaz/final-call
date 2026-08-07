@@ -1709,7 +1709,7 @@
         4650
       ],
       "pitch": {
-        "_note": "The argument for THIS itinerary — three stacked slides between the map and the dataviz. Not a highlight reel: mood sets the feeling, arguments makes exactly three distinct claims (not the same point three ways), gem is ONE vivid moment, held singular on purpose. Numbers describing the EXPERIENCE stay ('seventy kilometres of bridges'); numbers describing the ITINERARY go (nights, days, stop counts) — those read as a schedule, not a story, and belong on the map and in the popover instead.",
+        "_note": "The argument for THIS itinerary — three stacked slides between the map and the dataviz. Not a highlight reel: mood sets the feeling, arguments makes exactly three distinct claims (not the same point three ways), gem is ONE vivid moment, held singular on purpose. Each argument may carry an `image` — a print on the back of its card, revealed with the body. Optional: without one the back is just the text. Numbers describing the EXPERIENCE stay ('seventy kilometres of bridges'); numbers describing the ITINERARY go (nights, days, stop counts) — those read as a schedule, not a story, and belong on the map and in the popover instead.",
         "mood": {
           "headline": "The colour is moving south with you.",
           "body": "Larches turning gold in the mountains, then ginkgo lighting up gold in Tokyo by the time you get there. You're not visiting in autumn — you're chasing the same wave of colour down the country."
@@ -1717,20 +1717,28 @@
         "arguments": [
           {
             "headline": "Hong Kong isn't a stopover.",
-            "body": "It's a country in its own right, before Japan even starts."
+            "body": "It's a country in its own right, before Japan even starts.",
+            "image": "img/hongkong-02.jpg"
           },
           {
             "headline": "There's a stretch of this with no signal at all.",
-            "body": "Alpine trail, hot water, cold stars — nothing scheduled, nothing to check."
+            "body": "Alpine trail, hot water, cold stars — nothing scheduled, nothing to check.",
+            "image": "img/japan-alps-03.jpg"
           },
           {
             "headline": "Built to dodge the queue, not join it.",
-            "body": "A castle town never rebuilt. A coastline still finding its feet after 2024, with almost nobody on the train."
+            "body": "A castle town never rebuilt. A coastline still finding its feet after 2024, with almost nobody on the train.",
+            "image": "img/kanazawa-02.jpg"
           }
         ],
         "gem": {
           "headline": "You cross the sea on a bicycle.",
-          "body": "Seventy kilometres of bridges, island to island across the Inland Sea — citrus groves and fishing harbours passing on both sides, salt air the whole way."
+          "body": "Seventy kilometres of bridges, island to island across the Inland Sea — citrus groves and fishing harbours passing on both sides, salt air the whole way.",
+          "label": "One more thing…",
+          "images": [
+            "img/shimanami-01.jpg",
+            "img/shimanami-03.jpg"
+          ]
         }
       },
       "stops": [

@@ -4,16 +4,132 @@
    The middle one holds three cards you turn over.
    ============================================================ */
 
-#pitch{position:relative;z-index:610}
+/* ============================================================
+   THE STACK
+   Four slides, each exactly one screen, each sticking in turn
+   while the next rides up over it.
+
+   They must all be SIBLINGS in one container. A sticky element
+   only sticks within its own parent, so while the pitch and the
+   footer were separate boxes each slide unstuck at the very
+   moment the next arrived — leaving nothing behind it, which is
+   what showed through the rounded corners as a seam.
+
+   `display:contents` dissolves #pitch and #footer so their
+   sections become direct children of #stack, without moving any
+   markup between the two renderers.
+   ============================================================ */
+/* ABOVE the paper texture (900). A stuck slide sits at the top of the viewport,
+   which is inside the textured region — so at 600 the grain painted straight
+   over it. Below the Final Call panel (930) so that still floats on top. */
+#stack{position:relative;z-index:905}
+/* .p-open is sticky inside this, so it holds only while #pitch is on screen —
+   which is exactly right: the cards are released once the stack takes over.
+   Above the texture (900) so the grain doesn't paint over the held cards. */
+#pitch{position:relative;z-index:904}
+#pitch[hidden]{display:none}
+#footer{position:relative;z-index:600}
+
+/* Everything ABOVE #stack — map, mood, cards — is ordinary scroll at whatever
+   height the content wants. Nothing up there is a slide.
+
+   Inside #stack, four slides of exactly one screen. The first is empty: it's
+   the floor the others slide over, sea blue so it reads as the page continuing.
+   Without it the first real slide would have nothing to cover, and the cards
+   would still be scrolling as it arrived.
+
+   The gap between slides is a margin-TOP on the FOLLOWING one, never a
+   margin-bottom on the sticky one. A sticky element is constrained by its
+   MARGIN box, so a bottom margin eats its own sticking room — that's what made
+   the budget slide start moving half a screen before the ask reached it. */
+/* The three that are slides: exactly one screen each. `.p-open` is in the stack
+   too but keeps its natural height — see below. */
+.p-gem,.f-costs,.f-ask{
+  position:sticky;top:0;
+  height:100vh;height:100svh;
+  overflow:hidden;
+}
+.p-gem{margin-top:var(--cards-tail)}
+.f-costs,.f-ask{margin-top:var(--stack-gap)}
+
 #pitch[hidden]{display:none}
 
+/* Ordinary flow. The stack relied on each slide covering the one beneath, and
+   with every slide the same sea blue there was nothing to see — so the effect
+   cost three viewport-heights of scroll and returned nothing. */
 .p-slide{
-  position:sticky;top:0;
-  min-height:100vh;min-height:100svh;
   display:flex;align-items:center;
   background:var(--sea);
-  border-top:1px solid rgba(255,255,255,.08);
 }
+/* The FIRST slide of the stack. Scroll stops here — the mood and the cards hold
+   while the gem rides up over them, and each block after that covers the last.
+   Sea blue, so it's the floor the colour walk climbs out of. */
+/* Taller than the viewport ON PURPOSE. The content fills the first screen and
+   the extra half-screen below it is dead air the slide holds through — so the
+   cards sit still long enough to read and turn over before the next slide
+   starts covering them. Without it the gem arrives the moment they do. */
+/* Exactly one screen, like every slide in the stack. No extra height is needed
+   for reading time: a stuck slide stays fully visible while the next rides up
+   over it, so the cards hold centre-screen for as long as it takes the gem to
+   arrive. The 150vh version was solving a problem sticky already solves. */
+/* First in the stack, and the only member that isn't a slide: sticky so the
+   cards hold, but at its NATURAL height so nothing is clipped or forced to a
+   screen. Sticky and a fixed height are separate decisions; pairing them is
+   what made this read as a slide before. */
+.p-open{
+  position:sticky;top:0;
+  min-height:100vh;min-height:100svh;
+  align-items:center;
+  padding:12vh 0 var(--cards-tail);
+  text-align:center;
+}
+
+/* The cards are held, so their grain has to be held with them — #texture scrolls
+   and would drag across still type. This layer sticks because the slide does,
+   and carries the same sheet, so the map above and the cards below read as one
+   continuous piece of paper. */
+.p-open::after{
+  content:"";
+  position:absolute;inset:0;
+  z-index:5;
+  pointer-events:none;
+  background:var(--paper-texture) center top / 100% auto repeat-y;
+  background-position-y:var(--tex-offset, 0px);
+  mix-blend-mode:multiply;
+  opacity:var(--paper-texture-opacity);
+}
+.p-open .p-inner{position:relative;z-index:4}
+
+/* The first of the stacked slides. From here to the end each block is a step
+   lighter and sits above the last, so the page climbs out of the sea. */
+.p-gem{
+  z-index:1;
+  padding:var(--stack-pad) 0;
+  background:#8FA1BC;
+  border-radius:34px 34px 0 0;
+  box-shadow:0 -26px 64px rgba(24,32,48,.34);
+  overflow:hidden;
+  text-align:center;
+}
+
+/* prints thrown behind the words */
+.p-prints{position:absolute;inset:0;pointer-events:none}
+.p-print{
+  position:absolute;margin:0;
+  transform:rotate(var(--r,0deg));
+  border:9px solid #F2F2F0;
+  box-shadow:0 14px 34px rgba(24,32,48,.26);
+  overflow:hidden;
+}
+.p-print img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+
+.p-label{
+  margin:0 0 clamp(28px,4vw,64px);
+  font-family:var(--sans);font-weight:700;
+  font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(255,255,255,.78);
+}
+.p-gem .p-inner{position:relative;z-index:2}
 .p-inner{
   width:100%;
   max-width:var(--artboard);
@@ -29,32 +145,37 @@
 .p-slide.is-in .p-inner{opacity:1;transform:none}
 
 .p-headline{
-  margin:0;
+  margin:0 auto;
   font-family:var(--display);
-  font-size:clamp(40px,6.4vw,110px);
-  line-height:1.02;letter-spacing:-.02em;
+  font-size:clamp(38px,5.4vw,86px);
+  line-height:1.08;letter-spacing:-.01em;
   color:#fff;
-  max-width:16ch;
+  max-width:15ch;
 }
 .p-body{
-  margin:clamp(20px,2.6vw,38px) 0 0;
+  margin:clamp(18px,2.2vw,30px) auto 0;
   font-family:var(--sans);font-weight:300;
-  font-size:clamp(17px,1.5vw,26px);
-  line-height:1.5;color:rgba(255,255,255,.82);
-  max-width:44ch;
+  font-size:clamp(15px,1.15vw,19px);
+  line-height:1.6;color:rgba(255,255,255,.78);
+  max-width:52ch;
 }
+/* the gem is the one that still gets a full beat to itself */
+
 
 /* ---- the three cards ---- */
+/* a label, not a headline — the cards are the thing here */
 .p-title{
-  margin:0 0 clamp(28px,3.4vw,56px);
-  font-family:var(--display);
-  font-size:clamp(34px,4.6vw,78px);
-  line-height:1.05;letter-spacing:-.02em;color:#fff;
+  margin:clamp(56px,7vw,110px) 0 clamp(24px,2.6vw,40px);
+  font-family:var(--sans);font-weight:700;
+  font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(255,255,255,.62);
 }
+/* A fixed size, not a fraction of the row: a playing card is an object and
+   objects don't stretch to fill their container. */
 .rc-row{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:clamp(14px,1.6vw,26px);
+  display:flex;justify-content:center;
+  gap:clamp(16px,2vw,34px);
+  flex-wrap:wrap;
 }
 
 /* The card is the button; .rc-inner is what turns. Perspective lives on the
@@ -63,7 +184,8 @@
 .rc{
   position:relative;
   perspective:1100px;
-  aspect-ratio:3/4;
+  width:275px;height:400px;
+  flex:0 0 auto;
   padding:0;border:0;background:none;
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
@@ -109,40 +231,53 @@
 .rc-face{
   position:absolute;inset:0;
   display:flex;flex-direction:column;
-  padding:clamp(18px,1.7vw,30px);
-  border-radius:6px;
+  padding:30px 26px;
+  border-radius:34px;
   backface-visibility:hidden;
   -webkit-backface-visibility:hidden;
-  text-align:left;
+  text-align:center;
 }
+/* the seal frame is a border, so the paper sits inside it */
 .rc-front{
   background:var(--paper);color:var(--ink);
-  justify-content:space-between;
-  box-shadow:0 14px 34px rgba(0,0,0,.26);
+  border:10px solid var(--seal);
+  align-items:center;justify-content:center;
+  box-shadow:0 16px 36px rgba(0,0,0,.22);
 }
 .rc-back{
   transform:rotateY(180deg);
   background:var(--seal);color:#fff;
-  justify-content:center;
-  box-shadow:0 14px 34px rgba(0,0,0,.3);
+  align-items:center;justify-content:center;gap:26px;
+  box-shadow:0 18px 40px rgba(0,0,0,.34);
 }
 
 .rc-num{
   font-family:var(--display);
-  font-size:clamp(30px,3.2vw,54px);line-height:1;
+  font-size:74px;line-height:1;
   color:var(--seal);
+  margin-bottom:18px;
 }
 .rc-headline{
-  font-family:var(--sans);font-weight:600;
-  font-size:clamp(17px,1.5vw,25px);
-  line-height:1.22;letter-spacing:-.015em;
+  font-family:var(--sans);font-weight:700;
+  font-size:19px;line-height:1.3;letter-spacing:-.01em;
+  max-width:17ch;
 }
+
+/* the print on the back, tilted and framed */
+.rc-print{
+  display:block;width:74%;
+  transform:rotate(-3.5deg);
+  border:7px solid #fff;
+  box-shadow:0 8px 20px rgba(0,0,0,.24);
+  overflow:hidden;
+}
+.rc-print img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover}
 .rc-hint{
-  position:absolute;left:0;right:0;bottom:clamp(12px,1.2vw,20px);
+  position:absolute;left:0;right:0;bottom:26px;
   text-align:center;
   font-family:var(--sans);font-weight:700;
-  font-size:10px;letter-spacing:.24em;text-transform:uppercase;
-  color:rgba(30,34,43,.34);
+  font-size:10px;letter-spacing:.2em;
+  color:rgba(30,34,43,.3);
   animation:rc-nudge 2.6s ease-in-out infinite;
 }
 .rc.is-open .rc-hint{opacity:0}
@@ -151,9 +286,9 @@
   93%{transform:translateY(-3px)}
 }
 .rc-body{
-  font-family:var(--sans);font-weight:300;
-  font-size:clamp(16px,1.35vw,22px);
-  line-height:1.45;
+  font-family:var(--sans);font-weight:600;
+  font-size:17px;line-height:1.4;
+  max-width:19ch;
 }
 
 @media(prefers-reduced-motion:reduce){
@@ -164,14 +299,17 @@
 }
 
 @media(max-width:860px){
-  .p-slide{min-height:auto;padding:12vh 0;position:relative}
+  /* less dead air on a phone — a half screen there is a long thumb-scroll */
+  .p-gem{border-radius:24px 24px 0 0}
+  .p-print{border-width:6px}
   .p-inner{padding:0 6%}
   .p-headline{font-size:clamp(34px,9vw,54px);max-width:none}
   .p-body{font-size:17px}
-  .p-title{font-size:clamp(30px,8vw,46px);margin-bottom:26px}
+  /* still the small label, just tighter spacing */
+  .p-title{margin:clamp(40px,10vw,64px) 0 20px}
   /* stacked: three flip cards in a narrow column are cramped and the tilt
      turns into clutter */
-  .rc-row{grid-template-columns:1fr;gap:14px}
-  .rc{aspect-ratio:auto;min-height:190px}
+  .rc-row{gap:16px}
+  .rc{width:min(275px,78vw);height:auto;aspect-ratio:275/400}
   .rc:nth-child(n){--rest:0deg}
 }

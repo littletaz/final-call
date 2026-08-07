@@ -51,22 +51,24 @@ body{
 /* The texture used to be on the hero only, which put a seam where the map
    ended. It's on the page now, above everything, so the paper is continuous
    from the map to the last button. */
-body::after{
-  content:"";
-  /* ABSOLUTE, not fixed: the grain belongs to the paper, so it has to travel
-     with it. Fixed made it sit still while the page moved underneath, which
-     read as a filter over the screen rather than a surface. */
+/* The paper runs from the map to the bottom of the cards — the sea-blue part of
+   the page — and stops where the stack begins. The three slides below are their
+   own surfaces climbing out of the sea, and grain over them would flatten the
+   whole point of the colour walk.
+
+   Its height is set in js (see sizeTexture in main.js): it has to end exactly
+   where .p-gem starts, and only layout knows where that is. */
+#texture{
   position:absolute;
   top:0;left:0;right:0;
-  height:100%;
+  height:100%;                  /* replaced once the pitch has laid out */
   z-index:900;
   pointer-events:none;
-  /* full width, natural height, tiled down the page — the sheet is 1440x1981,
-     so it repeats roughly every 2.4 screens */
   background:var(--paper-texture) top center / 100% auto repeat-y;
   mix-blend-mode:multiply;
   opacity:var(--paper-texture-opacity);
 }
+
 
 
 #frame{position:relative;width:100%;max-width:var(--artboard);margin:0 auto}
@@ -497,7 +499,6 @@ body.has-poi{overflow:hidden}
   font-size:14px;border-radius:4px;
 }
 
-
 /* the hotel bars, shared with nothing else now */
 .hotel{
   display:block;
@@ -532,10 +533,23 @@ body.has-poi{overflow:hidden}
 /* ============================================================
    FOOTER — the cost, then the question
    ============================================================ */
-#footer{position:relative;z-index:600;background:var(--sea);color:#fff}
+/* The last two blocks DO stack — and here it works, because they're different
+   colours from each other and from the sea above. That's the whole mechanism:
+   a slide has to visibly cover the one beneath it. The pitch slides were all
+   sea blue, which is why stacking did nothing there. */
+/* dissolved into #stack — see pitch.css */
+#footer{color:inherit}
 
 /* dusk: the same world as the hero, later in the day */
-.f-costs{padding:0 0 14vh}
+.f-costs{
+  z-index:2;
+  display:flex;align-items:center;
+  padding:var(--stack-pad) 0;
+  background:#D5DDE8;
+  color:var(--ink);
+  border-radius:34px 34px 0 0;
+  box-shadow:0 -26px 64px rgba(24,32,48,.28);
+}
 .f-inner{
   max-width:var(--artboard);margin:0 auto;
   padding-inline:var(--grid-margin);
@@ -543,7 +557,7 @@ body.has-poi{overflow:hidden}
 #footer .slot-label{
   font-family:var(--sans);font-weight:500;
   font-size:11px;letter-spacing:.2em;
-  color:rgba(255,255,255,.45);margin:0 0 10px;
+  color:rgba(89,109,136,.62);margin:0 0 10px;
 }
 
 /* ---- dataviz ---- */
@@ -553,8 +567,8 @@ body.has-poi{overflow:hidden}
   margin-bottom:14vh;
 }
 #stats .stat{text-align:center}
-#stats .val{font-family:var(--display);font-size:clamp(34px,4.2vw,72px);line-height:1;color:#fff}
-#stats .key{font-size:11px;letter-spacing:.16em;margin-top:6px;color:rgba(255,255,255,.6)}
+#stats .val{font-family:var(--display);font-size:clamp(34px,4.2vw,72px);line-height:1;color:var(--sea)}
+#stats .key{font-size:11px;letter-spacing:.16em;margin-top:6px;color:rgba(89,109,136,.72)}
 #stats .rule{width:62%;height:6px;background:var(--seal);margin:12px auto 0;border-radius:2px}
 
 /* ---- the cost ---- */
@@ -565,11 +579,11 @@ body.has-poi{overflow:hidden}
 .bud-total{
   font-family:var(--sans);font-weight:500;
   font-size:clamp(44px,5.4vw,96px);letter-spacing:-.035em;line-height:1;
-  color:#fff;margin:0;font-variant-numeric:tabular-nums;
+  color:var(--sea);margin:0;font-variant-numeric:tabular-nums;
 }
 .bud-sub{
   margin:14px 0 0;font-size:clamp(14px,1.3vw,20px);
-  color:rgba(255,255,255,.55);font-variant-numeric:tabular-nums;
+  color:rgba(89,109,136,.7);font-variant-numeric:tabular-nums;
 }
 
 /* one stacked bar rather than five — it reads as proportion at a glance */
@@ -584,9 +598,9 @@ body.has-poi{overflow:hidden}
 }
 .bud-legend li{display:grid;grid-template-columns:14px 1fr;gap:8px 9px;align-items:center}
 .bud-swatch{width:13px;height:13px;border-radius:2px}
-.bud-key{font-size:13px;color:rgba(255,255,255,.8)}
+.bud-key{font-size:13px;color:rgba(89,109,136,.8)}
 .bud-val{
-  grid-column:2;font-size:12.5px;color:rgba(255,255,255,.45);
+  grid-column:2;font-size:12.5px;color:rgba(89,109,136,.62);
   font-variant-numeric:tabular-nums;
 }
 
@@ -594,23 +608,23 @@ body.has-poi{overflow:hidden}
 .bud-levers{
   display:grid;grid-template-columns:repeat(3,1fr);
   gap:var(--grid-gutter-in);
-  padding-top:5vh;border-top:1px solid rgba(255,255,255,.14);
+  padding-top:5vh;border-top:1px solid rgba(89,109,136,.2);
 }
 .bud-lever-title{
   margin:0 0 14px;font-family:var(--sans);font-weight:700;
-  font-size:12px;letter-spacing:.16em;color:rgba(255,255,255,.5);
+  font-size:12px;letter-spacing:.16em;color:rgba(89,109,136,.68);
 }
 .bud-opt{
   display:block;width:100%;text-align:left;cursor:pointer;
   padding:12px 16px;margin-bottom:8px;
-  background:none;border:1px solid rgba(255,255,255,.18);border-radius:3px;
-  color:rgba(255,255,255,.65);font-family:var(--sans);
+  background:none;border:1px solid rgba(89,109,136,.32);border-radius:3px;
+  color:rgba(89,109,136,.78);font-family:var(--sans);
   font-size:15px;font-weight:500;line-height:1.3;
   transition:border-color .2s,background .2s,color .2s;
 }
-.bud-opt:hover{border-color:rgba(255,255,255,.5);color:rgba(255,255,255,.95)}
+.bud-opt:hover{border-color:var(--sea);color:var(--sea)}
 /* the chosen one inverts — it's the loudest thing in the block, which is right */
-.bud-opt.on{background:#fff;border-color:#fff;color:#111}
+.bud-opt.on{background:var(--sea);border-color:var(--sea);color:#fff}
 .bud-opt:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
 
 /* ============================================================
@@ -619,15 +633,36 @@ body.has-poi{overflow:hidden}
    page — as a fixed layer it competed with the card parallax and
    the map, and the reveal never settled. The wall has its own page.
    ============================================================ */
+/* the last slide, and the lightest — the page has walked from sea to daylight */
 .f-ask{
-  padding:14vh 0 16vh;
+  z-index:3;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:var(--stack-pad) 0;
+  background:#fff;
+  border-radius:34px 34px 0 0;
+  box-shadow:0 -26px 64px rgba(24,32,48,.22);
+  overflow:hidden;
   text-align:center;
 }
+.f-ask-prints{position:absolute;inset:0;pointer-events:none}
+.f-ask-print{
+  position:absolute;margin:0;
+  transform:rotate(var(--r,0deg));
+  border:9px solid #F2F2F0;
+  box-shadow:0 14px 34px rgba(24,32,48,.18);
+  overflow:hidden;
+}
+.f-ask-print img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.f-ask-title,.f-ask .ask-actions{position:relative;z-index:2}
+/* black on white — the last button on the page, and the only one that matters */
+.f-ask .fc-yes{background:var(--ink);color:#fff}
+.f-ask .fc-yes:hover{background:#000}
 .f-ask-title{
   font-family:var(--display);
   font-size:clamp(46px,7.6vw,132px);
   line-height:1;letter-spacing:-.01em;
-  margin:0 0 6vh;color:#fff;
+  margin:0 0 6vh;color:var(--ink);
 }
 .ask-actions{
   display:flex;gap:14px;justify-content:center;
@@ -636,7 +671,6 @@ body.has-poi{overflow:hidden}
   width:clamp(150px,13vw,210px);height:54px;
   font-size:16px;border-radius:4px;
 }
-
 
 @media(max-width:860px){
   /* the hero grows to fit the selector below the map */
@@ -977,7 +1011,6 @@ body.is-calibrating .poi{cursor:move}
 
   #calib{width:100%}
 }
-
 
 
 /* ============================================================

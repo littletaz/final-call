@@ -23,10 +23,95 @@ let active = null
 /* The selector's frames are a trip's own art direction, so they live in its
    folder and are named in its data. A trip that doesn't supply them gets a flat
    plate instead — see --sel-panel-img in styles/main.css. */
+/* The grain covers the sea-blue part of the page and stops where the stacked
+   slides begin. That boundary is the top of .p-gem, which only layout knows —
+   so it's measured rather than guessed, and re-measured when the itinerary
+   changes (a different pitch is a different height). */
+function sizeTexture(){
+  const tex = document.getElementById('texture')
+  if(!tex) return
+  /* The sheet covers everything that SCROLLS — map, mood, cards — and stops at
+     #stack. Past there each slide locks to the top, and a scrolling sheet would
+     drag its grain across held type. The floor slide carries the same sea blue,
+     so the join is invisible. */
+  /* The scrolling sheet covers the MAP and stops at the stack. The cards carry
+     their own grain from there (see .p-open::after) because they're held — a
+     scrolling sheet would drag across them. */
+  const stack = document.querySelector('#stack')
+  if(!stack){ tex.style.height = '' ; return }
+
+  const top = Math.max(0, Math.round(stack.getBoundingClientRect().top + window.scrollY))
+  tex.style.height = top + 'px'
+
+  /* The cards' own sheet picks up exactly where this one stops, so the paper
+     runs unbroken from the map into the cards rather than restarting. */
+  const open = document.querySelector('.p-open')
+  if(open){
+    const w = document.getElementById('stage')?.clientWidth || window.innerWidth
+    const tile = w * (1981 / 1440)          /* the texture's own proportions */
+    open.style.setProperty('--tex-offset', `${-(top % tile).toFixed(1)}px`)
+  }
+
+}
+
+/* Every stacked slide is exactly one screen. That's a content constraint, not a
+   layout one: the slides are fixed at 100vh in css, so content that doesn't fit
+   is CLIPPED rather than scrollable — writing less is the only fix.
+
+   This checks the content against the slide it's in and says so, since a
+   clipped slide looks fine until the thing that got cut off mattered. */
+function checkSlideHeights(){
+  document.querySelectorAll('.p-gem, .f-costs, .f-ask').forEach(el => {
+    const over = el.scrollHeight - el.clientHeight
+    if(over > 8){
+      console.warn(`[final-call] .${el.className.split(' ')[0]} overflows its screen `
+        + `by ${Math.round(over)}px — that content is clipped, not scrollable`)
+    }
+  })
+}
+
+let texRaf
+function scheduleTexture(){
+  cancelAnimationFrame(texRaf)
+  texRaf = requestAnimationFrame(() => { checkSlideHeights(); sizeTexture() })
+}
+
+/* Sticky is contained by the parent BOX, so the three stacked slides have to be
+   real siblings. Pitch and Footer each render into their own element, then their
+   stacked sections are moved here — which keeps both renderers independent
+   while giving the stack one honest container.
+
+   `.p-open` leads: it's sticky at its natural height, so the cards stay put
+   while everything else rides over them. It only holds as long as its CONTAINER
+   lasts, which is why it has to be in here rather than left in #pitch — there it
+   was released the moment #stack began. */
+function assembleStack(){
+  const stack = document.getElementById('stack')
+  if(!stack) return
+  const slides = [
+    document.querySelector('#pitch .p-open'),   /* the cards hold the stack open */
+    document.querySelector('#pitch .p-gem'),
+    document.querySelector('#footer .f-costs'),
+    document.querySelector('#footer .f-ask'),
+  ].filter(Boolean)
+
+  /* replaceChildren, not append: a re-render creates NEW sections, and appending
+     them left the previous set in place — two budget blocks stacked on each
+     other after one change of duration. This also drops the gem when an
+     itinerary has no pitch written. */
+  stack.replaceChildren(...slides)
+}
+
 function applyUiArt(ui){
   const root = document.documentElement
+  /* ABSOLUTE, not relative. A relative url() inside a custom property is
+     resolved against the STYLESHEET that uses it, not the document — and the
+     built CSS lives in /assets/, so "./trips/…" became "/assets/trips/…" and
+     404'd. It works in dev only because the CSS is served from the root there.
+     Resolving against document.baseURI removes the ambiguity entirely. */
+  const abs = file => new URL(tripAsset(file), document.baseURI).href
   const set = (prop, file) =>
-    root.style.setProperty(prop, file ? `url('${tripAsset(file)}')` : 'none')
+    root.style.setProperty(prop, file ? `url('${abs(file)}')` : 'none')
   /* Declared art that never arrives is silent — border-image just does nothing.
      Warn, so a missing file reads as a missing file rather than a design choice. */
   if(ui?.selectorPanel){
@@ -35,7 +120,7 @@ function applyUiArt(ui){
       '[final-call] missing asset: ' + ui.selectorPanel +
       ' — the selector falls back to a plain plate. Expected at ' +
       'public/trips/<trip-id>/' + ui.selectorPanel)
-    probe.src = tripAsset(ui.selectorPanel)
+    probe.src = abs(ui.selectorPanel)
   }
   set('--sel-panel-img', ui?.selectorPanel)
   set('--sel-tab-img',   ui?.selectorTab)
@@ -52,10 +137,12 @@ function renderAll(){
   PoiCard.init(active)
   Pitch.render(active)        /* the argument changes with the itinerary */
   Footer.render(active)
+  assembleStack()             /* both just re-rendered; re-collect their slides */
   FinalCall.update(active)
   FinalCall.watchAsk()        /* the footer was just rebuilt — re-observe it */
   MapView.setVariant(active)
   MapView.renderPins(active, goToCard)
+  scheduleTexture()           /* the pitch just changed height */
   if(Calib?.on) Calib.enableDrag()
 }
 
@@ -129,6 +216,8 @@ function initBackToMap(){
        what left the YES button on its placeholder href. The ask observer is a
        separate call, because THAT does need the footer to exist. */
     FinalCall.init()
+    addEventListener('resize', scheduleTexture)
+    if(document.fonts?.ready) document.fonts.ready.then(scheduleTexture)
 
     setItinerary(TRIP.data.defaultItineraryId)
     await initDevTools()

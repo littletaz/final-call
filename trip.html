@@ -19,6 +19,9 @@
 <div id="boot">LOADING&hellip;</div>
 
 <!-- ============ HERO ============ -->
+<!-- the paper grain; js bounds it to where the stacked slides begin -->
+<div id="texture" aria-hidden="true"></div>
+
 <header id="stage">
   <div id="frame">
 
@@ -79,9 +82,22 @@
     <div class="pc-photos" aria-hidden="true"></div>
   </div>
 </aside>
-<!-- the argument for whichever itinerary is selected; empty if unwritten -->
+<!-- The mood and the cards: normal scroll, the continuation of the map. -->
 <div id="pitch" hidden></div>
 
+<!-- Every STACKED slide has to be a real sibling here. Sticky is contained by
+     its parent box, so the gem, the costs and the ask are physically moved into
+     this element after they render (see assembleStack in main.js) rather than
+     left in two containers — display:contents removes the box but leaves the
+     containment ambiguous, and the costs slide unstuck exactly as the ask
+     landed. -->
+<!-- The mood and the cards are the FIRST member of the stack, not a separate
+     floor before it. A floor that has to end exactly where the cards end IS the
+     cards — and as its own element it could only start once #pitch had finished,
+     which released them. As a sibling here they hold until the whole stack does. -->
+<div id="stack"></div>
+
+<!-- where the footer renders before its slides are moved into #stack -->
 <footer id="footer"></footer>
 
 <!-- ============ DEV TOOLS ============

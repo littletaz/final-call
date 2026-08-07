@@ -1,4 +1,4 @@
-import { TRIP, tripBudget, sleepOptionCost, eur } from './data.js'
+import { TRIP, tripAsset, tripBudget, sleepOptionCost, eur } from './data.js'
 import { Cards } from './cards.js'
 
 /* ============================================================
@@ -83,6 +83,36 @@ const SEG = {
   transport:'rgba(255,255,255,.32)', activities:'rgba(255,255,255,.16)',
 }
 
+/* Prints from across the whole trip, thrown over the last slide — the places
+   you've just been shown, one more time before the question. Fixed angles, and
+   the photos picked by walking the stops evenly rather than at random: random
+   re-rolls on every itinerary change and never settles. */
+const ASK_SCATTER = [
+  { x:'56%',  y:'-4%',  w:'23%', r:'8deg'   },
+  { x:'-7%',  y:'22%',  w:'19%', r:'-11deg' },
+  { x:'78%',  y:'40%',  w:'21%', r:'-6deg'  },
+  { x:'8%',   y:'70%',  w:'22%', r:'12deg'  },
+  { x:'62%',  y:'78%',  w:'18%', r:'-4deg'  },
+  { x:'32%',  y:'88%',  w:'17%', r:'6deg'   },
+]
+
+function askPrints(itinerary){
+  const pool = []
+  for(const stop of itinerary.stops ?? []){
+    const loc = TRIP.byId[stop.locationId]
+    const first = loc?.photos?.[0]?.src
+    if(first) pool.push(first)
+  }
+  if(!pool.length) return ''
+  const picked = ASK_SCATTER.map((_, i) => pool[Math.floor(i * pool.length / ASK_SCATTER.length)])
+  return `<div class="f-ask-prints" aria-hidden="true">${picked.map((src, i) => {
+    const s = ASK_SCATTER[i]
+    return `<figure class="f-ask-print" style="left:${s.x};top:${s.y};width:${s.w};--r:${s.r}">
+      <img src="${tripAsset(src)}" alt="" loading="lazy">
+    </figure>`
+  }).join('')}</div>`
+}
+
 export const Footer = {
   el: null,
   choice: {},
@@ -111,6 +141,7 @@ export const Footer = {
       </section>
 
       <section class="f-ask">
+        ${askPrints(itinerary)}
         <h2 class="f-ask-title">${cta.headline ?? 'So\u2026 Are you in?'}</h2>
         <div class="ask-actions">
           <a class="fc-btn fc-no" href="./no.html${TRIP.id ? `?trip=${encodeURIComponent(TRIP.id)}` : ''}">NO</a>
