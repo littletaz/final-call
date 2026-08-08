@@ -16,10 +16,6 @@
      is reading time, not a gap you can see — the next slide doesn't begin
      rising until you have scrolled past it. */
   --stack-gap:55vh;
-  /* Breathing room under the three cards before the stack starts. A fixed value,
-     not vh: it's the gap after a fixed-size object, so it shouldn't grow with
-     the screen. */
-  --cards-tail:220px;
   /* Breathing room INSIDE a slide. It is height:100vh with border-box, so this
      comes out of the slide rather than adding to it — content never sits against
      the edge, and the slide is still exactly one screen. */

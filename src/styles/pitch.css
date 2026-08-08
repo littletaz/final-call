@@ -23,10 +23,10 @@
    which is inside the textured region — so at 600 the grain painted straight
    over it. Below the Final Call panel (930) so that still floats on top. */
 #stack{position:relative;z-index:905}
-/* .p-open is sticky inside this, so it holds only while #pitch is on screen —
-   which is exactly right: the cards are released once the stack takes over.
-   Above the texture (900) so the grain doesn't paint over the held cards. */
-#pitch{position:relative;z-index:904}
+/* BELOW the texture (900): the mood is what's left in here, and it scrolls with
+   the map, so it should take the same grain from #texture. The cards are moved
+   out into #stack, which sits above the texture and carries its own. */
+#pitch{position:relative;z-index:600}
 #pitch[hidden]{display:none}
 #footer{position:relative;z-index:600}
 
@@ -42,15 +42,31 @@
    margin-bottom on the sticky one. A sticky element is constrained by its
    MARGIN box, so a bottom margin eats its own sticking room — that's what made
    the budget slide start moving half a screen before the ask reached it. */
-/* The three that are slides: exactly one screen each. `.p-open` is in the stack
+/* The three that are slides: exactly one screen each. `.p-cards` is in the stack
    too but keeps its natural height — see below. */
 .p-gem,.f-costs,.f-ask{
   position:sticky;top:0;
   height:100vh;height:100svh;
   overflow:hidden;
 }
-.p-gem{margin-top:var(--cards-tail)}
-.f-costs,.f-ask{margin-top:var(--stack-gap)}
+.p-gem,.f-costs,.f-ask{margin-top:var(--stack-gap)}
+
+/* ---- one more thing ----
+   The first of the coloured slides, and a step lighter than the sea it rises
+   from. Everything in it is centred: it's one claim and one photograph pair,
+   not a column of copy. */
+.p-gem{
+  background:#8FA1BC;
+  padding:var(--stack-pad) 0;
+  border-radius:34px 34px 0 0;
+  box-shadow:0 -26px 64px rgba(24,32,48,.34);
+  text-align:center;
+}
+.p-gem .p-inner{position:relative;z-index:2;text-align:center}
+.p-gem .p-headline,
+.p-gem .p-body,
+.p-gem .p-label{margin-left:auto;margin-right:auto;text-align:center}
+
 
 #pitch[hidden]{display:none}
 
@@ -59,7 +75,7 @@
    cost three viewport-heights of scroll and returned nothing. */
 .p-slide{
   display:flex;align-items:center;
-  background:var(--sea);
+  background:#8FA1BC;
 }
 /* The FIRST slide of the stack. Scroll stops here — the mood and the cards hold
    while the gem rides up over them, and each block after that covers the last.
@@ -72,23 +88,32 @@
    for reading time: a stuck slide stays fully visible while the next rides up
    over it, so the cards hold centre-screen for as long as it takes the gem to
    arrive. The 150vh version was solving a problem sticky already solves. */
-/* First in the stack, and the only member that isn't a slide: sticky so the
-   cards hold, but at its NATURAL height so nothing is clipped or forced to a
-   screen. Sticky and a fixed height are separate decisions; pairing them is
-   what made this read as a slide before. */
-.p-open{
-  position:sticky;top:0;
-  min-height:100vh;min-height:100svh;
-  align-items:center;
-  padding:12vh 0 var(--cards-tail);
+/* ---- the mood: ordinary scroll, part of the map ---- */
+.p-mood{
+  display:flex;align-items:center;
+  background:var(--sea);
+  padding:0;
   text-align:center;
 }
 
-/* The cards are held, so their grain has to be held with them — #texture scrolls
-   and would drag across still type. This layer sticks because the slide does,
-   and carries the same sheet, so the map above and the cards below read as one
-   continuous piece of paper. */
-.p-open::after{
+/* ---- the cards: the first slide of the stack ----
+   One screen exactly, like the slides after it. The cards are 400px and the
+   label is small, so a screen is comfortable — nothing else lives here, which
+   is the point of splitting the mood out. */
+.p-cards{
+  position:sticky;top:0;
+  height:100vh;height:100svh;
+  align-items:center;
+  overflow:hidden;
+  text-align:center;
+  /* stated rather than inherited from .p-slide — this is the floor the colour
+     walk climbs out of, and it shouldn't change if that shared rule ever does */
+  background:var(--sea);
+}
+
+/* The cards are held, so their grain is held with them — #texture scrolls and
+   would drag across still type. Offset in js to continue the sheet above. */
+.p-cards::after{
   content:"";
   position:absolute;inset:0;
   z-index:5;
@@ -98,21 +123,25 @@
   mix-blend-mode:multiply;
   opacity:var(--paper-texture-opacity);
 }
-.p-open .p-inner{position:relative;z-index:4}
+.p-cards .p-inner{position:relative;z-index:6}
 
-/* The first of the stacked slides. From here to the end each block is a step
-   lighter and sits above the last, so the page climbs out of the sea. */
-.p-gem{
-  z-index:1;
-  padding:var(--stack-pad) 0;
-  background:#8FA1BC;
-  border-radius:34px 34px 0 0;
-  box-shadow:0 -26px 64px rgba(24,32,48,.34);
-  overflow:hidden;
-  text-align:center;
+/* The column everything sits in — same width and margins as the rest of the
+   page, so the pitch lines up with the map above it. */
+.p-inner{
+  width:100%;
+  max-width:var(--artboard);
+  margin:0 auto;
+  padding:0 var(--grid-margin);
 }
 
-/* prints thrown behind the words */
+/* arriving: a small lift, nothing precious */
+.p-slide .p-inner,.p-mood .p-inner{
+  opacity:0;transform:translateY(26px);
+  transition:opacity .5s ease, transform .6s cubic-bezier(.2,.9,.3,1.2);
+}
+.p-slide.is-in .p-inner,.p-mood.is-in .p-inner{opacity:1;transform:none}
+
+/* ---- prints thrown behind the words ---- */
 .p-prints{position:absolute;inset:0;pointer-events:none}
 .p-print{
   position:absolute;margin:0;
@@ -123,26 +152,13 @@
 }
 .p-print img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
 
+/* the small label above a slide's headline */
 .p-label{
   margin:0 0 clamp(28px,4vw,64px);
   font-family:var(--sans);font-weight:700;
   font-size:12px;letter-spacing:.2em;text-transform:uppercase;
   color:rgba(255,255,255,.78);
 }
-.p-gem .p-inner{position:relative;z-index:2}
-.p-inner{
-  width:100%;
-  max-width:var(--artboard);
-  margin:0 auto;
-  padding:0 var(--grid-margin);
-}
-
-/* arriving: a small lift, nothing precious */
-.p-slide .p-inner{
-  opacity:0;transform:translateY(26px);
-  transition:opacity .5s ease, transform .6s cubic-bezier(.2,.9,.3,1.2);
-}
-.p-slide.is-in .p-inner{opacity:1;transform:none}
 
 .p-headline{
   margin:0 auto;
@@ -165,7 +181,7 @@
 /* ---- the three cards ---- */
 /* a label, not a headline — the cards are the thing here */
 .p-title{
-  margin:clamp(56px,7vw,110px) 0 clamp(24px,2.6vw,40px);
+  margin:0 0 clamp(24px,2.6vw,40px);
   font-family:var(--sans);font-weight:700;
   font-size:12px;letter-spacing:.2em;text-transform:uppercase;
   color:rgba(255,255,255,.62);

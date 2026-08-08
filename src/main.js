@@ -35,7 +35,7 @@ function sizeTexture(){
      drag its grain across held type. The floor slide carries the same sea blue,
      so the join is invisible. */
   /* The scrolling sheet covers the MAP and stops at the stack. The cards carry
-     their own grain from there (see .p-open::after) because they're held — a
+     their own grain from there (.p-cards::after) because they're held — a
      scrolling sheet would drag across them. */
   const stack = document.querySelector('#stack')
   if(!stack){ tex.style.height = '' ; return }
@@ -43,14 +43,15 @@ function sizeTexture(){
   const top = Math.max(0, Math.round(stack.getBoundingClientRect().top + window.scrollY))
   tex.style.height = top + 'px'
 
-  /* The cards' own sheet picks up exactly where this one stops, so the paper
-     runs unbroken from the map into the cards rather than restarting. */
-  const open = document.querySelector('.p-open')
+  /* The cards' own sheet picks up where this one stops, so the paper runs
+     unbroken from the map into the cards rather than restarting. */
+  const open = document.querySelector('.p-cards')
   if(open){
     const w = document.getElementById('stage')?.clientWidth || window.innerWidth
-    const tile = w * (1981 / 1440)          /* the texture's own proportions */
+    const tile = w * (1981 / 1440)
     open.style.setProperty('--tex-offset', `${-(top % tile).toFixed(1)}px`)
   }
+
 
 }
 
@@ -81,15 +82,13 @@ function scheduleTexture(){
    stacked sections are moved here — which keeps both renderers independent
    while giving the stack one honest container.
 
-   `.p-open` leads: it's sticky at its natural height, so the cards stay put
-   while everything else rides over them. It only holds as long as its CONTAINER
-   lasts, which is why it has to be in here rather than left in #pitch — there it
-   was released the moment #stack began. */
+   `.p-cards` leads the stack. The mood above it stays in #pitch as ordinary
+   scroll — it belongs with the map, not with the slides. */
 function assembleStack(){
   const stack = document.getElementById('stack')
   if(!stack) return
   const slides = [
-    document.querySelector('#pitch .p-open'),   /* the cards hold the stack open */
+    document.querySelector('#pitch .p-cards'),  /* the cards hold the stack open */
     document.querySelector('#pitch .p-gem'),
     document.querySelector('#footer .f-costs'),
     document.querySelector('#footer .f-ask'),

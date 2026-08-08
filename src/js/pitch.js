@@ -55,18 +55,24 @@ export const Pitch = {
         </span>
       </button>`).join('')
 
-    /* mood and the cards in one flowing block, the gem on its own after it */
+    /* Three separate blocks now: the mood belongs with the map (ordinary
+       scroll), the cards are the first slide of the stack. */
     this.el.innerHTML = `
-      <section class="p-slide p-open">
-        <div class="p-inner">
-          ${p.mood?.headline ? `
+      ${p.mood?.headline ? `
+        <section class="p-mood">
+          <div class="p-inner">
             <h2 class="p-headline">${p.mood.headline}</h2>
-            ${p.mood.body ? `<p class="p-body">${p.mood.body}</p>` : ''}` : ''}
-          ${cards ? `
+            ${p.mood.body ? `<p class="p-body">${p.mood.body}</p>` : ''}
+          </div>
+        </section>` : ''}
+
+      ${cards ? `
+        <section class="p-slide p-cards">
+          <div class="p-inner">
             <h4 class="p-title">${TITLE}</h4>
-            <div class="rc-row">${cards}</div>` : ''}
-        </div>
-      </section>
+            <div class="rc-row">${cards}</div>
+          </div>
+        </section>` : ''}
 
       ${slide('gem', p.gem, 'p-gem')}`
 
@@ -89,7 +95,7 @@ export const Pitch = {
         }
       })
     }, { threshold: 0.25 })
-    this.el.querySelectorAll('.p-slide').forEach(s => io.observe(s))
+    this.el.querySelectorAll('.p-slide, .p-mood').forEach(s => io.observe(s))
   },
 }
 

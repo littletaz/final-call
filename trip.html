@@ -91,11 +91,10 @@
      left in two containers — display:contents removes the box but leaves the
      containment ambiguous, and the costs slide unstuck exactly as the ask
      landed. -->
-<!-- The mood and the cards are the FIRST member of the stack, not a separate
-     floor before it. A floor that has to end exactly where the cards end IS the
-     cards — and as its own element it could only start once #pitch had finished,
-     which released them. As a sibling here they hold until the whole stack does. -->
+<!-- The mood and the cards are the first member of the stack: sticky so they
+     hold while everything rides over them, but at their natural height. -->
 <div id="stack"></div>
+</div>
 
 <!-- where the footer renders before its slides are moved into #stack -->
 <footer id="footer"></footer>
