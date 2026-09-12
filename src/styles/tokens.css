@@ -8,26 +8,21 @@
    loader overwrites them with the real families once the trip data resolves. */
 
 :root{
-  /* ---- Figma grid ------------------------------------------
-     artboard 1920 · 8 columns · stretch · margin 218 · gutter 20
-     margin 11.3542% + (8 x 8.75%) + (7 x 1.0417%) = 100%
-     --------------------------------------------------------- */
-  /* Dead air after each stacked slide. The slide is stuck and fills it, so this
-     is reading time, not a gap you can see — the next slide doesn't begin
-     rising until you have scrolled past it. */
-  --stack-gap:55vh;
-  /* Breathing room INSIDE a slide. It is height:100vh with border-box, so this
-     comes out of the slide rather than adding to it — content never sits against
-     the edge, and the slide is still exactly one screen. */
+  /* Breathing room inside a slide (.p-gem, .f-costs, .f-ask, .p-cards) —
+     internal padding, independent of the (removed) sticky-stack mechanic. */
   --stack-pad:8vh;
-  --artboard:1920px;
-  --grid-margin:11.3542%;   /* 218 / 1920 */
-  --grid-gutter:1.0417%;    /*  20 / 1920 — as % of the artboard  */
-  --grid-gutter-in:1.3477%; /*  20 / 1484 — as % of the content box */
-  --grid-col:8.75%;         /* 168 / 1920 */
+  --artboard:1440px;
+  --grid-gutter-in:1.6667%; /*  20 / 1200 — as % of the content box */
+  /* --grid-margin / --grid-gutter / --grid-col are defined once, further
+     down, under "the page grid" — they used to be duplicated here as
+     percentages of the artboard, which is a different measurement. */
 
   /* ---- colour ---- */
   --sea:#596D88;
+  /* the same colour at zero alpha, for gradient ramps — fading to plain
+     `transparent` interpolates through transparent black and greys the
+     ramp. MapView.init() overwrites both from map.backgroundColor. */
+  --sea-fade:#596D8800;
   --paper:#FAEDDC;
   --seal:#CF4736;
   --ink:#1E222B;
@@ -77,4 +72,100 @@
 
   /* ---- motion ---- */
   --ease-pop:cubic-bezier(.3,1.4,.4,1);
+
+  /* ---- the responsive ladder ------------------------------------------
+     Figma's "Mediaqueries" section (node 169:2327) draws the page at
+     2156 / 1440 / 1200 / 768 / 375. Read together those five frames are
+     two FIXED canvases, each centred, with only backgrounds and the map
+     bleeding full width — NOT a fluid system. So the type steps once, at
+     the 1024 desktop/mobile line (see src/js/breakpoints.js), instead of
+     scaling with the viewport:
+
+       section headings   64px -> 36px  (measured on L'essentiel, METEO,
+                                         Le budget and Itineraire alike)
+       body / bullets     22px -> 16px
+
+     Sizes that Figma holds CONSTANT at every width — the weather city
+     label (19px), the temperature (74px) and the date pill (24px) — have
+     no token here on purpose; they are literals at their one size.
+     --------------------------------------------------------------------- */
+  /* ---- the page grid --------------------------------------------------
+     One grid for the whole page, stepping 12 → 8 → 4 columns at 1024 and
+     768. Measured in vw rather than %, because it is the VIEWPORT's grid:
+     a call site inside a capped column (#frame stops at --artboard) would
+     otherwise resolve the margin against its own box and drift.
+
+     A span of n columns is
+         calc(n * var(--grid-col) + (n - 1) * var(--grid-gutter))
+     and the left edge of column s is
+         calc(var(--grid-margin) + (s - 1) * (var(--grid-col) + var(--grid-gutter)))
+     Both are rounded to whole pixels at the call site — see .map-timeline.
+
+     The BASE band's numbers come from the trip's own data — grid.columns /
+     grid.margin / grid.gutter, read off the Figma frame's layoutGrids and
+     injected by applyGrid() in main.js — so the page and the debug overlay
+     draw the same grid the mockup does, and a second trip with a different
+     one (japon-2026 is 8 columns on a 1920 artboard) gets its own. The
+     values below are only the fallback for a trip that declares none.
+
+     The MARGIN is not a percentage of the viewport. A trip that declares
+     grid.minMargin holds a FIXED content column and centres it, which is
+     what the frames actually draw: the Météo blocks span 120-1320 at 1440,
+     478-1678 at 2156 and 0-1200 at 1200 — one 1200px column, centred,
+     clipped when there isn't room for it. Below that the margin stops at
+     minMargin so the grid can't collapse.
+
+     The two narrower bands come from the same frames, read off the three
+     things that sit on their margin rather than on a column: at 768 the
+     "Itineraire" heading and the Google Maps pill both end at x=728 and
+     the ledger/timeline fill x=129..640, which is columns 2-7 of an
+     8-column grid with a 40px margin (68.5px columns); at 375 the same
+     three end at 355 and fill 20..355, i.e. all four columns of a 20px
+     margin. Between 375 and 768 the margin interpolates rather than
+     stepping, so the content column doesn't jump at the 768 line — that
+     is exactly what --gutter-mobile already solves, so it is reused. */
+  --grid-cols:var(--grid-cols-base, 12);
+  /* 40 up to 1280, 120 at 1440, 478 at 2156 — a 1200px column, centred */
+  --grid-margin:var(--grid-margin-base, max(40px, calc((100vw - 1200px) / 2)));
+  --grid-gutter:var(--grid-gutter-base, 20px);
+  --grid-col:calc(
+    (100vw - 2 * var(--grid-margin) - (var(--grid-cols) - 1) * var(--grid-gutter))
+    / var(--grid-cols));
+
+  --heading-size:64px;
+  --body-size:22px;
+
+  /* The design canvas itself — the box every fixed offset in this pass is
+     measured in, centred in the viewport and simply clipped when the
+     viewport is narrower. #hero and the sticker scatter both place against
+     it, which is why it lives here rather than in either file. */
+  --canvas:1440px;
+
+  /* The side gutter on the mobile canvas: 20px in the 375 frame, 40px in
+     the 768 one, interpolated between (solved from those two, so it is
+     exact at both). Desktop keeps --grid-margin, which really is the 120px
+     Figma draws. */
+  --gutter-mobile:calc(.92px + 5.09vw);
+}
+
+/* 768–1023 — eight 68.5px columns inside a 40px margin. The ledger and the
+   timeline both fill columns 2-7 (x 129..640 in the frame), and the map
+   furniture's right edge sits on the margin itself at 728. */
+@media (max-width:1023px){
+  :root{
+    --heading-size:36px;
+    --body-size:16px;
+    --canvas:375px;
+    --grid-cols:8;
+    --grid-margin:40px;
+  }
+}
+/* below 768 — four columns. 20px either side at 375 (the 335 content column
+   the card and the ledger both fill), interpolating up to the 40px the
+   8-column band starts with, so nothing jumps at the breakpoint. */
+@media (max-width:767px){
+  :root{
+    --grid-cols:4;
+    --grid-margin:max(20px, var(--gutter-mobile));
+  }
 }

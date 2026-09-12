@@ -1,5 +1,4 @@
-import { TRIP, tripAsset, tripBudget, sleepOptionCost, eur } from './data.js'
-import { Cards } from './cards.js'
+import { TRIP, tripBudget, sleepOptionCost, buildLedger, eur } from './data.js'
 
 /* ============================================================
    FOOTER
@@ -83,34 +82,12 @@ const SEG = {
   transport:'rgba(255,255,255,.32)', activities:'rgba(255,255,255,.16)',
 }
 
-/* Prints from across the whole trip, thrown over the last slide — the places
-   you've just been shown, one more time before the question. Fixed angles, and
-   the photos picked by walking the stops evenly rather than at random: random
-   re-rolls on every itinerary change and never settles. */
-const ASK_SCATTER = [
-  { x:'56%',  y:'-4%',  w:'23%', r:'8deg'   },
-  { x:'-7%',  y:'22%',  w:'19%', r:'-11deg' },
-  { x:'78%',  y:'40%',  w:'21%', r:'-6deg'  },
-  { x:'8%',   y:'70%',  w:'22%', r:'12deg'  },
-  { x:'62%',  y:'78%',  w:'18%', r:'-4deg'  },
-  { x:'32%',  y:'88%',  w:'17%', r:'6deg'   },
-]
-
-function askPrints(itinerary){
-  const pool = []
-  for(const stop of itinerary.stops ?? []){
-    const loc = TRIP.byId[stop.locationId]
-    const first = loc?.photos?.[0]?.src
-    if(first) pool.push(first)
-  }
-  if(!pool.length) return ''
-  const picked = ASK_SCATTER.map((_, i) => pool[Math.floor(i * pool.length / ASK_SCATTER.length)])
-  return `<div class="f-ask-prints" aria-hidden="true">${picked.map((src, i) => {
-    const s = ASK_SCATTER[i]
-    return `<figure class="f-ask-print" style="left:${s.x};top:${s.y};width:${s.w};--r:${s.r}">
-      <img src="${tripAsset(src)}" alt="" loading="lazy">
-    </figure>`
-  }).join('')}</div>`
+/* "So… Are you in?" → "So… Are you " + a highlighted "in?" — matches the
+   Figma End screen's two-tone treatment without hardcoding the copy. */
+function askTitle(headline){
+  const words = headline.split(' ')
+  const last = words.pop()
+  return `${words.join(' ')} <span class="f-ask-highlight">${last}</span>`
 }
 
 export const Footer = {
@@ -135,27 +112,62 @@ export const Footer = {
     this.el.innerHTML = `
       <section class="f-costs">
         <div class="f-inner">
-          <div id="stats"></div>
           <div class="bud" id="bud"></div>
         </div>
       </section>
 
       <section class="f-ask">
-        ${askPrints(itinerary)}
-        <h2 class="f-ask-title">${cta.headline ?? 'So\u2026 Are you in?'}</h2>
+        <h2 class="f-ask-title">${askTitle(cta.headline ?? 'So\u2026 Are you in?')}</h2>
         <div class="ask-actions">
           <a class="fc-btn fc-no" href="./no.html${TRIP.id ? `?trip=${encodeURIComponent(TRIP.id)}` : ''}">NO</a>
           <a class="fc-btn fc-yes" ${url ? `href="${url}" target="_blank" rel="noopener noreferrer"` : 'aria-disabled="true"'}>YES</a>
         </div>
       </section>`
 
-    Cards.renderStats(itinerary)
     this.renderBudget(itinerary)
   },
 
   renderBudget(itinerary){
     const host = document.getElementById('bud')
     if(!host) return
+    if(TRIP.data.budget?.model === 'ledger') return this.renderLedger(host, itinerary)
+    this.renderBudgetLevers(host, itinerary)
+  },
+
+  /* v2 — flat itemized ledger, one <details> group per base stop. See
+     data.js:buildLedger(). No levers: every number is already authored on
+     a location (stays/thingsToDo) or in budget.fixed. */
+  renderLedger(host, itinerary){
+    const { groups, total } = buildLedger(itinerary)
+    const origin = TRIP.data.budget?.originLabel
+
+    host.className = 'bud grid-12'
+    host.innerHTML = `
+      <header class="ledger-head col-full">
+        <p class="ledger-title">Le budget</p>
+        ${origin ? `<div class="ledger-origin">
+          <span>Depart : ${origin}</span>
+          <span class="ledger-origin-chevron" aria-hidden="true"></span>
+        </div>` : ''}
+      </header>
+      <div class="ledger-list">
+        ${groups.map(g => `
+          <details class="ledger-group" open>
+            <summary class="ledger-group-name">
+              <span class="ledger-chevron" aria-hidden="true"></span>
+              <span>${g.label}</span>
+            </summary>
+            <ul class="ledger-items">
+              ${g.items.map(i => `<li><span>${i.label}</span><span>${i.free ? 'gratuit' : `${eur(i.lo)}–${eur(i.hi)}`}</span></li>`).join('')}
+            </ul>
+          </details>`).join('')}
+        <div class="ledger-total"><span>Total estime</span><span>${eur(total.lo)}–${eur(total.hi)}</span></div>
+      </div>`
+  },
+
+  /* v1 — formula/lever model. Unchanged, still used by any trip whose
+     budget doesn't declare the ledger model (e.g. japon-2026 for now). */
+  renderBudgetLevers(host, itinerary){
     const model = TRIP.data.budget
     const b = tripBudget(itinerary, this.choice)
     const cta = TRIP.data.cta ?? {}
@@ -203,7 +215,7 @@ export const Footer = {
       <div class="bud-bar">${bar}</div>
       <ul class="bud-legend">${legend}</ul>
 
-      <div class="bud-levers">${['sleep','eat','move'].map(lever).join('')}</div>`
+      ${model.levers ? `<div class="bud-levers">${['sleep','eat','move'].map(lever).join('')}</div>` : ''}`
 
     host.querySelectorAll('.bud-opt').forEach(btn =>
       btn.addEventListener('click', () => {

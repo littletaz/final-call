@@ -16,7 +16,7 @@
       "id": "australia-2027",
       "title": "Australia & New Zealand",
       "file": "trips/australia-2027/trip.json",
-      "period": "30 Dec 2026 – 19 Jan 2027",
+      "period": "30 Dec 2026 – 18 Jan 2027",
       "cover": "trips/australia-2027/map.png",
       "month": "DEC", "status": "ontime", "boardLabel": "AUSTRALIA"
     }

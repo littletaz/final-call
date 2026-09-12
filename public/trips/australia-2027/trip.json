@@ -1,184 +1,1459 @@
 {
+  "_readme": "ONE FILE PER TRIP. Everything a trip needs: manifest, locations, itineraries. All asset paths are relative to this file's folder. See TRIP_SCHEMA.md for the authoring contract — note that the live contract is scripts/validate-trip.mjs, which is ahead of the doc (pitch, artDirection.fonts, budget.levers).",
+  "schemaVersion": 1,
   "id": "australia-2027",
   "title": "Australia & New Zealand",
-  "subtitle": "Sydney to Fiordland, three weeks, no car required",
-  "defaultItineraryId": "full-21",
-  "schemaVersion": 1,
-
-  "artDirection": {
-    "id": "placeholder-generic",
-    "colors": { "sea": "#4A6FA5", "paper": "#F5F0E6", "seal": "#B5533C", "ink": "#22262B" },
-    "fonts": {
-      "display": { "family": "Georgia", "src": null, "google": null, "fallback": "Georgia, 'Times New Roman', serif" },
-      "sans": { "family": "Arial", "src": null, "google": null, "fallback": "Arial, Helvetica, sans-serif" }
-    }
-  },
-
-  "grid": {
-    "columns": 12,
-    "gutter": 24,
-    "artboard": { "w": 1440, "h": 1024 }
-  },
-
+  "subtitle": "New Year on the harbour, then the Southern Alps",
+  "defaultItineraryId": "full-20",
   "map": {
+    "assetId": "australia-nz-v2",
     "base": "map.png",
-    "baseSize": { "w": 3840, "h": 2760 },
-    "backgroundColor": "#4A6FA5",
+    "baseSize": {
+      "w": 2238,
+      "h": 1545
+    },
+    "contentSize": {
+      "w": 1908,
+      "h": 1120
+    },
+    "contentOffset": {
+      "x": 165.44,
+      "y": 155
+    },
+    "narrowScale": 0.52725,
+    "cropBottom": 0,
+    "backgroundColor": "#F7F4EF",
     "pin": "pin.svg",
     "logo": "logo.png",
-    "_calibrated": false
+    "route": {
+      "src": "img/map/route.svg",
+      "x": 0.393,
+      "y": 0.4405,
+      "w": 0.2024,
+      "h": 0.242,
+      "legs": {
+        "route-1": {
+          "mode": "plane",
+          "badge": true
+        },
+        "route-2": {
+          "mode": "car"
+        }
+      },
+      "_legsNote": "How each segment of route.svg was travelled. `mode` is one of the Figma 'transport' component set (plane | car | bus | train, node 170:2458) and decides two things: the glyph, and the colour the leg turns once you've passed it — a flight yellows in, anything on the ground greens. Untravelled, every leg is the black line Figma draws. `badge` puts the 22px disc at the leg's midpoint; Figma only marks the flight (node 169:1655), so route-2 declares its mode for the colour without one. A bare string is shorthand for {mode, badge:true}. See Timeline.buildRoute()."
+    },
+    "_canvasNote": "map.png exported from Figma node 157:3380 — the same artwork as before (127:483) re-exported with more surrounding canvas/margin, which was making the map feel cropped at the edges. The two are pixel-for-pixel identical, just translated and on a bigger canvas (2238x1545 vs 1440x1351). All coordinates below (and the route overlay's x/y/w/h) were recomputed from that exact translation, not re-eyeballed. contentSize/contentOffset are the VISIBLE WINDOW onto that canvas: the 1908x1120 soft-edged box every desktop frame in Figma's Mediaqueries section now masks the artwork with (nodes 176:2921/2925/2929 and 173:2864), sitting at base-image (165.44, 155). Figma places it identically in all four — 674px right and 160px down inside the placed image rect at 1200, 1440, 2156 and 3820 alike — so one window serves the whole desktop ladder and only the viewport around it changes. contentOffset.x + contentSize.w/2 = 1119.44 is therefore still the anchor: the one point of the image that lands on the viewport's centre line at every width, which is what keeps the crop symmetric instead of scaling to fit. contentOffset.y positions the window vertically the same way — see MapView.applyMapMetrics(). narrowScale is how wide the artwork is drawn in the 375 frame (1180px of 2238 = 0.52725); mobile drops the window entirely and shows the whole image, 1:1 at 768 and interpolating below.",
+    "_calibrated": true,
+    "_calibrationNote": "All 11 locations (base stops and day-trip spurs alike) are exact — derived by translating the previous exact calibration onto the new, less-cropped map.png (see _canvasNote), then visually verified against the new artwork."
   },
-
+  "artDirection": {
+    "id": "australia-nz-v2",
+    "colors": {
+      "sea": "#4A6FA5",
+      "paper": "#F7F4EF",
+      "seal": "#B5533C",
+      "ink": "#1C2321",
+      "green": "#00824B",
+      "greenDark": "#005E32",
+      "yellow": "#FDC816"
+    },
+    "fonts": {
+      "_readme": "Sunshine Formula (script) and Scribble Note (hand) are the real licensed faces, self-hosted under fonts/. Elms Sans (heavy) is still a licensed marketplace font not yet purchased — Nunito stands in for that role until it arrives; only that one entry changes when it does.",
+      "display": {
+        "family": "Georgia",
+        "src": null,
+        "google": null,
+        "fallback": "Georgia, 'Times New Roman', serif"
+      },
+      "sans": {
+        "family": "Arial",
+        "src": null,
+        "google": null,
+        "fallback": "Arial, Helvetica, sans-serif"
+      },
+      "script": {
+        "family": "Sunshine Formula",
+        "src": "fonts/sunshineformula.woff2",
+        "google": null,
+        "fallback": "'Brush Script MT', cursive"
+      },
+      "hand": {
+        "family": "Scribble Note",
+        "src": "fonts/scribble-note.woff2",
+        "google": null,
+        "fallback": "'Comic Sans MS', cursive"
+      },
+      "heavy": {
+        "family": "Nunito",
+        "src": null,
+        "google": "Nunito:wght@900",
+        "fallback": "Arial Black, sans-serif"
+      }
+    }
+  },
+  "weather": [
+    {
+      "region": "Sydney",
+      "dateLabel": "30 dec. – 7 janv.",
+      "tempRangeC": [
+        20,
+        28
+      ],
+      "color": "green",
+      "notes": [
+        "Plein ete, ensoleille la majorite du temps.",
+        "Le Nouvel An se fete dehors, sur la plage ou le port.",
+        "Le soleil se couche vers 20h15 fin decembre."
+      ]
+    },
+    {
+      "region": "Ile du Sud",
+      "dateLabel": "7 – 18 janv.",
+      "tempRangeC": [
+        15,
+        24
+      ],
+      "color": "yellow",
+      "notes": [
+        "Ete neo-zelandais, plus frais et changeant — prevoir des couches.",
+        "Lake Tekapo est une reserve de ciel etoile officielle.",
+        "Milford Sound reste l'un des endroits les plus pluvieux du pays."
+      ]
+    }
+  ],
+  "highlights": [
+    {
+      "src": "img/highlights/highlight-1.png",
+      "alt": "Sydney, Australia — Sydney Opera House, fireworks and night, 31 Dec 2026"
+    },
+    {
+      "src": "img/highlights/highlight-2.png",
+      "alt": "Milford Sound, Fiordland, New Zealand — scenic fjord cruise, 8 Jan 2027"
+    },
+    {
+      "src": "img/highlights/highlight-3.png",
+      "alt": "Kawarau Bridge, Queenstown, New Zealand — bungee jumping, 9 Jan 2027"
+    },
+    {
+      "src": "img/highlights/highlight-4.png",
+      "alt": "Lake Wanaka, New Zealand — the lone tree, 14 Jan 2027"
+    },
+    {
+      "src": "img/highlights/highlight-5.png",
+      "alt": "Aoraki / Mount Cook National Park, New Zealand — glacier lake tour, 15 Jan 2027"
+    }
+  ],
+  "hero": {
+    "logo": "img/hero/logo.svg",
+    "datePill": true,
+    "stickers": [
+      {
+        "src": "img/stickers/australia.png",
+        "rotate": -17.58,
+        "wide": {
+          "x": 162.19,
+          "y": 62.37,
+          "w": 191.0
+        },
+        "narrow": {
+          "x": -46.24,
+          "y": 35.03,
+          "w": 74.8
+        }
+      },
+      {
+        "src": "img/stickers/nz.png",
+        "wide": {
+          "x": 1305.0,
+          "y": 71.0,
+          "w": 132.0
+        },
+        "narrow": {
+          "x": 336.45,
+          "y": 9.31,
+          "w": 35.4
+        }
+      },
+      {
+        "src": "img/stickers/plane.png",
+        "rotate": -11.07,
+        "wide": {
+          "x": 1194.92,
+          "y": 423.6,
+          "w": 144.2
+        },
+        "narrow": {
+          "x": 338.28,
+          "y": 230.91,
+          "w": 45.3
+        }
+      },
+      {
+        "src": "img/stickers/sydney.png",
+        "rotate": -23.94,
+        "wide": {
+          "x": 133.14,
+          "y": 562.93,
+          "w": 185.3
+        },
+        "narrow": {
+          "x": 24.76,
+          "y": 322.96,
+          "w": 67.2
+        }
+      },
+      {
+        "src": "img/stickers/kangoo.png",
+        "anchor": "#weather",
+        "rotate": 31.33,
+        "wide": {
+          "x": 1245.16,
+          "y": 28.97,
+          "w": 107.5
+        }
+      },
+      {
+        "src": "img/stickers/surf.png",
+        "anchor": "#footer .f-costs",
+        "rotate": -30.0,
+        "wide": {
+          "x": 184.43,
+          "y": -12.86,
+          "w": 139.6
+        },
+        "narrow": {
+          "x": 7.77,
+          "y": -1.71,
+          "w": 66.5
+        }
+      },
+      {
+        "src": "img/stickers/sheep.png",
+        "anchor": ".f-ask",
+        "wide": {
+          "x": 737.5,
+          "y": 0.0,
+          "w": 207.0
+        },
+        "narrow": {
+          "x": 163.93,
+          "y": 13.35,
+          "w": 96.3
+        }
+      }
+    ],
+    "_stickerNote": "Positions are the CENTRE of each sticker, in the centred design canvas's own coordinates (1440 wide / 375 on the mobile canvas) — read from Figma nodes 169:1870 and 169:2355. `w` is the UNROTATED width; `rotate` is applied about that centre, so the rendered bounding box matches the mockup's. `anchor` names the element the y is measured from (its top); without one, y is from the top of the page. Anchoring is what keeps the lower three from drifting when a trip has more budget rows than the mockup did. A sticker with no `narrow` block is simply not drawn on the mobile canvas — Figma's 375 frame drops the kangaroo."
+  },
+  "grid": {
+    "_source": "Read from the 'Mockup v2' frame's own Figma layout grid (Plugin API node.layoutGrids), not eyeballed: pattern COLUMNS, count 12, gutterSize 20, alignment STRETCH, offset 120, on a 1440-wide frame. This is the unified grid for the whole page — see src/styles/tokens.css (--grid-margin etc.) and grid.css (.grid-12).",
+    "artboard": 1440,
+    "columns": 12,
+    "margin": 120,
+    "gutter": 20,
+    "columnWidth": 81.667,
+    "contentWidth": 1200,
+    "minMargin": 40
+  },
   "locations": [
     {
       "id": "sydney",
-      "name": { "en": "Sydney" },
-      "subtitle": "Harbour, NYE, and the mountains behind it",
-      "intro": "The anchor of the whole trip — NYE fireworks on the harbour, a coastal walk with zero planning required, and the Blue Mountains a train ride away.",
-      "coordinates": { "x": 0.5, "y": 0.2 },
+      "pin": "01",
+      "pinColor": "#FDC816",
+      "name": {
+        "en": "Sydney"
+      },
+      "subtitle": "Circular Quay · Bondi · Manly",
+      "coordinates": {
+        "x": 0.3971,
+        "y": 0.4465
+      },
       "scatter": 0,
-      "photos": [ { "src": "img/sydney-01.jpg" } ],
+      "tags": [
+        "city",
+        "beaches",
+        "harbour"
+      ],
+      "intro": "We land two days before the year turns and don't move again for over a week. The harbour does most of the work — ferries as public transport, a coastal path that needs no planning, and on the 31st the loudest new year on the planet going off directly overhead.",
+      "photos": [
+        {
+          "src": "img/sydney-01.jpg"
+        }
+      ],
       "thingsToDo": [
-        { "title": "NYE Harbour fireworks (public vantage point)", "note": "Free to watch from public foreshore spots; arrive hours early for a good one. Paid vantage tickets/harbourview dining cost extra and aren't included here.", "priceEUR": [0, 0] },
-        { "title": "Bondi to Coogee coastal walk", "note": "Self-guided, flat, ~2-3 hours, no transport booking needed.", "priceEUR": [0, 0] },
-        { "title": "Blue Mountains day tour (Scenic World + Echo Point/Three Sisters, hotel pickup)", "note": "Peak-season (late Dec/early Jan) pricing. NSW's bushfire danger period overlaps these dates — keep this day flexible if possible and check RFS conditions morning-of.", "priceEUR": [95, 165] }
+        {
+          "title": "NYE fireworks from a public harbour vantage point",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free from the public foreshore — Mrs Macquarie's Point, Blues Point, Barangaroo. Free spots ballot or queue from early morning; paid vantage tickets and harbourview dinners are extra and aren't counted here."
+        },
+        {
+          "title": "Circular Quay and the Opera House at sunset",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Arrival-evening walk. Nothing booked, nothing paid."
+        },
+        {
+          "title": "Bondi to Coogee coastal walk",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Self-guided, flat, 2-3 hours. Best done on the 1st when the whole city is moving slowly."
+        },
+        {
+          "title": "Manly ferry return and a beach afternoon",
+          "priceEUR": [
+            8,
+            12
+          ],
+          "note": "Opal card fare both ways. The cheapest harbour cruise in Sydney is the scheduled ferry."
+        },
+        {
+          "title": "Transports en commun (Opal card, ~8 jours)",
+          "priceEUR": [
+            70,
+            90
+          ],
+          "note": "Buses, ferries and trains, Opal weekly capping applied across the stay."
+        },
+        {
+          "title": "Royal Botanic Garden and Mrs Macquarie's Chair",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free. Also the NYE recon walk — you can see exactly where you'd want to stand."
+        }
       ],
       "stays": [
-        { "tier": "budget", "name": "Kith Hotel Darling Harbour", "priceNightEUR": [140, 190], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Kith+Hotel+Darling+Harbour+Sydney" },
-        { "tier": "middle", "name": "Novotel Sydney on Darling Harbour", "priceNightEUR": [230, 300], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Novotel+Sydney+on+Darling+Harbour" },
-        { "tier": "dear", "name": "Hyatt Regency Sydney", "priceNightEUR": [380, 470], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Hyatt+Regency+Sydney" }
+        {
+          "name": "Song Hotel Sydney",
+          "tier": "budget",
+          "priceNightEUR": [
+            75,
+            105
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Song+Hotel+Sydney"
+        },
+        {
+          "name": "Adina Apartment Hotel Sydney Darling Harbour",
+          "tier": "middle",
+          "priceNightEUR": [
+            115,
+            155
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Adina+Apartment+Hotel+Sydney+Darling+Harbour"
+        },
+        {
+          "name": "Hyatt Regency Sydney",
+          "tier": "dear",
+          "priceNightEUR": [
+            190,
+            250
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Hyatt+Regency+Sydney"
+        }
+      ],
+      "_staysNote": "Prices are the PER-PERSON share of a room split three ways, which is how the budget model reads them. Apartment-style beats hotel rooms here — three people in one Adina apartment is cheaper per head than three hotel beds. Book by mid-November: the NYE week is the highest-demand accommodation window of the Australian year.",
+      "foodNotes": "No pork — easy here. Seafood, Thai and Vietnamese are everywhere; the thing to watch is bacon defaulting into breakfasts."
+    },
+    {
+      "id": "blue-mountains",
+      "pin": "02",
+      "pinColor": "#FDC816",
+      "name": {
+        "en": "Blue Mountains"
+      },
+      "subtitle": "Katoomba · Three Sisters · Scenic World",
+      "coordinates": {
+        "x": 0.3779,
+        "y": 0.4266
+      },
+      "scatter": 1,
+      "tags": [
+        "mountains",
+        "hiking",
+        "day-trip"
+      ],
+      "intro": "Two hours west of the harbour and a thousand metres up, into eucalyptus haze and sandstone cliffs. We go as a day trip rather than a stay — the drama is all in the first look over Jamison Valley, and you get that in an afternoon.",
+      "photos": [
+        {
+          "src": "img/blue-mountains-01.jpg"
+        }
+      ],
+      "thingsToDo": [
+        {
+          "title": "Day tour from Sydney — Scenic World, Echo Point and the Three Sisters",
+          "priceEUR": [
+            95,
+            165
+          ],
+          "note": "Peak-season pricing with hotel pickup, which is also the transport for the day. NSW's bushfire danger period covers these dates — keep the day movable and check the RFS conditions that morning."
+        },
+        {
+          "title": "Prince Henry Cliff Walk",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free clifftop path between the lookouts. The tour leaves enough time for the Echo Point stretch."
+        }
+      ],
+      "stays": [
+        {
+          "name": "3 Sisters Motel Katoomba",
+          "tier": "budget",
+          "priceNightEUR": [
+            40,
+            60
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=3+Sisters+Motel+Katoomba"
+        },
+        {
+          "name": "Echoes Boutique Hotel Katoomba",
+          "tier": "middle",
+          "priceNightEUR": [
+            85,
+            115
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Echoes+Boutique+Hotel+Katoomba"
+        },
+        {
+          "name": "Lilianfels Blue Mountains Resort & Spa",
+          "tier": "dear",
+          "priceNightEUR": [
+            140,
+            190
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Lilianfels+Blue+Mountains+Resort+and+Spa"
+        }
+      ],
+      "_staysNote": "Listed for completeness — this is a day trip in both itineraries, so these cost nothing in the budget. They're here in case the Blue Mountains ever get promoted to an overnight."
+    },
+    {
+      "id": "hunter-valley",
+      "pin": "03",
+      "pinColor": "#FDC816",
+      "name": {
+        "en": "Hunter Valley"
+      },
+      "subtitle": "Pokolbin · Semillon · vineyards",
+      "coordinates": {
+        "x": 0.4037,
+        "y": 0.4003
+      },
+      "scatter": 2,
+      "tags": [
+        "wine",
+        "food",
+        "day-trip"
+      ],
+      "intro": "Australia's oldest wine region, and the one that makes a white nobody else makes — Hunter Semillon, picked early and left alone for a decade. A slow day of tastings between the Blue Mountains and the coast.",
+      "photos": [
+        {
+          "src": "img/hunter-valley-01.jpg"
+        }
+      ],
+      "thingsToDo": [
+        {
+          "title": "Small-group winery day tour from Sydney",
+          "priceEUR": [
+            90,
+            140
+          ],
+          "note": "Four to five cellar doors with lunch, and nobody has to drive. Transport for the day is inside this price."
+        },
+        {
+          "title": "Hot air balloon over the vineyards at dawn",
+          "note": "OPTIONAL, deliberately left unpriced so it stays out of the budget total. Reckon €180-240 a head — leave it out unless the budget has room. Would need an overnight in the valley to be worth the 4am start."
+        }
+      ],
+      "stays": [
+        {
+          "name": "Vineyard Hill Country Motel",
+          "tier": "budget",
+          "priceNightEUR": [
+            45,
+            65
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Vineyard+Hill+Country+Motel+Pokolbin"
+        },
+        {
+          "name": "Oaks Cypress Lakes Resort",
+          "tier": "middle",
+          "priceNightEUR": [
+            80,
+            110
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Oaks+Cypress+Lakes+Resort+Pokolbin"
+        },
+        {
+          "name": "Chateau Elan at The Vintage",
+          "tier": "dear",
+          "priceNightEUR": [
+            150,
+            200
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Chateau+Elan+at+The+Vintage+Pokolbin"
+        }
       ]
     },
     {
       "id": "port-stephens",
-      "name": { "en": "Port Stephens" },
-      "subtitle": "Dolphins and dunes, no long-haul travel required",
-      "intro": "A coach ride from Sydney rather than a flight — near-guaranteed dolphin sightings and sandboarding on Stockton's dunes.",
-      "coordinates": { "x": 0.8, "y": 0.5 },
-      "scatter": 1,
-      "photos": [ { "src": "img/port-stephens-01.jpg" } ],
+      "pin": "04",
+      "pinColor": "#FDC816",
+      "name": {
+        "en": "Port Stephens"
+      },
+      "subtitle": "Nelson Bay · Stockton dunes · dolphins",
+      "coordinates": {
+        "x": 0.4165,
+        "y": 0.3829
+      },
+      "scatter": 3,
+      "tags": [
+        "coast",
+        "wildlife",
+        "beaches"
+      ],
+      "intro": "White sand, a bay with about a hundred resident bottlenose dolphins, and the largest moving coastal sand mass in the southern hemisphere to throw ourselves down. Jervis Bay south of Sydney is the alternative — same idea, whiter sand, longer drive.",
+      "photos": [
+        {
+          "src": "img/port-stephens-01.jpg"
+        }
+      ],
       "thingsToDo": [
-        { "title": "Dolphin watching cruise, Nelson Bay", "note": "~90 min, runs Nov-Apr only — these dates fall right in season. ~100 resident dolphins in the bay, near-guaranteed sightings.", "priceEUR": [27, 30] },
-        { "title": "Sandboarding & 4WD dune tour, Stockton Sand Dunes", "note": "Southern hemisphere's largest moving coastal sand mass.", "priceEUR": [16, 25] }
+        {
+          "title": "Dolphin watching cruise, Nelson Bay",
+          "priceEUR": [
+            27,
+            30
+          ],
+          "note": "About 90 minutes. Runs Nov-Apr only, so these dates are dead centre of the season and sightings are near-guaranteed."
+        },
+        {
+          "title": "Sandboarding and 4WD tour, Stockton Sand Dunes",
+          "priceEUR": [
+            16,
+            25
+          ],
+          "note": "Thirty-two kilometres of dune. Go early — the sand is genuinely too hot to walk on by midday in January."
+        }
       ],
       "stays": [
-        { "tier": "budget", "name": "Seabreeze Hotel", "priceNightEUR": [120, 160], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Seabreeze+Hotel+Nelson+Bay" },
-        { "tier": "middle", "name": "Oaks Port Stephens Pacific Blue Resort", "priceNightEUR": [190, 250], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Oaks+Port+Stephens+Pacific+Blue+Resort" },
-        { "tier": "dear", "name": "Anchorage Hotel & Spa", "priceNightEUR": [280, 370], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Anchorage+Hotel+and+Spa+Port+Stephens" }
-      ]
+        {
+          "name": "Seabreeze Hotel Nelson Bay",
+          "tier": "budget",
+          "priceNightEUR": [
+            45,
+            65
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Seabreeze+Hotel+Nelson+Bay"
+        },
+        {
+          "name": "Oaks Port Stephens Pacific Blue Resort",
+          "tier": "middle",
+          "priceNightEUR": [
+            70,
+            95
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Oaks+Port+Stephens+Pacific+Blue+Resort"
+        },
+        {
+          "name": "Anchorage Hotel & Spa",
+          "tier": "dear",
+          "priceNightEUR": [
+            110,
+            150
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Anchorage+Hotel+and+Spa+Port+Stephens"
+        }
+      ],
+      "_staysNote": "A day trip in the 20-day plan and a five-night base in the coach plan, which is why the stays are priced properly rather than left as placeholders."
     },
     {
       "id": "queenstown",
-      "name": { "en": "Queenstown" },
-      "subtitle": "Fiordland, hikes, and a town that needs no car",
-      "intro": "Every big South Island scene — Milford Sound, Doubtful Sound, the Routeburn — reachable by coach or boat tour from a single base.",
-      "coordinates": { "x": 0.5, "y": 0.8 },
-      "scatter": 2,
-      "photos": [ { "src": "img/queenstown-01.jpg" } ],
+      "pin": "05",
+      "pinColor": "#FDC816",
+      "name": {
+        "en": "Queenstown"
+      },
+      "subtitle": "Lake Wakatipu · Gibbston · Arrowtown",
+      "coordinates": {
+        "x": 0.5356,
+        "y": 0.6764
+      },
+      "scatter": 0,
+      "tags": [
+        "mountains",
+        "adventure",
+        "lakes",
+        "wine"
+      ],
+      "intro": "The pivot of the trip: we swap a city of five million for a town of fifteen thousand with mountains on every side. Everything worth doing on this half of the island starts here, and for the first five nights we do it without a car.",
+      "photos": [
+        {
+          "src": "img/queenstown-01.jpg"
+        }
+      ],
       "thingsToDo": [
-        { "title": "Milford Sound coach & cruise day trip", "note": "Full day, ~4-5hrs each way by coach. January is Fiordland's wettest month — pack proper rain gear; cruises run in all weather and the waterfalls are best when it's pouring.", "priceEUR": [110, 150] },
-        { "title": "Doubtful Sound overnight cruise", "note": "Shared cabin, includes 2 meals + kayaking. Far quieter than Milford (~100-150 visitors/day vs 1000+). Dolphins and fur seals are a near-sure thing; Fiordland crested penguins breed July-Nov so January sightings would be a bonus, not the expected highlight.", "priceEUR": [400, 490] },
-        { "title": "Routeburn Track day walk from Glenorchy", "note": "Track itself is free; this covers the shuttle transfer to/from the trailhead. Summer is the best season for this hike — clear paths, longest daylight.", "priceEUR": [30, 45] },
-        { "title": "Arrowtown self-guided visit", "note": "Historic gold-mining town, easy day trip, food and history rather than a paid attraction.", "priceEUR": [0, 0] }
+        {
+          "title": "Skyline Gondola at sunset",
+          "priceEUR": [
+            25,
+            35
+          ],
+          "note": "Return gondola. Go up for the last light over Wakatipu, not for the restaurant."
+        },
+        {
+          "title": "Kawarau Bridge bungy",
+          "priceEUR": [
+            90,
+            140
+          ],
+          "note": "The original, 43 metres, since 1988. Shotover Jet costs roughly the same if the jet boat appeals more than the fall — budget for one, not both."
+        },
+        {
+          "title": "Ben Lomond Track",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free, six to eight hours return from town, 1,438m at the top. The hard day of the trip."
+        },
+        {
+          "title": "TSS Earnslaw lake cruise",
+          "priceEUR": [
+            40,
+            55
+          ],
+          "note": "Coal-fired steamer from 1912, still running on its original boilers."
+        },
+        {
+          "title": "Gibbston Valley wine tasting",
+          "priceEUR": [
+            25,
+            45
+          ],
+          "note": "Central Otago pinot noir, twenty minutes out of town, past the bungy bridge."
+        },
+        {
+          "title": "Arrowtown and the Chinese settlement",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Gold-rush village, free to wander. Bring money for lunch, not for entry."
+        },
+        {
+          "title": "Glenorchy and the Paradise valley road",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Forty-five minutes of lake road, and the Routeburn trailhead at the end of it if there's appetite for a day walk."
+        }
       ],
       "stays": [
-        { "tier": "budget", "name": "Ramada Queenstown Central", "priceNightEUR": [150, 200], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Ramada+Queenstown+Central" },
-        { "tier": "middle", "name": "Scenic Suites Queenstown", "priceNightEUR": [230, 290], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Scenic+Suites+Queenstown" },
-        { "tier": "dear", "name": "QT Queenstown", "priceNightEUR": [360, 470], "bookingUrl": "https://www.booking.com/searchresults.html?ss=QT+Queenstown" }
+        {
+          "name": "Nomads Queenstown",
+          "tier": "budget",
+          "priceNightEUR": [
+            45,
+            70
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Nomads+Queenstown"
+        },
+        {
+          "name": "Scenic Suites Queenstown",
+          "tier": "middle",
+          "priceNightEUR": [
+            95,
+            130
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Scenic+Suites+Queenstown"
+        },
+        {
+          "name": "QT Queenstown",
+          "tier": "dear",
+          "priceNightEUR": [
+            160,
+            215
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=QT+Queenstown"
+        }
+      ],
+      "_staysNote": "January averages around NZD 255 a night for a mid-range room here — expensive, but nothing like the NYE spike we've already paid for in Sydney.",
+      "foodNotes": "No pork. Lamb, venison and green-lipped mussels are the local defaults, so this is the easy half of the trip."
+    },
+    {
+      "id": "milford-sound",
+      "pin": "06",
+      "pinColor": "#005E32",
+      "name": {
+        "en": "Milford Sound"
+      },
+      "subtitle": "Te Anau · Homer Tunnel · Mitre Peak",
+      "coordinates": {
+        "x": 0.5195,
+        "y": 0.6802
+      },
+      "scatter": 1,
+      "tags": [
+        "fiord",
+        "nature",
+        "day-trip"
+      ],
+      "intro": "A long day and the only unavoidable one — four to five hours of coach each way through Te Anau and the Homer Tunnel, for two hours on the water under a mountain that comes straight out of it. January is Fiordland's wettest month, which is the good news: the waterfalls only exist when it rains.",
+      "photos": [
+        {
+          "src": "img/milford-sound-01.jpg"
+        }
+      ],
+      "thingsToDo": [
+        {
+          "title": "Milford Sound coach and cruise day trip from Queenstown",
+          "priceEUR": [
+            110,
+            150
+          ],
+          "note": "Full day, roughly 5am to 8pm. Coach beats self-driving: the road is spectacular and you can't look at it while driving it. Cruises sail in any weather."
+        },
+        {
+          "title": "Mirror Lakes and The Chasm roadside stops",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Included in the coach day. Free, brief, and worth getting off the bus for."
+        }
+      ],
+      "stays": [
+        {
+          "name": "Te Anau Lakeview Kiwi Holiday Park & Motels",
+          "tier": "budget",
+          "priceNightEUR": [
+            40,
+            60
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Te+Anau+Lakeview+Kiwi+Holiday+Park+and+Motels"
+        },
+        {
+          "name": "Distinction Luxmore Hotel Lake Te Anau",
+          "tier": "middle",
+          "priceNightEUR": [
+            70,
+            95
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Distinction+Luxmore+Hotel+Lake+Te+Anau"
+        },
+        {
+          "name": "Fiordland Lakeview Motel & Apartments",
+          "tier": "dear",
+          "priceNightEUR": [
+            90,
+            125
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Fiordland+Lakeview+Motel+and+Apartments+Te+Anau"
+        }
+      ],
+      "_staysNote": "Te Anau stays, listed in case the day trip ever becomes an overnight. As a spur they cost nothing in the budget."
+    },
+    {
+      "id": "doubtful-sound",
+      "pin": "07",
+      "pinColor": "#005E32",
+      "name": {
+        "en": "Doubtful Sound"
+      },
+      "subtitle": "Manapouri · Wilmot Pass · overnight",
+      "coordinates": {
+        "x": 0.5131,
+        "y": 0.6889
+      },
+      "scatter": 2,
+      "tags": [
+        "fiord",
+        "wildlife",
+        "slow"
+      ],
+      "intro": "Milford's quieter, larger neighbour — a hundred visitors a day against Milford's thousand, reached by boat and then over a mountain pass by coach. You sleep on the water, and at some point the crew cut the engines and let it go completely silent.",
+      "photos": [
+        {
+          "src": "img/doubtful-sound-01.jpg"
+        }
+      ],
+      "thingsToDo": [
+        {
+          "title": "Doubtful Sound overnight cruise",
+          "priceEUR": [
+            400,
+            490
+          ],
+          "note": "Shared quad-share cabin, two meals, kayaks off the back. Dolphins and fur seals are near-certain; the Fiordland crested penguins breed July-Nov, so a January sighting would be luck, not the plan. The Queenstown room stays booked for the night."
+        }
+      ],
+      "stays": [
+        {
+          "name": "Manapouri Motels & Holiday Park",
+          "tier": "budget",
+          "priceNightEUR": [
+            40,
+            60
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Manapouri+Motels+and+Holiday+Park"
+        },
+        {
+          "name": "Cathedral Drive Farmstay Manapouri",
+          "tier": "middle",
+          "priceNightEUR": [
+            75,
+            100
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Cathedral+Drive+Farmstay+Manapouri"
+        },
+        {
+          "name": "Fiordland Lodge Te Anau",
+          "tier": "dear",
+          "priceNightEUR": [
+            160,
+            210
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Fiordland+Lodge+Te+Anau"
+        }
+      ],
+      "_staysNote": "You sleep on the boat, not in these — they exist because the schema wants three stays per location and because a night ashore in Manapouri is the fallback if the cruise is cancelled."
+    },
+    {
+      "id": "wanaka",
+      "pin": "08",
+      "pinColor": "#005E32",
+      "name": {
+        "en": "Wanaka"
+      },
+      "subtitle": "Roys Peak · Rob Roy · that tree",
+      "coordinates": {
+        "x": 0.5425,
+        "y": 0.6672
+      },
+      "scatter": 3,
+      "tags": [
+        "lakes",
+        "hiking",
+        "slow"
+      ],
+      "intro": "An hour over the Crown Range from Queenstown and about a tenth of the noise. This is where we pick up the car and stop being on anyone else's schedule — two nights, one big climb, and a willow standing in the lake that half the internet has already photographed.",
+      "photos": [
+        {
+          "src": "img/wanaka-01.jpg"
+        }
+      ],
+      "thingsToDo": [
+        {
+          "title": "Roys Peak Track",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free. Five to six hours return, 1,200m of climb, and the view everyone comes for is 45 minutes before the summit. Start before 6am to beat both the heat and the queue at the viewpoint."
+        },
+        {
+          "title": "Rob Roy Glacier Track",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free, three to four hours, gentler than Roys. The access road crosses unbridged fords — check the rental agreement covers it before committing."
+        },
+        {
+          "title": "That Wanaka Tree at first light",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Five minutes from town. Ten minutes of your life. Go at dawn or don't bother."
+        },
+        {
+          "title": "Puzzling World",
+          "priceEUR": [
+            10,
+            15
+          ],
+          "note": "Illusion rooms and a large outdoor maze. Deeply silly and the right thing to do on a rest afternoon."
+        }
+      ],
+      "stays": [
+        {
+          "name": "Wanaka Hotel",
+          "tier": "budget",
+          "priceNightEUR": [
+            50,
+            70
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Wanaka+Hotel"
+        },
+        {
+          "name": "Distinction Wanaka Serviced Apartments",
+          "tier": "middle",
+          "priceNightEUR": [
+            85,
+            115
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Distinction+Wanaka+Serviced+Apartments"
+        },
+        {
+          "name": "Edgewater Resort Wanaka",
+          "tier": "dear",
+          "priceNightEUR": [
+            130,
+            175
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Edgewater+Resort+Wanaka"
+        }
       ]
+    },
+    {
+      "id": "lake-tekapo",
+      "pin": "09",
+      "pinColor": "#005E32",
+      "name": {
+        "en": "Lake Tekapo"
+      },
+      "subtitle": "Lindis Pass · Good Shepherd · dark sky",
+      "coordinates": {
+        "x": 0.5616,
+        "y": 0.6474
+      },
+      "scatter": 0,
+      "tags": [
+        "lakes",
+        "stargazing",
+        "hot-pools"
+      ],
+      "intro": "Three hours from Wanaka over the Lindis Pass, into a lake the colour of glacier flour and a village that switched off its streetlights on purpose. It sits inside an international dark sky reserve, which is the entire reason to sleep here rather than pass through.",
+      "photos": [
+        {
+          "src": "img/lake-tekapo-01.jpg"
+        }
+      ],
+      "thingsToDo": [
+        {
+          "title": "Church of the Good Shepherd",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free, tiny, and photographed from every angle already. Worth five minutes at either end of the day, not at noon."
+        },
+        {
+          "title": "Tekapo Springs hot pools",
+          "priceEUR": [
+            15,
+            22
+          ],
+          "note": "The right thing to do after the Lindis Pass drive."
+        },
+        {
+          "title": "Mt John dark-sky stargazing tour",
+          "priceEUR": [
+            55,
+            75
+          ],
+          "note": "Guided, telescopes, runs late. Southern Cross and the Magellanic Clouds — neither of which is visible from home. Cancelled if cloudy, so book the first of the two nights and keep the second as backup."
+        }
+      ],
+      "stays": [
+        {
+          "name": "YHA Lake Tekapo",
+          "tier": "budget",
+          "priceNightEUR": [
+            40,
+            60
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=YHA+Lake+Tekapo"
+        },
+        {
+          "name": "Peppers Bluewater Resort",
+          "tier": "middle",
+          "priceNightEUR": [
+            95,
+            130
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Peppers+Bluewater+Resort+Lake+Tekapo"
+        },
+        {
+          "name": "Lakestone Lodge",
+          "tier": "dear",
+          "priceNightEUR": [
+            150,
+            200
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Lakestone+Lodge+Lake+Pukaki"
+        }
+      ]
+    },
+    {
+      "id": "mount-cook",
+      "pin": "10",
+      "pinColor": "#005E32",
+      "name": {
+        "en": "Aoraki / Mount Cook"
+      },
+      "subtitle": "Hooker Valley · Tasman Glacier · 3,724m",
+      "coordinates": {
+        "x": 0.5549,
+        "y": 0.6408
+      },
+      "scatter": 1,
+      "tags": [
+        "mountains",
+        "hiking",
+        "day-trip"
+      ],
+      "intro": "An hour up the side of Lake Pukaki from Tekapo, dead-ending at the tallest mountain in the country. The best walk here is also the easiest one, which almost never happens — flat, three swing bridges, and a lake with icebergs floating in it at the end.",
+      "photos": [
+        {
+          "src": "img/mount-cook-01.jpg"
+        }
+      ],
+      "thingsToDo": [
+        {
+          "title": "Hooker Valley Track",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free. Ten kilometres return, three hours, almost no climb, and it ends at Hooker Lake with Aoraki straight ahead. The single best value walk of the trip."
+        },
+        {
+          "title": "Tasman Glacier viewpoint and terminal lake",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free, forty minutes return on the way back out. New Zealand's longest glacier, retreating fast enough to see the difference decade to decade."
+        }
+      ],
+      "stays": [
+        {
+          "name": "YHA Aoraki Mt Cook",
+          "tier": "budget",
+          "priceNightEUR": [
+            40,
+            60
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=YHA+Aoraki+Mt+Cook"
+        },
+        {
+          "name": "Aoraki Court Motel",
+          "tier": "middle",
+          "priceNightEUR": [
+            95,
+            130
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Aoraki+Court+Motel+Mount+Cook"
+        },
+        {
+          "name": "The Hermitage Hotel",
+          "tier": "dear",
+          "priceNightEUR": [
+            130,
+            185
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=The+Hermitage+Hotel+Mount+Cook"
+        }
+      ],
+      "_staysNote": "A day trip from Tekapo, so these cost nothing. Sleeping in the village is the upgrade if the dark-sky night gets clouded out — Mount Cook is inside the same reserve."
     },
     {
       "id": "christchurch",
-      "name": { "en": "Christchurch" },
-      "subtitle": "Closing the loop: city, penguins, and Hector's dolphins",
-      "intro": "The trip's final stretch — Antarctic wildlife without leaving the city, and Akaroa's Hector's dolphins a coach ride away.",
-      "coordinates": { "x": 0.2, "y": 0.5 },
-      "scatter": 3,
-      "photos": [ { "src": "img/christchurch-01.jpg" } ],
+      "pin": "11",
+      "pinColor": "#005E32",
+      "name": {
+        "en": "Christchurch"
+      },
+      "subtitle": "Avon · Banks Peninsula · Akaroa",
+      "coordinates": {
+        "x": 0.5911,
+        "y": 0.6345
+      },
+      "scatter": 2,
+      "tags": [
+        "city",
+        "wildlife",
+        "gardens"
+      ],
+      "intro": "Three and a half hours down from Tekapo and the car goes back. A city still visibly rebuilding itself fifteen years on, a garden you can punt through, and an hour over the hills the world's smallest and rarest dolphin.",
+      "photos": [
+        {
+          "src": "img/christchurch-01.jpg"
+        }
+      ],
       "thingsToDo": [
-        { "title": "International Antarctic Centre", "note": "Penguins, huskies, storm simulator, Hägglund ride.", "priceEUR": [35, 45] },
-        { "title": "Akaroa day tour with harbour cruise", "note": "Guided day tour including transport (no driving needed) and a Hector's dolphin / seal / penguin harbour cruise. Hector's dolphins are the world's smallest and rarest, endemic to NZ's South Island.", "priceEUR": [140, 190] }
+        {
+          "title": "International Antarctic Centre",
+          "priceEUR": [
+            35,
+            45
+          ],
+          "note": "Little blue penguins, huskies, a storm room and a Hägglund ride. Five minutes from the airport, so it doubles as the last morning."
+        },
+        {
+          "title": "Akaroa harbour cruise, self-drive",
+          "priceEUR": [
+            45,
+            60
+          ],
+          "note": "Cruise only — we still have the car, so we skip the coach tour and drive the ninety minutes ourselves. Hector's dolphins are endemic to the South Island and this is the reliable place to see them."
+        },
+        {
+          "title": "Botanic Gardens and punting on the Avon",
+          "priceEUR": [
+            15,
+            22
+          ],
+          "note": "Half an hour on a flat-bottomed boat with someone else doing the work. Unserious, and exactly right for the last afternoon."
+        }
       ],
       "stays": [
-        { "tier": "budget", "name": "Grand Riccarton Hotel", "priceNightEUR": [110, 150], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Grand+Riccarton+Hotel+Christchurch" },
-        { "tier": "middle", "name": "Hotel 115", "priceNightEUR": [160, 210], "bookingUrl": "https://www.booking.com/searchresults.html?ss=Hotel+115+Christchurch" },
-        { "tier": "dear", "name": "The Observatory Hotel Christchurch", "priceNightEUR": [240, 310], "bookingUrl": "https://www.booking.com/searchresults.html?ss=The+Observatory+Hotel+Christchurch" }
-      ]
+        {
+          "name": "Grand Riccarton Hotel",
+          "tier": "budget",
+          "priceNightEUR": [
+            45,
+            65
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Grand+Riccarton+Hotel+Christchurch"
+        },
+        {
+          "name": "Hotel 115 Christchurch",
+          "tier": "middle",
+          "priceNightEUR": [
+            75,
+            100
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Hotel+115+Christchurch"
+        },
+        {
+          "name": "The Observatory Hotel Christchurch",
+          "tier": "dear",
+          "priceNightEUR": [
+            110,
+            150
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=The+Observatory+Hotel+Christchurch"
+        }
+      ],
+      "foodNotes": "No pork. Riverside Market covers everyone; the thing to check is the Canterbury pub menus, which put bacon in most things."
     }
   ],
-
   "itineraries": [
     {
-      "id": "full-21",
-      "days": 21,
-      "label": "Sydney, Port Stephens, Queenstown & Christchurch",
-      "dateRange": { "start": "2026-12-30", "end": "2027-01-19" },
-      "periodDisplay": "30 Dec – 19 Jan",
-      "flights": 3,
-      "_flightsNote": "Counting the 3 flights taken within the itinerary (into Sydney, into Queenstown, into Christchurch). The return flight home is excluded from this count as a judgement call — 'flights taken during the trip' rather than 'flights taken total'.",
-
+      "id": "full-20",
+      "days": 20,
+      "_dayPlanNote": "Optional: one entry per day, in order, naming what that day IS. {\"at\":\"blue-mountains\"} is a day trip — the card and the map's active pin move to it while the route stays put at the stay it hangs off. {\"at\":\"sydney\",\"place\":\"Bondi Beach\"} keeps you in Sydney but titles the day. `at` takes any locationId, base or day trip; `place` is free text that overrides the name on the card. Omit dayPlan entirely and Timeline.buildSchedule() derives one: each base fills its own nights and its day trips are spread evenly through them, skipping the arrival day — right about where you sleep, a guess about which day each trip falls on. Fill this in to pin that down.",
+      "label": "Harbour & the Southern Alps",
+      "dateRange": {
+        "start": "2026-12-30",
+        "end": "2027-01-18"
+      },
+      "periodDisplay": "30 déc. 2026 / 18 janv. 2027",
+      "flights": 2,
+      "_flightsNote": "Two flights inside the trip: into Sydney, and Sydney to Queenstown on 7 Jan. The Christchurch flight home is treated as going home rather than a trip leg — change to 3 if you'd rather count it.",
+      "budgetPerPersonEUR": [
+        4750,
+        7400
+      ],
+      "_datesNote": "Nineteen nights on the ground, 30 Dec to 18 Jan. The draft's 'day 20-21, Jan 18-19' is the journey home across the date line, which sits outside the itinerary the way the return flight does.",
+      "pitch": {
+        "mood": {
+          "headline": "You arrive at the start of the year, in the middle of summer.",
+          "body": "Sydney turns the year over before almost anywhere else on earth, in twenty-eight degrees and flip-flops. Two weeks later you're at the foot of a glacier in the same shorts. Same summer, opposite ends of it."
+        },
+        "arguments": [
+          {
+            "headline": "The fireworks are the opening, not the point.",
+            "body": "One and a half million people watch it from the foreshore for nothing, and then the whole city takes a week off. Eight days of harbour, coast and mountains while everyone back home has already gone back to work."
+          },
+          {
+            "headline": "Halfway through, you stop being on anyone's schedule.",
+            "body": "Queenstown to Wanaka to Tekapo to Christchurch, in a car, at whatever pace the road suggests. The second half of this trip has no guide, no pickup time and no group."
+          },
+          {
+            "headline": "Longest days of the year, and the darkest skies.",
+            "body": "Light in Fiordland until close to ten at night, so a serious walk can start after lunch. Then Tekapo, inside an international dark sky reserve, where the village turned its streetlights off on purpose."
+          }
+        ],
+        "gem": {
+          "headline": "You walk to the foot of the highest mountain in the country, on a flat path.",
+          "body": "Three swing bridges, three hours, almost no climb — and it ends at a lake with icebergs in it, Aoraki filling the whole windscreen of the valley. The best thing in New Zealand costs nothing and doesn't need to be booked.",
+          "label": "One more thing…"
+        }
+      },
       "stops": [
-        { "locationId": "sydney", "nights": 5, "arriveBy": "flight" },
-        { "locationId": "port-stephens", "nights": 5, "arriveBy": "surface" },
-        { "locationId": "queenstown", "nights": 8, "arriveBy": "flight" },
-        { "locationId": "christchurch", "nights": 2, "arriveBy": "flight" }
-      ]
-    }
-  ],
-
-  "budget": {
-    "currency": "EUR",
-    "levers": {
-      "sleep": {
-        "label": "Where we sleep",
-        "options": [
-          { "id": "cheap", "label": "budget hotels" },
-          { "id": "middle", "label": "mid-range comfort" },
-          { "id": "dear", "label": "the nicest option at each stop" }
+        {
+          "locationId": "sydney",
+          "nights": 8,
+          "arriveBy": "flight",
+          "stopType": "basecamp"
+        },
+        {
+          "locationId": "blue-mountains",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "sydney",
+          "stopType": "daytrip"
+        },
+        {
+          "locationId": "hunter-valley",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "sydney",
+          "stopType": "daytrip"
+        },
+        {
+          "locationId": "port-stephens",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "sydney",
+          "stopType": "daytrip"
+        },
+        {
+          "locationId": "queenstown",
+          "nights": 5,
+          "arriveBy": "flight",
+          "stopType": "basecamp"
+        },
+        {
+          "locationId": "milford-sound",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "queenstown",
+          "stopType": "daytrip"
+        },
+        {
+          "locationId": "wanaka",
+          "nights": 2,
+          "arriveBy": "surface",
+          "stopType": "stay"
+        },
+        {
+          "locationId": "lake-tekapo",
+          "nights": 2,
+          "arriveBy": "surface",
+          "stopType": "stay"
+        },
+        {
+          "locationId": "mount-cook",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "lake-tekapo",
+          "stopType": "daytrip"
+        },
+        {
+          "locationId": "christchurch",
+          "nights": 2,
+          "arriveBy": "surface",
+          "stopType": "stay"
+        }
+      ],
+      "flightSearch": {
+        "legs": [
+          {
+            "from": "PAR",
+            "to": "SYD",
+            "dateFrom": "itineraryStart",
+            "label": "Out"
+          },
+          {
+            "from": "SYD",
+            "to": "ZQN",
+            "date": "2027-01-07",
+            "label": "Sydney → Queenstown"
+          },
+          {
+            "from": "CHC",
+            "to": "PAR",
+            "dateFrom": "itineraryEnd",
+            "label": "Home"
+          }
         ],
-        "default": "cheap"
-      },
-      "eat": {
-        "label": "How we eat",
-        "perNight": true,
-        "options": [
-          { "id": "konbini", "label": "self-catering & cheap eats", "eur": [20, 30] },
-          { "id": "mixed", "label": "casual, a few nice dinners", "eur": [40, 60] },
-          { "id": "proper", "label": "eating well most nights", "eur": [75, 110] }
-        ],
-        "default": "mixed"
-      },
-      "move": {
-        "label": "Getting around",
-        "options": [
-          { "id": "coach", "label": "buses & scheduled transfers", "eur": [550, 750] },
-          { "id": "mixed", "label": "coach + a few private transfers", "eur": [950, 1350] },
-          { "id": "private", "label": "private transfers throughout", "eur": [1900, 2600] }
-        ],
-        "default": "coach"
+        "_note": "An open jaw into Sydney and out of Christchurch, with the trans-Tasman hop in the middle. PAR is the search origin because two of the three of us start there — from Antananarivo it's TNR with a Johannesburg or Nairobi connection, and from Lyon it's LYS or a short hop to CDG. Everyone books their own."
       }
     },
+    {
+      "id": "coach-21",
+      "days": 21,
+      "_dayPlanNote": "Optional: one entry per day, in order, naming what that day IS. {\"at\":\"blue-mountains\"} is a day trip — the card and the map's active pin move to it while the route stays put at the stay it hangs off. {\"at\":\"sydney\",\"place\":\"Bondi Beach\"} keeps you in Sydney but titles the day. `at` takes any locationId, base or day trip; `place` is free text that overrides the name on the card. Omit dayPlan entirely and Timeline.buildSchedule() derives one: each base fills its own nights and its day trips are spread evenly through them, skipping the arrival day — right about where you sleep, a guess about which day each trip falls on. Fill this in to pin that down.",
+      "label": "No-car version",
+      "dateRange": {
+        "start": "2026-12-30",
+        "end": "2027-01-19"
+      },
+      "periodDisplay": "30 déc. 2026 / 19 janv. 2027",
+      "flights": 3,
+      "_flightsNote": "Into Sydney, Sydney to Queenstown on 9 Jan, Queenstown to Christchurch on 17 Jan. The flight home is excluded, same convention as the other itinerary.",
+      "budgetPerPersonEUR": [
+        5050,
+        7800
+      ],
+      "_note": "The earlier plan, kept as the alternative: nobody drives anything. Four bases instead of six, Port Stephens as a real stay rather than a day trip, and the Doubtful Sound overnight in place of the Wanaka-Tekapo road.",
+      "pitch": {
+        "mood": {
+          "headline": "Nobody has to drive.",
+          "body": "Four bases in three weeks. You unpack, and then everything comes to you — coaches, ferries, boats, a gondola. The only thing you have to be on time for is the boat."
+        },
+        "arguments": [
+          {
+            "headline": "Four bases, not a suitcase relay.",
+            "body": "Sydney, then a bay on the New South Wales coast, then one town in the mountains for over a week. Long enough in each to stop reading maps."
+          },
+          {
+            "headline": "Doubtful Sound instead of Milford.",
+            "body": "A hundred visitors a day against Milford's thousand, and you sleep on the water rather than turning round at the mouth of it."
+          },
+          {
+            "headline": "The wildlife here isn't a maybe.",
+            "body": "About a hundred bottlenose dolphins live in Port Stephens year-round, and Akaroa holds the world's smallest and rarest dolphin. Neither of these is a lottery."
+          }
+        ],
+        "gem": {
+          "headline": "They cut the engines and let the fiord go silent.",
+          "body": "Somewhere in Doubtful Sound the crew stop the boat, kill the generator and ask everyone not to speak. No engine, no road within fifty kilometres, no phone signal — just water against a rock wall eight hundred metres high.",
+          "label": "One more thing…"
+        }
+      },
+      "stops": [
+        {
+          "locationId": "sydney",
+          "nights": 5,
+          "arriveBy": "flight",
+          "stopType": "basecamp"
+        },
+        {
+          "locationId": "blue-mountains",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "sydney",
+          "stopType": "daytrip"
+        },
+        {
+          "locationId": "hunter-valley",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "sydney",
+          "stopType": "daytrip"
+        },
+        {
+          "locationId": "port-stephens",
+          "nights": 5,
+          "arriveBy": "surface",
+          "stopType": "basecamp"
+        },
+        {
+          "locationId": "queenstown",
+          "nights": 8,
+          "arriveBy": "flight",
+          "stopType": "basecamp"
+        },
+        {
+          "locationId": "milford-sound",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "queenstown",
+          "stopType": "daytrip"
+        },
+        {
+          "locationId": "doubtful-sound",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "queenstown",
+          "stopType": "daytrip"
+        },
+        {
+          "locationId": "christchurch",
+          "nights": 2,
+          "arriveBy": "flight",
+          "stopType": "stay"
+        }
+      ],
+      "flightSearch": {
+        "legs": [
+          {
+            "from": "PAR",
+            "to": "SYD",
+            "dateFrom": "itineraryStart",
+            "label": "Out"
+          },
+          {
+            "from": "SYD",
+            "to": "ZQN",
+            "date": "2027-01-09",
+            "label": "Sydney → Queenstown"
+          },
+          {
+            "from": "CHC",
+            "to": "PAR",
+            "dateFrom": "itineraryEnd",
+            "label": "Home"
+          }
+        ],
+        "_note": "Three legs so the multi-city search resolves cleanly. The Queenstown → Christchurch hop on 17 Jan is a cheap domestic you'd book separately anyway — or take the InterCity coach and see the Lindis Pass from a window."
+      }
+    }
+  ],
+  "budget": {
+    "_readme": "v2 ledger model (final-call-v1-vs-v2-spec.md §2: 'ledger chronologique poste par poste'). Per person. No levers, no comfort-tier multiplier — src/js/data.js:buildLedger() groups each base stop's hotel (the 'budget'-tier stay × nights) with every thingsToDo entry for it and its spurs, plus any `fixed` line tagged to it via locationId. Food isn't tracked (spec: 'ledger exhaustif, hors nourriture').",
+    "model": "ledger",
+    "currency": "EUR",
+    "originLabel": "Antananarivo",
     "fixed": [
-      { "id": "flights", "label": "Flights", "eur": [1900, 2600] }
+      {
+        "id": "flights-intl",
+        "label": "Vols long-courriers (aller-retour, Antananarivo)",
+        "eur": [
+          1300,
+          2400
+        ],
+        "locationId": "sydney"
+      },
+      {
+        "id": "flights-domestic",
+        "label": "Vol domestique Sydney → Queenstown",
+        "eur": [
+          90,
+          180
+        ],
+        "locationId": "queenstown"
+      }
     ],
-    "presets": [
-      { "id": "comfort", "label": "Comfortable", "sleep": "cheap", "eat": "mixed", "move": "coach" }
-    ]
+    "_fixedNote": "International leg via Johannesburg/Nairobi, January pricing — the priciest month on this route. Domestic hop is an Air NZ / Jetstar one-way economy estimate."
   },
-
   "cta": {
     "headline": "So… are you in?",
+    "buttonLabel": "YES",
     "flightSearch": {
       "provider": "kayak",
-      "passengers": 4,
+      "passengers": 3,
       "cabin": "economy",
+      "mode": "both",
       "showLegs": false,
-      "legs": [
-        { "from": "PAR", "to": "SYD", "dateFrom": "itineraryStart" },
-        { "from": "SYD", "to": "ZQN", "date": "2027-01-09" },
-        { "from": "ZQN", "to": "CHC", "date": "2027-01-17" },
-        { "from": "CHC", "to": "PAR", "dateFrom": "itineraryEnd" }
-      ]
-    }
+      "_legsNote": "Legs live on each itinerary, because the middle hop moves with the duration. Three of us travelling, but from three different cities — the search is priced from Paris and everyone books their own ticket.",
+      "_bookingNote": "Lock the long-haul first. Sydney at New Year and the South Island in January are the two most in-demand windows either country has."
+    },
+    "roomAdults": 3
   }
 }

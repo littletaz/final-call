@@ -1,0 +1,277 @@
+/* ============================================================
+   TIMELINE — matches the Figma "Timeline" component (node 132:610): a
+   card with the current stop, date, and a mini progress track, plus the
+   length-tab fan above it (node 132:601-608) built by
+   Cards.renderLengthTabs() — see src/js/timeline.js and src/js/cards.js.
+   ============================================================ */
+
+/* ---- the wrapper -------------------------------------------------------
+   On the page grid (see tokens.css), not on measured pixel offsets: the
+   card spans a whole number of columns and starts on a column edge, so it
+   lines up with the ledger and the Météo blocks instead of floating near
+   them. Reading the six authored instances back as spans, against each
+   frame's own grid (tokens.css):
+
+       frame   instance x / w   →  span            grid gives
+        375     20 /  335         cols 1-4          20 /  335   exact
+        768    129 /  511         cols 2-7         128.5/ 511   exact
+       1200    136 /  358         cols 2-5         135  / 360   1px
+       1440    230 /  380         cols 2-5         221.7/ 386.7
+       2156    788 /  580         cols 4-9         783  / 590
+       3820   1521 /  778         cols 3-10       1513.3/ 793.3
+
+   Columns 4-9 and 3-10 are symmetric about the middle of a 12-column
+   grid, which is why the card simply centres from 1800 up rather than
+   needing a left offset of its own.
+
+   The instances sit a few px inside those edges at 1440 and above (the
+   ledger and the Météo blocks land on the grid exactly, this doesn't), so
+   the card is snapped to the grid here and the sizes rounded to whole
+   pixels.
+
+   --tl-span / --tl-start are the only things a breakpoint changes; the two
+   calcs are the grid's own span and column-edge formulas. round() keeps
+   them off half-pixels, with the unrounded value as the fallback for
+   anything that doesn't support it. */
+.map-timeline{
+  --tl-span:4;
+  --tl-start:2;
+  --tl-left:calc(var(--grid-margin) + (var(--tl-start) - 1) * (var(--grid-col) + var(--grid-gutter)));
+  --tl-width:calc(var(--tl-span) * var(--grid-col) + (var(--tl-span) - 1) * var(--grid-gutter));
+
+  position:absolute;
+  z-index:45;
+  left:var(--tl-left);
+  width:var(--tl-width);
+  top:1148px;
+}
+@supports (width: round(1px, 1px)){
+  .map-timeline{
+    left:round(var(--tl-left), 1px);
+    width:round(var(--tl-width), 1px);
+  }
+}
+
+/* ≥1800 — centred rather than column-started: six columns (4-9), then
+   eight (3-10) from 3200, both of which are symmetric about the middle of
+   the grid, so left:50% lands them where the frames draw them. */
+@media (min-width:1800px){
+  .map-timeline{
+    --tl-span:6;
+    left:50%;
+    transform:translateX(-50%);
+  }
+}
+@media (min-width:3200px){
+  .map-timeline{ --tl-span:8 }
+}
+
+/* 1024–1799 — one band, on the left: four columns starting at column 2,
+   where a centred card would land on top of New Zealand. */
+@media (max-width:1799px){
+  .map-timeline{
+    transform:none;
+    /* Measured into the band, whose top is now 123 at every desktop width
+       (see main.css): Figma has the card at page y 1066 at 1200 and 1063
+       at 1440, so 943 → 940. It jumps to the base 1148 at 1800 because the
+       band itself grows 192px there — the 2156 frame draws the card at
+       y 1271, 208px lower than the 1440 one does. */
+    top:calc(958px - 1.25vw);       /* 943 @1200 → 940 @1440 */
+  }
+}
+
+/* ≤1023 — columns 2-7 of the eight, which is the 511px the ledger fills at
+   768 too; below 768 it becomes all four columns (335 at 375). */
+@media (max-width:1023px){
+  .map-timeline{
+    --tl-span:6;
+    --tl-start:2;
+    transform:none;
+    top:calc(75px + 144.27vw);      /* 1183 @768 → 616 @375 */
+  }
+}
+@media (max-width:767px){
+  .map-timeline{ --tl-span:4; --tl-start:1 }
+}
+
+/* ---- the route drawn on the map itself (inside #pois) ----
+   Lives inside #world, positioned via map.route's x/y/w/h (fractions —
+   see timeline.js:buildRoute()). Lost when this file was rewritten for
+   the card redesign; restored here. */
+.route-layer{
+  position:absolute;
+  pointer-events:none;
+  overflow:visible;
+}
+.route-marker{
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));
+}
+
+/* ---- the length-tab fan (13j/17j/21j) ----
+   Figma 176:2939: each tab is a 104x20 underline shape with the label sat
+   on it, and the tabs OVERLAP by 30px so they read as a fanned stack of
+   paper rather than a row of buttons. The active one is last in the fan
+   (white, on top of its neighbours) — DOM order is data order, so z-index
+   does the stacking instead of reordering the markup. */
+.length-tabs{
+  display:flex;
+  justify-content:center;
+  gap:0;
+  margin:0;
+  padding-inline:20px;
+}
+.lt-tab{
+  position:relative;
+  border:0;
+  background:none;
+  width:104px;
+  height:20px;
+  flex:none;
+  margin-right:-30px;
+  padding:0;
+  font-family:var(--hand,cursive);
+  font-size:14.286px;
+  line-height:20px;
+  color:#1C2321;
+  cursor:pointer;
+}
+.lt-tab:last-child{ margin-right:0 }
+.lt-tab::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:var(--lt-tab-underline) center / 100% 100% no-repeat;
+  z-index:-1;
+}
+/* on top of the fan, and its label sits slightly right of centre because
+   the active shape's own notch is (see tab-underline-active.svg) */
+.lt-tab--active{ z-index:2 }
+.lt-tab--active::before{ background-image:var(--lt-tab-underline-active) }
+
+/* ---- the card ----
+   20/20/10 padding, 10px radius, and a 1px white border — all straight off
+   the component. The tab fan overlaps it by 2px so the two read as one
+   piece of paper. */
+.tl-card{
+  position:relative;
+  margin-top:-2px;
+  background:#fff;
+  border:1px solid #fff;
+  border-radius:10px;
+  padding:20px 20px 10px;
+  box-shadow:0 14px 30px rgba(0,0,0,.12);
+}
+.tl-link{
+  position:absolute;
+  top:20px;right:20px;
+  width:23px;height:23px;
+  border:0;
+  background:var(--tl-link-icon) center / 100% 100% no-repeat;
+  cursor:default; /* full itinerary view is a later pass — see timeline.js */
+}
+.tl-city{
+  margin:0;
+  padding-right:31px;
+  font-family:var(--script,cursive);
+  font-weight:200;
+  font-size:24px;
+  color:#1C2321;
+  line-height:1.2;
+}
+.tl-date{
+  margin:0;
+  font-family:var(--hand,cursive);
+  font-size:13px;
+  line-height:1.3;
+  color:#1C2321;
+}
+
+/* ---- the gauge ----
+   The component gives it 20px of air above and below, a 7px rail running
+   the full inner width, 14px station dots, and a 22px ring for the handle
+   — all of which the old 18px-tall track with a 34px right inset and 10px
+   dots was a fraction of. That size difference IS the redesign. */
+.tl-track{
+  position:relative;
+  /* Figma's gauge row is only as tall as the RAIL — the dots, the fill and
+     the handle are all absolute and overflow it — so the row is 7px with
+     20px of air either side. Kept as 23px with 12px margins instead: same
+     47px overall, but a thumb-sized target to grab rather than a 7px line. */
+  margin:12px 4px;
+  height:23px;
+  cursor:grab;
+  touch-action:none;
+}
+.tl-track:active{ cursor:grabbing }
+.tl-track::before{ /* the cream background rail */
+  content:'';
+  z-index:0;
+  position:absolute;
+  top:50%;left:0;right:0;
+  height:7px;
+  transform:translateY(-50%);
+  background:#F5EFE4;
+  border-radius:40px;
+}
+.tl-track-fill{
+  z-index:2;
+  position:absolute;
+  top:50%;left:0;
+  height:7px;
+  width:0%;
+  transform:translateY(-50%);
+  background:var(--leg-1,#FDC816);
+  border-radius:40px;
+}
+/* the green portion of the fill (past the flight leg) — width/position
+   driven from JS via --green-left/--green-width */
+.tl-track::after{
+  content:'';
+  z-index:2;
+  position:absolute;
+  top:50%;
+  left:var(--green-left, 100%);
+  width:var(--green-width, 0%);
+  height:7px;
+  transform:translateY(-50%);
+  background:var(--leg-2,#00824B);
+  border-radius:40px;
+}
+.tl-dots{ position:absolute; inset:0; z-index:1 }
+.tl-dot{
+  position:absolute;
+  top:50%;left:0;
+  width:14px;height:14px;
+  box-sizing:border-box;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:var(--leg-2,#00824B);
+  border:4px solid #fff;
+}
+/* The two ends are solid discs rather than ringed stations — and they take
+   the colour of the leg they belong to, the same yellow/green split the
+   route itself uses. Straight off the component's gauge (node 176:2933):
+   every dot is r5 with a 4px stroke, so 14px across with a 6px core; the
+   ends just stroke themselves in their own fill. */
+.tl-dot--start{ background:var(--leg-1,#FDC816); border-color:var(--leg-1,#FDC816) }
+.tl-dot--end{ background:var(--leg-2,#00824B); border-color:var(--leg-2,#00824B) }
+
+/* The travelling handle is a ring now, not the kangaroo sticker: white
+   with a 4px ink stroke, 22px across (component node 176:2938). Drawn in
+   CSS rather than shipped as an asset — it's two colours and a radius. */
+.tl-marker{
+  z-index:3;
+  position:absolute;
+  top:50%;left:0%;
+  width:22px;height:22px;
+  box-sizing:border-box;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:#fff;
+  border:4px solid #1C2321;
+  pointer-events:none;
+}
+
+/* Nothing else changes on the mobile canvas: Figma's instances there are
+   143px tall like the desktop one, so the type holds its size and only the
+   card's WIDTH moves (handled at the top of this file). */

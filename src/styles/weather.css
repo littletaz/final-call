@@ -1,0 +1,142 @@
+/* ============================================================
+   MÉTÉO — two regional weather blocks either side of a postcard photo.
+   See src/js/weather.js.
+
+   Measured off Figma's "Mediaqueries" section (node 169:2327). The blocks
+   are 487px wide at EVERY breakpoint — Figma never resizes them, it only
+   changes how they're arranged:
+
+     desktop (1440)   photo between them, blocks right- then left-aligned,
+                      the three spanning x 120-1320 of the canvas
+     mobile  (375/768) photo first, heading under it, blocks stacked and
+                      centred; the section grows 471px -> 816px
+
+   Only the heading (64 -> 36px) and the bullets (22 -> 16px) change size;
+   the region label (19px) and the temperature (74px) are the same at every
+   width, so they're literals rather than tokens.
+
+   The old `@media (min-width:820px)` that HID the photo below 820 was a
+   guess and is gone — Figma draws it at all five widths.
+   ============================================================ */
+
+#weather{
+  position:relative;
+  padding:59px var(--grid-margin) 64px;
+  background:var(--hero-paper,#F7F4EF);
+  overflow:hidden;
+}
+
+.wx-heading{
+  font-weight:200;
+  margin:0 0 56px;
+  text-align:center;
+  font-family:var(--script,cursive);
+  font-size:var(--heading-size);
+  /* Figma's 64px headings occupy a 79px box (36 -> 45 on mobile) — the
+     face's own "normal" leading. Declared, so the rhythm below doesn't
+     depend on whichever fallback face is standing in. */
+  line-height:1.235;
+  color:#1C2321;
+}
+
+.wx-row{
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  gap:0;
+  max-width:var(--artboard);
+  margin:0 auto;
+}
+
+.wx-card{
+  flex:none;
+  width:487px;
+}
+/* 477 rather than 487 on the wide-screen frame (173:2633) — the blocks
+   tighten by 10px there, and the photo's gaps absorb it. */
+@media (min-width:3200px){
+  .wx-card{ width:477px }
+  .wx-photo{ margin:0 40px 0 66px }
+}
+.wx-card:first-child{ text-align:right }
+.wx-card:last-child{ text-align:left }
+
+.wx-region{
+  margin:0;
+  font-family:var(--script,cursive);
+  font-size:19px;
+  line-height:1.2;
+  color:#1C2321;
+}
+.wx-temp{
+  font-weight:200;
+  /* Figma pulls the temperature up into the label's line box by 8px */
+  margin:-8px 0 8px;
+  font-family:var(--script,cursive);
+  font-size:74px;
+  line-height:1;
+}
+.wx-card--green .wx-temp{ color:#00824B }
+.wx-card--yellow .wx-temp{ color:#FBD456 }
+
+.wx-notes{
+  list-style:none;
+  margin:0;
+  padding:0;
+  font-family:var(--hand,cursive);
+  font-size:var(--body-size);
+  color:rgba(28,35,33,.72);
+}
+.wx-notes li{ margin-top:8px }
+.wx-notes li::before{ content:'• ' }
+
+/* 130px wide, sitting 56px after the first block and 40px before the
+   second — asymmetric in the mockup, and that asymmetry is what centres
+   the three of them on the canvas (120 + 487 + 56 + 130 + 40 + 487 = 1320). */
+.wx-photo{
+  display:block;
+  flex:none;
+  align-self:center;
+  width:130px;
+  margin:0 40px 0 56px;
+  filter:drop-shadow(0 20px 30px rgba(0,0,0,.18));
+}
+
+/* Mobile reorders the section to photo / heading / block / block. The photo
+   is a child of .wx-row in the markup (it belongs between the two blocks on
+   desktop), so the row goes `display:contents` here and the four elements
+   become siblings that `order` can sequence — no second DOM shape in
+   weather.js for one breakpoint.
+
+   The blocks keep their 487px width and simply overflow a 375 viewport,
+   centred, exactly as Figma draws them; #weather's overflow:hidden is what
+   stops that becoming a scrollbar.
+
+   The photo is the one element here that resizes between the two mobile
+   frames — 130px at 768, 109.918px at 375 — so its width and the gap under
+   it are those pairs solved as a line, exact at both. Same approach as
+   map-extras.css; see the note there. */
+@media (max-width:1023px){
+  #weather{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:47px var(--gutter-mobile) 66px;
+  }
+  .wx-row{ display:contents }
+
+  .wx-photo{
+    order:1;
+    align-self:center;
+    width:calc(90.76px + 5.11vw);
+    /* 8px right of centre — the same offset the photo has on desktop,
+       where the 56/40 gaps either side of it put its centre at 728 in a
+       1440 frame. Figma keeps it on both mobile frames too (centre 392 of
+       768, 195.96 of 375); stacking it just lost the nudge. */
+    margin:0 -16px calc(23.84px - 3.1vw) 0;
+  }
+  .wx-heading{ order:2; margin:0 0 calc(16.36px + 7.63vw) }
+  .wx-card{ order:3 }
+  .wx-card:first-child,.wx-card:last-child{ text-align:center }
+  .wx-card:last-child{ order:4; margin-top:43px }
+}

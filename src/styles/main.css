@@ -2,14 +2,45 @@
    LAYOUT & COMPONENTS
    ============================================================ */
 *{margin:0;padding:0;box-sizing:border-box}
+
 /* custom easing lives in js/scroll.js — native smooth would fight it */
-html{scroll-behavior:auto}
+html{
+  scroll-behavior:auto;
+  /* Several things bleed past the viewport ON PURPOSE — the stickers, the
+     map, the 487px weather blocks on a 375 screen — and the page must not
+     scroll sideways because of them. body's own overflow-x:hidden below
+     wasn't enough: a right-bleeding sticker still left the document 90px
+     wider than the viewport and scrollable. `clip` rather than `hidden`
+     because hidden here would make the root a scroll container and break
+     position:fixed (#to-map, #poi-card); clip just cuts. */
+  overflow-x:clip;
+}
 body{
   position:relative;          /* the texture is absolute against this */
   background:var(--sea);
   color:#fff;
   font-family:var(--sans);
-  overflow-x:hidden;
+  overflow-x:clip;
+
+  /* No selection highlight anywhere. The page is a drawing you scrub, drag
+     and scroll through, not a document you quote from, and the tint fired
+     on every stray drag across the map, the strip or the timeline.
+
+     It was previously set ad hoc on a few elements (#basemap, .poi-num,
+     .hl-track) and then on the artwork generally; this supersedes all of
+     them, so the decision lives in exactly one place and is one line to
+     undo. Find-in-page is a separate mechanism and still highlights its
+     matches, and screen readers are unaffected either way; the cost is
+     that nothing on the page can be selected or copied. */
+  user-select:none;
+  -webkit-user-select:none;
+}
+/* The calibration panel exists to be copied out of — it prints the JSON you
+   paste back into trip.json — so it keeps its selection. Dev-only: the whole
+   #calib tree is removed from the DOM in production. */
+#calib,#calib *{
+  user-select:text;
+  -webkit-user-select:text;
 }
 
 /* ---------- loading / error ---------- */
@@ -43,22 +74,47 @@ body{
    would otherwise be transparent within the group — and multiplying against
    transparency washes the area pale instead of graining it. This matches the
    sea baked into map-japon.png exactly (#596D88). */
+/* The hero and the map overlap, so the two read as one immersive scene
+   rather than a hard cut: the artwork's own paper-toned margin (the same
+   tone as the hero's ground, which is why the seam is invisible) runs up
+   behind the title, and the watercolour starts about a third of the way
+   down it.
+
+   Measured off Figma, where the visible map band's top edge sits at page
+   y=69 under a 575-tall hero (1440 and 2156 alike), y=79 at 1200, y=0 at
+   768 and y=113 at 375 under a 309-tall one. #stage stacks on top of #hero
+   in the overlap band (later in the DOM, same z-index:auto) while
+   .hero-title/.hero-pill's own z-index:2 punches them back through.
+
+   Scoped to .has-map-crop — i.e. to a trip whose map is authored against
+   this design at all (map.contentSize). The overlap only works because
+   that artwork carries ~500px of its own paper margin above the
+   watercolour; a v1 map like japon-2026's has none, so the same figure
+   would slide half its map up behind the title. */
 #stage{
   position:relative;width:100%;overflow:hidden;
   isolation:isolate;
   background:var(--sea);
 }
+/* Figma puts the window's top edge at page y 243 on every desktop frame
+   (the 1200 one draws it at 254, where the whole map section sits 11px
+   lower — the one place this band doesn't follow it, because 1024-1799 is
+   a single media query and 1440 is the canvas it is measured in). The band
+   starts 120px above that, so the fade has somewhere to finish. */
+#stage.has-map-crop{ margin-top:-452px }                            /* 123 − 575 */
+/* 768 → 0 − 309; 375 → 113 − 309. Solved as a line between the two
+   authored frames, same as the other mobile offsets in this pass. */
+@media(max-width:1023px){ #stage.has-map-crop{ margin-top:calc(-88.18px - 28.753vw) } }
 /* The texture used to be on the hero only, which put a seam where the map
    ended. It's on the page now, above everything, so the paper is continuous
    from the map to the last button. */
-/* The paper runs from the map to the bottom of the cards — the sea-blue part of
-   the page — and stops where the stack begins. The three slides below are their
-   own surfaces climbing out of the sea, and grain over them would flatten the
-   whole point of the colour walk.
-
-   Its height is set in js (see sizeTexture in main.js): it has to end exactly
-   where .p-gem starts, and only layout knows where that is. */
+/* Covers the hero/map/highlights band — the coloured sections below (pitch,
+   footer) carry their own backgrounds, and grain over them would flatten the
+   colour walk. Height is set in js (see sizeTexture in main.js). */
 #texture{
+  /* Hidden for now — revisit once the v2 section colours (hero/map/
+     highlights paper tones) are settled; the grain read as noise over them. */
+  display:none;
   position:absolute;
   top:0;left:0;right:0;
   height:100%;                  /* replaced once the pitch has laid out */
@@ -71,10 +127,142 @@ body{
 
 
 
+/* The 1440 column the map's own furniture is laid out in (the "Itineraire"
+   heading, the Google Maps link, the timeline card) — NOT the artwork,
+   which is sized by a different rule entirely and is a sibling in the
+   markup. See trip.html. */
 #frame{position:relative;width:100%;max-width:var(--artboard);margin:0 auto}
 /* aspect-ratio (contain) or an explicit height (cover) is set from the trip
    data in MapView.applyFit() — no default here, so nothing fights it */
 #world{position:relative;width:100%;overflow:hidden}
+
+/* ---- map.contentSize: the fixed-px model (MapView.applyMapMetrics) -------
+   Figma's five breakpoint frames all render the artwork at a FIXED pixel
+   width and centre it on one point of the base image; what varies down the
+   ladder is only the scale (1:1 from 768px up) and how much vertical band
+   shows. So #stage gets that band as an explicit height, and #world is an
+   absolutely-positioned px box hung off the viewport's centre line — it
+   bleeds past both edges on purpose, and #stage's overflow:hidden is what
+   crops it. #frame then lies over the band as the furniture column.
+
+   The three custom properties are written by JS (they come from trip data
+   and, below 768, from the viewport width). A trip with no contentSize —
+   japon-2026 — never gets .has-map-crop and keeps the original model:
+   #world in flow at 100% of #frame, height from its own aspect-ratio. */
+/* The band is the box the window floats in, not the window itself: 120px
+   of room above for the fade, then the 1120 window, then whatever is left
+   before the next section starts.
+
+   That last figure is where the desktop range splits, and the split is at
+   1800, NOT at 1440: Figma starts "03 — why" at page y 1408 in the 1440
+   frame and at y 1408 in the 1200 frame alike, and only at y 1600 in the
+   2156 and 3820 ones. 1440 was being given the 2156 treatment, which left
+   192px of empty paper under the map that the 1440 mockup doesn't draw.
+   So the base is the narrow band and ≥1800 is the exception.
+
+   The 45px left under the window is tighter than the fade needs — exactly
+   as Figma draws it, and invisible because the section below is the same
+   paper. Mobile has no window, so there it falls back to the whole
+   image's own height. */
+#stage.has-map-crop{ height:1285px }                               /* 1408 − 123 */
+@media(min-width:1800px){ #stage.has-map-crop{ height:1477px } }   /* 1600 − 123 */
+@media(max-width:1023px){ #stage.has-map-crop{ height:var(--map-band-h) } }
+
+#stage.has-map-crop #world{
+  position:absolute;
+  /* contentOffset.y is where the window's top edge falls on the artwork,
+     so the artwork hangs that far above it */
+  top:calc(var(--map-window-top) - var(--map-content-y));
+  left:50%;
+  width:var(--map-render-w);
+  margin-left:calc(var(--map-anchor-x) * -1);
+  /* the band does the clipping; #world is exactly the image's own box, and
+     clipping here would cut pin tooltips off at the artwork's edge */
+  overflow:visible;
+}
+#stage.has-map-crop #frame{
+  position:absolute;
+  top:0;left:0;right:0;bottom:0;
+  margin-inline:auto;
+  /* a positioning context only — the artwork underneath stays clickable
+     everywhere the furniture isn't */
+  pointer-events:none;
+}
+#stage.has-map-crop #frame > *{ pointer-events:auto }
+
+/* ---- the soft edge (Figma node 172:2490) --------------------------------
+   The artwork used to stop at a hard line wherever the band cropped it.
+   Figma's revision keeps the same image and masks it with a rounded rect
+   (1908x1120, r171) blurred at stdDeviation 60 — i.e. the map dissolves
+   into the paper over its outer ~240px instead of being cut.
+
+   Done as an overlay rather than a mask on #world, because the fade is
+   anchored to the BAND (the mask is measured in the 2156x1440 frame's own
+   coordinates) while #world is an oversized box hung off the centre line;
+   masking it would mean redoing that offset in mask-position at every
+   width. #stage's background is the same paper the artwork fades into
+   (map.backgroundColor drives --sea), so painting the fade on top is
+   pixel-identical to fading the map to transparent, and it costs no
+   second coordinate space. --sea-fade is that colour at zero alpha: a
+   gradient to plain `transparent` would interpolate through transparent
+   BLACK and grey the ramp.
+
+   The window is a FIXED 1908x1120 box, centred — the same box in both
+   mockups that use it (172:2490 draws it inset 124px in a 2156 frame;
+   173:2633 centres it in a 3820 one), with the blur giving a +-120px ramp
+   around each edge. One rule covers the whole ladder:
+
+     >= 3200   the window is smaller than the viewport in both directions,
+               so it floats with paper all round it — the wide-screen
+               design. --map-window-top/bottom place it in the band.
+     1908-3200 only the sides show paper; at 2156 the gradient's stops
+               land on 4px and 244px, which is exactly what 172:2490 draws.
+     <= 1908   --map-window-x goes negative, so the side stops fall outside
+               the box entirely and the map is full-bleed again, as the
+               1440/1200/768/375 frames have it. No media query needed.
+
+   Above the pins (z-index 8) on purpose: a pin sitting in the fade should
+   fade with the map it belongs to. */
+#stage.has-map-crop{
+  --map-fade:120px;
+  --map-window-x:calc((100% - 1908px) / 2);
+  --map-window-top:120px;
+  --map-window-bottom:45px;     /* 1285 band − 120 − 1120 */
+}
+@media(min-width:1800px){
+  #stage.has-map-crop{ --map-window-bottom:237px }  /* 1477 − 120 − 1120 */
+}
+/* Mobile has no window at all — the 768 and 375 frames show the whole
+   image unmasked — so the vertical stops collapse and only the (already
+   off-screen) horizontal ones remain. */
+@media(max-width:1023px){
+  #stage.has-map-crop{ --map-window-top:0px; --map-window-bottom:0px }
+}
+#stage.has-map-crop::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:9;
+  pointer-events:none;
+  background:
+    linear-gradient(to right,
+      var(--sea) 0,
+      var(--sea) calc(var(--map-window-x) - var(--map-fade)),
+      var(--sea-fade) calc(var(--map-window-x) + var(--map-fade)),
+      var(--sea-fade) calc(100% - var(--map-window-x) - var(--map-fade)),
+      var(--sea) calc(100% - var(--map-window-x) + var(--map-fade)),
+      var(--sea) 100%),
+    linear-gradient(to bottom,
+      var(--sea) 0,
+      var(--sea) calc(var(--map-window-top) - var(--map-fade)),
+      var(--sea-fade) calc(var(--map-window-top) + var(--map-fade)),
+      var(--sea-fade) calc(100% - var(--map-window-bottom) - var(--map-fade)),
+      var(--sea) calc(100% - var(--map-window-bottom) + var(--map-fade)),
+      var(--sea) 100%);
+}
+/* On a wide screen the band is taller than the window (see wideWindow in
+   the trip data) so the fade finishes inside #stage's clip rather than the
+   map being cut mid-ramp. */
 
 .layer{position:absolute;inset:0}
 /* `contain` rather than the default `fill`: if the declared ratio and the real
@@ -86,7 +274,7 @@ body{
    the image being squashed to fit. */
 #basemap,#basemap-alt{
   position:absolute;top:0;left:0;width:100%;height:auto;display:block;
-  user-select:none;-webkit-user-drag:none;
+  -webkit-user-drag:none;
 }
 /* stacked above the base and faded in, so switching itinerary artwork doesn't
    flash through the background colour */
@@ -144,7 +332,11 @@ body{
 #pois{z-index:8;pointer-events:none}
 #pois .poi{pointer-events:auto}
 .poi{
-  position:absolute;width:3.1%;transform:translate(-50%,-50%);
+  /* --poi-anchor-y lets a pin's own viewBox override WHERE on itself the
+     coordinate lands — the dot, not the button's own box centre, is the
+     real anchor (see the per-type overrides below); anything without one
+     (the generic badge design) keeps the old plain centre. */
+  position:absolute;width:3.1%;transform:translate(-50%, var(--poi-anchor-y, -50%));
   background:none;border:0;padding:0;cursor:pointer;
   filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
   transition:transform .22s var(--ease-pop);
@@ -186,16 +378,130 @@ body{
   display:flex;align-items:center;justify-content:center;
   font-family:var(--sans);font-weight:600;font-size:min(1.05vw,15px);
   line-height:1;
-  pointer-events:none;user-select:none;
+  pointer-events:none;
 }
 .poi.is-inactive .poi-num{opacity:0}
-.poi:hover,.poi:focus-visible{transform:translate(-50%,-50%) scale(1.28);z-index:20}
+.poi:hover,.poi:focus-visible,.poi.is-current{transform:translate(-50%, var(--poi-anchor-y, -50%)) scale(1.28);z-index:20}
 .poi.is-inactive{opacity:.1;filter:grayscale(1)}
+
+/* ---- basecamp/stay/daytrip pins (Australia v2 — see pin.svg) ----
+   Scoped with :has(.poi-shape), not just [data-pin-type] — every trip's
+   pins carry data-pin-type now (renderPins() always sets it), but only a
+   trip whose OWN pin.svg opts into this convention actually renders a
+   .poi-shape element, so Japan's numbered badge pins (a different
+   pin.svg, untouched) are unaffected by any of the rules below.
+
+   No badge/panel/inner to invert and no room for a number (Figma's badges
+   are solid shapes, no numeral) — the generic hover/is-current scale
+   above is the only feedback these need. */
+.poi:has(.poi-shape) .poi-num{display:none}
+/* Sized against the MAP, not the viewport — but at the pins' own drawn
+   scale, not the shared 3.1% above, which blew them up to ~45px.
+   Figma draws the pin art 11px wide against a 2238px-wide image on the
+   desktop canvas and 20.85px on the mobile one — deliberately ~1.9x
+   bigger relative to the map, so they still read (and stay tappable)
+   once the artwork shrinks. Measured at both mobile frames: 20.8px at
+   768, where the art is 1:1, and 11px at 375, where it is at .52725.
+
+   The widths below are one unit larger than the art because pin.svg's
+   viewBoxes carry the badge's 1px stroke (12 units for an 11px badge,
+   11 for a 9px dot), so: 12/2238 = .5362% and 11/2238 = .4915% on
+   desktop, x1.8955 of each on mobile.
+
+   Percentages rather than px because #world is now a fixed-px box
+   (MapView.applyMapMetrics) — so they resolve to exactly those pixel
+   sizes on desktop, and track the artwork for free as it scales below
+   768 without a resize listener.
+
+   --poi-anchor-y is the dot's own centre within that viewBox (a badge's
+   dot sits low in it, not in the middle) — the real calibrated point, so
+   the pin has to pivot on THAT, not the box's centre, or it reads as
+   several px off the actual location (worse the taller the badge: ~7px
+   for basecamp, ~5px for stay, at these sizes). Maths, from pin.svg:
+     basecamp  viewBox 0 0 12 23.5, dot y 14.5–23.5 → centre 19/23.5
+     stay      viewBox 0 0 12 18.5, dot y  9.5–18.5 → centre 14/18.5
+     daytrip   viewBox 0 0 11    9, dot IS the shape → centre = box centre */
+.poi:has(.poi-shape)[data-pin-type="basecamp"]{ width:.5362%; --poi-anchor-y:-80.8511% }
+.poi:has(.poi-shape)[data-pin-type="stay"]{ width:.5362%; --poi-anchor-y:-75.6757% }
+.poi:has(.poi-shape)[data-pin-type="daytrip"]{ width:.4915% }
+@media(max-width:1023px){
+  .poi:has(.poi-shape)[data-pin-type="basecamp"],
+  .poi:has(.poi-shape)[data-pin-type="stay"]{ width:1.0165% }
+  .poi:has(.poi-shape)[data-pin-type="daytrip"]{ width:.9316% }
+}
+
+/* The badge can bob a couple of px above its own dot without being clipped
+   by the SVG's viewBox edge. */
+.poi .poi-shape{ overflow:visible }
+
+/* ---- the day you're actually there ----
+   .is-current is set by the timeline for the place the scrubbed day
+   belongs to — on a day-trip day that's the day trip, not the town you
+   slept in. It used to show only as the badge's livelier bob, which meant
+   a day trip (a bare dot, no badge — see pin.svg) had NO active state at
+   all: scrub onto the Blue Mountains and nothing on the map said so.
+
+   The dot itself carries it now: it fills with the trip's yellow and takes
+   an ink ring, so it reads the same whether the pin has a badge over it or
+   is just the dot. No transform — the dot marks the exact geo point and
+   must not move, awake or asleep (only the fanion moves). paint-order
+   keeps the ring outside the fill rather than eating half of it. */
+.poi:has(.poi-shape).is-current .poi-dot{
+  fill:#FDC816;
+  stroke:#1C2321;
+  stroke-width:1.4;
+  paint-order:stroke;
+}
+.poi .poi-dot{ transition:fill .2s, stroke-width .2s }
+@media(prefers-reduced-motion:reduce){ .poi .poi-dot{ transition:none } }
+
+/* The badge (the "fanion") used to bob: a small idle loop on every pin at
+   rest, and a bigger one on hover/focus/current. Both are gone — ten pins
+   oscillating on their own is movement the map never asked for.
+
+   What's left is a single settled lift on hover/focus/current, so pointing
+   at a pin still answers: the fanion rises once and stays there. It is
+   still only the fanion that moves — the dot marks the exact geo point and
+   holds its place in every state. transform-box:fill-box makes the origin
+   the shape's own visual centre rather than the SVG viewport's, which is
+   what keeps the lift square over the dot. */
+.poi-badge{
+  transform-box:fill-box;
+  transform-origin:center;
+  /* NOT --ease-pop: that curve is a spring (cubic-bezier(.3,1.4,.4,1)), so
+     it spent 70% of a 3px lift in the first frame and then overshot — which
+     on a move this small doesn't read as bounce, it reads as a flick. A
+     plain ease-out over the same distance just rises and stops. */
+  transition:transform .2s ease-out;
+}
+
+/* Cancels the generic scale-the-whole-pin hover feedback below (still
+   right for Japan's one-piece badge, which has no separate dot to keep
+   still) and moves it onto .poi-badge alone. */
+.poi:has(.poi-shape):hover,
+.poi:has(.poi-shape):focus-visible,
+.poi:has(.poi-shape).is-current{ transform:translate(-50%, var(--poi-anchor-y, -50%)) }
+.poi:hover .poi-badge,
+.poi:focus-visible .poi-badge,
+.poi.is-current .poi-badge{ transform:translateY(-3px) scale(1.12) }
+@media(prefers-reduced-motion:reduce){
+  .poi-badge{ transition:none }
+}
+
 .poi .tip{
   position:absolute;bottom:118%;left:50%;transform:translateX(-50%);
   background:var(--seal);color:#fff;font-size:10px;letter-spacing:.1em;
   text-transform:uppercase;padding:5px 9px;border-radius:5px;white-space:nowrap;
   opacity:0;pointer-events:none;transition:opacity .2s;
+}
+/* The seal red above is japon-2026's accent, and it followed the tooltip
+   onto a trip whose palette has no red in it at all. Scoped the same way
+   as the rest of this pin design (:has(.poi-shape)), so Japan keeps its
+   own: the trip's dark green and cream, which is the chip already used for
+   the hero's date pill. */
+.poi:has(.poi-shape) .tip{
+  background:#005E32;
+  color:#F5EFE4;
 }
 .poi:hover .tip,.poi:focus-visible .tip{opacity:1}
 
@@ -532,12 +838,8 @@ body.has-poi{overflow:hidden}
 
 /* ============================================================
    FOOTER — the cost, then the question
+   Normal document-flow scroll (see pitch.css) — no sticky stack.
    ============================================================ */
-/* The last two blocks DO stack — and here it works, because they're different
-   colours from each other and from the sea above. That's the whole mechanism:
-   a slide has to visibly cover the one beneath it. The pitch slides were all
-   sea blue, which is why stacking did nothing there. */
-/* dissolved into #stack — see pitch.css */
 #footer{color:inherit}
 
 /* dusk: the same world as the hero, later in the day */
@@ -547,11 +849,9 @@ body.has-poi{overflow:hidden}
   padding:var(--stack-pad) 0;
   background:#D5DDE8;
   color:var(--ink);
-  border-radius:34px 34px 0 0;
-  box-shadow:0 -26px 64px rgba(24,32,48,.28);
 }
 .f-inner{
-  max-width:var(--artboard);margin:0 auto;
+  width:100%;max-width:var(--artboard);margin:0 auto;
   padding-inline:var(--grid-margin);
 }
 #footer .slot-label{
@@ -559,17 +859,6 @@ body.has-poi{overflow:hidden}
   font-size:11px;letter-spacing:.2em;
   color:rgba(89,109,136,.62);margin:0 0 10px;
 }
-
-/* ---- dataviz ---- */
-#stats{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  column-gap:var(--grid-gutter-in);
-  margin-bottom:14vh;
-}
-#stats .stat{text-align:center}
-#stats .val{font-family:var(--display);font-size:clamp(34px,4.2vw,72px);line-height:1;color:var(--sea)}
-#stats .key{font-size:11px;letter-spacing:.16em;margin-top:6px;color:rgba(89,109,136,.72)}
-#stats .rule{width:62%;height:6px;background:var(--seal);margin:12px auto 0;border-radius:2px}
 
 /* ---- the cost ---- */
 .bud-head{
@@ -634,65 +923,49 @@ body.has-poi{overflow:hidden}
    the map, and the reveal never settled. The wall has its own page.
    ============================================================ */
 /* the last slide, and the lightest — the page has walked from sea to daylight */
+/* Figma "06 — END" (node 169:1852 / 169:1166): a 499px band with the
+   question at 128px and two 270x86 buttons under it, and a 393px one on
+   mobile at 36px with the buttons at exactly half size. The question and
+   the buttons scale by DIFFERENT factors between the two canvases (0.281
+   vs 0.5), which is why neither is a clamp(). */
 .f-ask{
   z-index:3;
   display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  padding:var(--stack-pad) 0;
-  background:#fff;
-  border-radius:34px 34px 0 0;
-  box-shadow:0 -26px 64px rgba(24,32,48,.22);
+  padding:135px 0 106px;
+  background:#000;
   overflow:hidden;
   text-align:center;
 }
-.f-ask-prints{position:absolute;inset:0;pointer-events:none}
-.f-ask-print{
-  position:absolute;margin:0;
-  transform:rotate(var(--r,0deg));
-  border:9px solid #F2F2F0;
-  box-shadow:0 14px 34px rgba(24,32,48,.18);
-  overflow:hidden;
-}
-.f-ask-print img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
 .f-ask-title,.f-ask .ask-actions{position:relative;z-index:2}
-/* black on white — the last button on the page, and the only one that matters */
-.f-ask .fc-yes{background:var(--ink);color:#fff}
-.f-ask .fc-yes:hover{background:#000}
+/* fc-yes/.fc-no keep their shared base colours here (cream/red on black,
+   see main.css's .fc-btn rules) — v1's dark-on-white override is gone along
+   with the white background. */
+/* No font-weight: the script face ships one weight, so asking for 700 only
+   got a synthetic bold — the browser smearing the outline sideways. Same
+   everywhere --script is used. */
 .f-ask-title{
-  font-family:var(--display);
-  font-size:clamp(46px,7.6vw,132px);
-  line-height:1;letter-spacing:-.01em;
-  margin:0 0 6vh;color:var(--ink);
+  font-weight:200;
+  font-family:var(--script,var(--display));
+  font-size:128px;
+  line-height:1.235;letter-spacing:-.01em;
+  margin:0 0 14px;color:#F5EFE4;
 }
+.f-ask-highlight{ color:#FBD456 }
 .ask-actions{
-  display:flex;gap:14px;justify-content:center;
+  display:flex;gap:30px;justify-content:center;
 }
 .ask-actions .fc-btn{
-  width:clamp(150px,13vw,210px);height:54px;
-  font-size:16px;border-radius:4px;
+  width:270px;height:86px;
+  font-size:30.353px;border-radius:10px;
 }
 
-@media(max-width:860px){
-  /* the hero grows to fit the selector below the map */
-  #stage{height:auto;min-height:0}
-  #frame{position:relative}
-
-  /* ---- hero: the map gets the room the dataviz used to take ----
-     The dataviz is dropped entirely (four numbers can't earn their space on a
-     phone), the map is scaled up 20%, and the crop is disabled in map.js so the
-     full artwork shows. The selector takes the freed strip as one compact row. */
-  #logo{width:38%;left:6%;top:3%}
-
-  /* The map runs 20% wider than the frame, bleeding evenly off both edges so it
-     stays centred. #stage clips it (overflow:hidden) and body has overflow-x
-     hidden, so nothing here can produce a horizontal scrollbar.
-     Anything positioned as a % of #world — pins, the inset — scales with it
-     for free. --map-w has to be told, though: it drives sprite sizes and would
-     otherwise leave the clouds 20% small against a bigger map. */
-  :root{--map-w:140vw}
-  #world{width:140%;margin-left:-10%}
-
-  #stats{grid-template-columns:repeat(4,1fr);column-gap:2%;margin-top:4vh;padding-top:4vh}
+@media(max-width:1023px){
+  /* #stage's height is the map band's, set from data at every width now
+     (MapView.applyMapMetrics) — nothing to unset here. The old rules that
+     did (`height:auto` plus a static #frame) belonged to a model where the
+     map's box came from its own aspect-ratio; see main.css's
+     #stage.has-map-crop block. */
 
   /* horizontal, stripped back: no panel, no tab, no dashed rule — just the
      three durations, because there isn't room for furniture */
@@ -783,17 +1056,19 @@ body.has-poi{overflow:hidden}
 
   /* ---- footer ---- */
   .f-costs{padding:0 0 9vh}
-  .f-inner{padding-inline:6%}
-  #stats{margin-bottom:8vh;column-gap:2%}
-  #stats .val{font-size:clamp(28px,9vw,52px)}
+  .f-inner{padding-inline:var(--gutter-mobile)}
   .bud-head{flex-direction:column;gap:18px;margin-bottom:4vh}
     .bud-bar{height:38px;gap:2px}
   .bud-legend{grid-template-columns:repeat(2,1fr);margin-bottom:5vh}
   .bud-levers{grid-template-columns:1fr;gap:5vh}
-  .f-ask{padding:9vh 0 10vh}
-  .f-ask-title{font-size:clamp(38px,13vw,68px);margin-bottom:4vh}
-  .ask-actions{gap:10px}
-  .ask-actions .fc-btn{width:40vw;height:48px;font-size:15px}
+  /* the buttons are exactly half size on the mobile canvas; the question
+     is not — 36px against the desktop 128 */
+  /* 179 / 99 around a 115px block = the 393px band Figma draws at 768 and
+     375 alike (Rectangle 56); the block itself already measures 115. */
+  .f-ask{padding:179px 0 99px}
+  .f-ask-title{font-size:36px;margin-bottom:27.5px}
+  .ask-actions{gap:15px}
+  .ask-actions .fc-btn{width:135.324px;height:43px;font-size:15.176px;border-radius:5px}
 
   #calib{width:100%}
 }
@@ -852,56 +1127,10 @@ body.has-poi{overflow:hidden}
    in proportion; clamped values drift apart and the padding ends up dominating.
    The gap is negative because the housings butt into each other, same as the
    wall — just -1px here rather than -2px, because the tiles are smaller. */
-/* Sizing is driven from src/js/finalcall.js, working forward from a whole-pixel
-   tile: --flap-w, --flap-h, --fc-gap, --fc-gut and --fc-pad are all set there.
-   The panel is fit-content, so it takes exactly whatever the board comes to
-   rather than being computed separately and disagreeing with it. */
-#final-call{
-  position:fixed;
-  top:24px;right:24px;
-  /* Above the footer (600) and the paper texture (900), below the POI overlay
-     (950) so an open card still dims it. At 520 it slid behind the budget
-     block, which read as vanishing early rather than being covered. */
-  z-index:930;
-  width:fit-content;
-  padding:var(--fc-pad, 10px);
-  background:#464646;
-  border-radius:8px;
-
-  filter:
-    drop-shadow(-47px 138px 41px rgba(0, 0, 0, 0.01))
-    drop-shadow(-30px 88px 37px rgba(0, 0, 0, 0.05))
-    drop-shadow(-17px 50px 31px rgba(0, 0, 0, 0.17))
-    drop-shadow(-7px 22px 23px rgba(0, 0, 0, 0.28))
-    drop-shadow(-2px 6px 13px rgba(0, 0, 0, 0.32));
-
-  transform-origin:right top;
-  opacity:0;
-  transform:translateY(-10px) scale(.98);
-  pointer-events:none;
-  transition:opacity .3s ease, transform .3s ease-in-out;
-}
-#final-call.is-visible{
-  opacity:1;
-  transform:translateY(0) scale(1);
-  pointer-events:auto;
-}
-#final-call.is-compact{transform:translateY(0) scale(.7)}
-
-/* The board sets the panel's width; nothing here may override the tile size,
-   which is why --flap-w and --flap-h are left alone. */
-#final-call .fc-logo{
-  display:flex;
-  --flap-gap:var(--fc-gap, -1px);
-  margin-bottom:var(--fc-stack, 2px);
-}
-
-/* two buttons filling the board's width exactly */
-.fc-actions{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:var(--fc-gut, 1px);
-}
+/* .fc-btn/.fc-no/.fc-yes are shared with the footer's own end-of-page ask
+   (.f-ask, in footer.js) — the sticky corner widget that used to also use
+   these was removed (final-call-v1-vs-v2-spec.md: no floating CTA, the
+   question is asked once, at the end). */
 .fc-btn{
   display:flex;align-items:center;justify-content:center;
   height:var(--fc-btn-h, 30px);
@@ -918,16 +1147,7 @@ body.has-poi{overflow:hidden}
 .fc-btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
 .fc-yes[aria-disabled="true"]{background:#8F8F8F;color:#EEE}
 
-@media(max-width:860px){
-  #final-call{
-    top:auto;bottom:14px;left:50%;right:auto;
-    transform:translateX(-50%) translateY(0) scale(1);
-  }
-  #final-call.is-visible{transform:translateX(-50%) translateY(0) scale(1)}
-  #final-call.is-compact{transform:translateX(-50%) scale(.85)}
-}
 @media(prefers-reduced-motion:reduce){
-  #final-call{transition:none}
   .fc-btn{transition:none}
 }
 
@@ -978,38 +1198,46 @@ body.has-poi{overflow:hidden}
 body.is-calibrating .poi{cursor:move}
 .poi.is-picking{outline:2px dashed #fff;outline-offset:6px}
 
+/* The debug grid draws the REAL page grid — same tokens every component
+   lays out against (see tokens.css), so what you see is what the page is
+   using, not a second description of it that can drift. It used to be
+   nailed inside #frame, which meant it only ever covered the map, and its
+   own rule said repeat(8,1fr) while the data says twelve columns — so the
+   twelve spans wrapped onto a second row.
+
+   Fixed rather than absolute: the columns stay put while you scroll, which
+   is the point of holding a grid up against a page. */
 #grid-overlay{
-  position:absolute;inset:0;z-index:150;pointer-events:none;display:none;
+  /* Above everything the page can paint — #footer alone is z-index 600,
+     which is what used to swallow the columns from the budget section
+     down. Just under the dev buttons (1000) so the toggle stays clickable. */
+  position:fixed;inset:0;z-index:999;pointer-events:none;display:none;
   padding-inline:var(--grid-margin);
 }
 #grid-overlay.on{
-  display:grid;grid-template-columns:repeat(8,1fr);column-gap:var(--grid-gutter-in);
+  display:grid;
+  grid-template-columns:repeat(var(--grid-cols), 1fr);
+  column-gap:var(--grid-gutter);
 }
+/* Magenta rather than the old blue: the overlay spans the whole page now,
+   and a 20% blue tint vanished against the budget section's dark green. */
 #grid-overlay span{
-  background:rgba(80,160,255,.20);
-  border-inline:1px solid rgba(80,160,255,.5);
+  background:rgba(255,0,110,.14);
+  border-inline:1px solid rgba(255,0,110,.45);
 }
+/* The spans are rendered once, at the widest column count; the narrower
+   bands simply stop showing the ones they don't have. */
+@media (max-width:1023px){ #grid-overlay span:nth-child(n+9){ display:none } }
+@media (max-width:767px){  #grid-overlay span:nth-child(n+5){ display:none } }
 
-@media(max-width:860px){
+/* The footer/budget half of this block used to be a verbatim copy of the
+   one above it — same selectors, same values, two breakpoints to keep in
+   step. Only the dev-tool rules were ever unique to it. */
+@media(max-width:1023px){
   /* stacked above the Final Call panel, which owns the bottom edge on mobile */
   .dev-btn{bottom:auto;top:14px}
   #grid-toggle{right:auto;left:14px}
   #calib-toggle{right:auto;left:98px}
-  /* ---- footer ---- */
-  .f-costs{padding:0 0 9vh}
-  .f-inner{padding-inline:6%}
-  #stats{margin-bottom:8vh;column-gap:2%}
-  #stats .val{font-size:clamp(28px,9vw,52px)}
-  .bud-head{flex-direction:column;gap:18px;margin-bottom:4vh}
-    .bud-bar{height:38px;gap:2px}
-  .bud-legend{grid-template-columns:repeat(2,1fr);margin-bottom:5vh}
-  .bud-levers{grid-template-columns:1fr;gap:5vh}
-  .f-ask{padding:9vh 0 10vh}
-  .f-ask-title{font-size:clamp(38px,13vw,68px);margin-bottom:4vh}
-  .ask-actions{gap:10px}
-  .ask-actions .fc-btn{width:40vw;height:48px;font-size:15px}
-
-  #calib{width:100%}
 }
 
 

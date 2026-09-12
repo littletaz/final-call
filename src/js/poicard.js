@@ -1,5 +1,6 @@
 import { TRIP, tripAsset, stayTotal, stopDates, bookingUrl, eur } from './data.js'
 import { watchImages } from './placeholder.js'
+import { isNarrow } from './breakpoints.js'
 
 /* ============================================================
    POI CARD
@@ -21,7 +22,9 @@ const TILT = [
   { r: -15, x: 34,  y: 10,  z: 2 },
 ]
 
-const narrow = () => window.matchMedia('(max-width: 860px)').matches
+/* the same line the card's own bottom-sheet styles switch at — see
+   src/js/breakpoints.js, and main.css's #poi-card rules */
+const narrow = isNarrow
 
 const fmt = d => d?.toLocaleDateString('en-GB', { day:'numeric', month:'short' }) ?? ''
 

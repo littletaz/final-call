@@ -1,55 +1,19 @@
 /* ============================================================
    PITCH
-   Three stacked slides: each sticks while the next rides over it.
-   The middle one holds three cards you turn over.
+   Standard document-flow scroll (final-call-v1-vs-v2-spec.md §9: "one
+   scroll model") — no sticky stack. Each slide is just a normal block,
+   one after another, sized to its own content.
    ============================================================ */
-
-/* ============================================================
-   THE STACK
-   Four slides, each exactly one screen, each sticking in turn
-   while the next rides up over it.
-
-   They must all be SIBLINGS in one container. A sticky element
-   only sticks within its own parent, so while the pitch and the
-   footer were separate boxes each slide unstuck at the very
-   moment the next arrived — leaving nothing behind it, which is
-   what showed through the rounded corners as a seam.
-
-   `display:contents` dissolves #pitch and #footer so their
-   sections become direct children of #stack, without moving any
-   markup between the two renderers.
-   ============================================================ */
-/* ABOVE the paper texture (900). A stuck slide sits at the top of the viewport,
-   which is inside the textured region — so at 600 the grain painted straight
-   over it. Below the Final Call panel (930) so that still floats on top. */
-#stack{position:relative;z-index:905}
-/* BELOW the texture (900): the mood is what's left in here, and it scrolls with
-   the map, so it should take the same grain from #texture. The cards are moved
-   out into #stack, which sits above the texture and carries its own. */
 #pitch{position:relative;z-index:600}
 #pitch[hidden]{display:none}
 #footer{position:relative;z-index:600}
 
-/* Everything ABOVE #stack — map, mood, cards — is ordinary scroll at whatever
-   height the content wants. Nothing up there is a slide.
-
-   Inside #stack, four slides of exactly one screen. The first is empty: it's
-   the floor the others slide over, sea blue so it reads as the page continuing.
-   Without it the first real slide would have nothing to cover, and the cards
-   would still be scrolling as it arrived.
-
-   The gap between slides is a margin-TOP on the FOLLOWING one, never a
-   margin-bottom on the sticky one. A sticky element is constrained by its
-   MARGIN box, so a bottom margin eats its own sticking room — that's what made
-   the budget slide start moving half a screen before the ask reached it. */
-/* The three that are slides: exactly one screen each. `.p-cards` is in the stack
-   too but keeps its natural height — see below. */
-.p-gem,.f-costs,.f-ask{
-  position:sticky;top:0;
-  height:100vh;height:100svh;
-  overflow:hidden;
-}
-.p-gem,.f-costs,.f-ask{margin-top:var(--stack-gap)}
+.p-gem,.f-costs,.f-ask{ overflow:hidden }
+/* Breathing room above the colour walk only where nothing already provides
+   it — .f-costs now follows #weather directly, which has its own padding,
+   so it gets none here. Consecutive slides (budget → end) butt together,
+   matching the Figma mock, with no page-background seam between them. */
+.p-gem{ margin-top:8vh }
 
 /* ---- one more thing ----
    The first of the coloured slides, and a step lighter than the sea it rises
@@ -77,17 +41,6 @@
   display:flex;align-items:center;
   background:#8FA1BC;
 }
-/* The FIRST slide of the stack. Scroll stops here — the mood and the cards hold
-   while the gem rides up over them, and each block after that covers the last.
-   Sea blue, so it's the floor the colour walk climbs out of. */
-/* Taller than the viewport ON PURPOSE. The content fills the first screen and
-   the extra half-screen below it is dead air the slide holds through — so the
-   cards sit still long enough to read and turn over before the next slide
-   starts covering them. Without it the gem arrives the moment they do. */
-/* Exactly one screen, like every slide in the stack. No extra height is needed
-   for reading time: a stuck slide stays fully visible while the next rides up
-   over it, so the cards hold centre-screen for as long as it takes the gem to
-   arrive. The 150vh version was solving a problem sticky already solves. */
 /* ---- the mood: ordinary scroll, part of the map ---- */
 .p-mood{
   display:flex;align-items:center;
@@ -96,13 +49,10 @@
   text-align:center;
 }
 
-/* ---- the cards: the first slide of the stack ----
-   One screen exactly, like the slides after it. The cards are 400px and the
-   label is small, so a screen is comfortable — nothing else lives here, which
-   is the point of splitting the mood out. */
+/* ---- the cards ----
+   Normal flow, sized to its own content — see the pitch banner above. */
 .p-cards{
-  position:sticky;top:0;
-  height:100vh;height:100svh;
+  min-height:100vh;min-height:100svh;
   align-items:center;
   overflow:hidden;
   text-align:center;
@@ -111,8 +61,8 @@
   background:var(--sea);
 }
 
-/* The cards are held, so their grain is held with them — #texture scrolls and
-   would drag across still type. Offset in js to continue the sheet above. */
+/* Own grain, since it now sits past where #texture's sheet stops (see
+   sizeTexture in main.js) — static rather than js-offset to continue it. */
 .p-cards::after{
   content:"";
   position:absolute;inset:0;
@@ -314,7 +264,7 @@
   .p-slide .p-inner{transition:none;opacity:1;transform:none}
 }
 
-@media(max-width:860px){
+@media(max-width:1023px){
   /* less dead air on a phone — a half screen there is a long thumb-scroll */
   .p-gem{border-radius:24px 24px 0 0}
   .p-print{border-width:6px}

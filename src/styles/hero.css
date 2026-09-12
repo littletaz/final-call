@@ -1,0 +1,228 @@
+/* ============================================================
+   HERO — v2 "scrapbook" title screen (see plans/groovy-strolling-sundae.md).
+   Scoped locally rather than added to tokens.css: these colours are this
+   trip's art direction, not a site-wide palette change for japon-2026 too.
+
+   ---- sizing ------------------------------------------------------------
+   Figma's "Mediaqueries" section (node 169:2327) draws the hero as a fixed
+   canvas at two heights and nothing in between: 1440x575 down to the 1024
+   line, then 375x309. So the height is a real px value at each, not the
+   old `min-height:46vh` + vh padding, which made it a different shape on
+   every screen and never the one that was drawn.
+
+   The WORDMARK, though, has three sizes, not two: the 768 frame's hero box
+   is the 375 one centred, but the lockup inside it is drawn at 0.5567 of
+   desktop rather than 0.35722 — see the 768–1023 block at the bottom.
+   ============================================================ */
+
+#hero{
+  --hero-green:#00824B;
+  --hero-green-dark:#005E32;
+  --hero-yellow:#FDC816;
+  --hero-paper:#F7F4EF;
+
+  /* The canvas the offsets below are measured in. Everything is placed as
+     `calc(50% - <canvas>/2 + <figma x>)`, so the design stays centred and
+     simply gets clipped at the sides when the viewport is narrower —
+     exactly what the 1200 and 375 frames show. Shared with the sticker
+     scatter, so the two can never disagree — see --canvas in tokens.css. */
+  --hero-canvas:var(--canvas);
+
+  position:relative;
+  height:575px;
+  background:var(--hero-paper);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding-inline:var(--grid-margin);
+  text-align:center;
+}
+
+/* ---- the wordmark ----
+   australia-2027 ships the lockup as a flattened SVG (hero.logo in its
+   trip.json) rather than live text, so none of Figma's per-word type sizes
+   apply to it — the whole "& AUSTRALIE / NOUVELLE-ZELANDE" group is one
+   image, and placing it is a matter of landing its INK where Figma's does.
+
+   logo.svg is a 901x258 viewBox whose ink sits at x 23.70, y 0.15 and
+   measures 876.79 x 243.71 (parsed from the path data). Figma renders that
+   same ink at (273, 152), 877 x 243 — i.e. the file is 1:1, so the element
+   is 901px wide and offset back by its own padding:
+     left = 273 - 23.70 = 249.30    top = 152 - 0.15 = 151.85
+   Mobile is the identical lockup at x0.35722 (the ratio Figma uses for
+   every glyph in the group), which is 321.9px wide. */
+.hero-title:has(.hero-logo){
+  position:absolute;
+  margin:0;
+  top:151.85px;
+  left:calc(50% - var(--hero-canvas) / 2 + 249.3px);
+  z-index:2;
+}
+.hero-logo{
+  display:block;
+  width:901px;
+  height:auto;
+}
+
+/* ---- the wordmark as live text ----
+   The path a trip without hero.logo takes (japon-2026). Figma's
+   composition is drawn around australia-2027's two specific words, and
+   that trip ships it as the SVG above — so nothing here follows the
+   mockup; it stays the generic centred stack it has always been, just
+   inside the hero's new fixed height. */
+.hero-title{
+  font-weight:200;
+  position:relative;
+  z-index:2;
+  margin:0;
+  font-family:var(--script,cursive);
+  line-height:0.92;
+}
+.hero-word{
+  display:block;
+  font-size:clamp(2.6rem,7.5vw,6.5rem);
+}
+.hero-word--a{ color:var(--hero-green) }
+.hero-word--b{ color:var(--hero-yellow) }
+
+.hero-amp{
+  display:block;
+  color:var(--hero-green-dark);
+  font-size:clamp(2rem,10vw,9rem);
+  transform:rotate(-6deg);
+  margin:-0.12em 0;
+}
+
+.hero-pill{
+  position:relative;
+  z-index:2;
+  margin-top:1.4em;
+  display:inline-block;
+  background:var(--hero-green-dark);
+  color:var(--hero-paper);
+  font-family:var(--hand,cursive);
+  font-size:1.15rem;
+  padding:.5em 1.3em;
+  border-radius:18px;
+  transform:rotate(3deg);
+}
+
+/* ---- the date pill, on the Figma composition ----
+   251.212 x 58.582 at 24px, rotated 3.61deg — and Figma holds all of that
+   CONSTANT between the two canvases (it is the one element that doesn't
+   scale), so only its position steps. Placed by its CENTRE, which is where
+   the rotation happens and therefore the one point that doesn't move as
+   the date string's length changes.
+
+   Scoped to the wordmark trips: on a live-text hero the pill stays in flow
+   under the title, since these coordinates are the lockup's, not a
+   general-purpose slot. */
+#hero:has(.hero-logo) .hero-pill{
+  position:absolute;
+  margin:0;
+  top:137.3px;
+  left:calc(50% - var(--hero-canvas) / 2 + 907.3px);
+  transform:translate(-50%,-50%) rotate(3.61deg);
+  display:inline-flex;
+  align-items:center;
+  min-height:58.582px;
+  box-sizing:border-box;
+  font-size:24px;
+  line-height:1;
+  white-space:nowrap;
+  padding:7px 20px;
+}
+
+@media (max-width:1023px){
+  #hero{
+    height:309px;
+  }
+  .hero-title:has(.hero-logo){
+    top:127.8px;
+    left:calc(50% - var(--hero-canvas) / 2 + 19.2px);
+  }
+  .hero-logo{ width:321.9px }
+  #hero:has(.hero-logo) .hero-pill{
+    top:96.3px;
+    left:calc(50% - var(--hero-canvas) / 2 + 203.3px);
+  }
+}
+
+/* ---- 768–1023: the lockup has a THIRD size --------------------------
+   The 768 frame's hero box is the 375 one centred (x 197, 375 wide, 309
+   tall) and the pill is still on that canvas — but the wordmark is not.
+   Figma draws its group 512.71 wide at (118.52, 103.24), in the 768
+   frame's own coordinates, i.e. 0.5567 of the desktop lockup rather than
+   the 0.35722 the 375 frame uses. Treating 768 as "the 375 design in a
+   wider window" made it 37% too small, which is the single biggest
+   difference between the build and the mockups.
+
+   Same derivation as the two bands above: Figma's group box is 41px wider
+   than the ink on the left and 50px taller above it (232/102 vs the ink's
+   273/152 at 1440), and logo.svg carries 23.70/0.15 of its own padding, so
+     left = 118.52 + 41 * 0.5567 - 23.70 * 0.5567 = 128.15
+     top  = 103.24 + 50 * 0.5567 -  0.15 * 0.5567 = 130.99
+   Placed against a 768 canvas, which puts the lockup 5px left of centre —
+   where Figma has it — for the whole band. */
+@media (min-width:768px) and (max-width:1023px){
+  .hero-title:has(.hero-logo){
+    top:131px;
+    left:calc(50% - 255.9px);       /* 768/2 - 128.15 */
+  }
+  .hero-logo{ width:501.6px }       /* 901 x 0.5567 */
+}
+
+/* Below the narrowest mockup the lockup would start running off both
+   edges, so it stops being a fixed size and fits the screen instead —
+   the only fluid rule left in this file, and only outside the range the
+   mockups cover. */
+@media (max-width:374px){
+  .hero-logo{ width:min(321.9px, calc(100vw - 40px)) }
+  .hero-title:has(.hero-logo){ left:20px }
+}
+
+/* Page-level layer (see trip.html) — deliberately NOT scoped under #hero, so
+   negative top/left offsets (stickers meant to bleed off the section edge,
+   per the Figma mock) aren't clipped by any section's own overflow. */
+/* Figma scatters stickers down the WHOLE page, not just the hero — seven of
+   them, from the title down to the "So... are you in?" band — so this layer
+   spans the document rather than a hero-sized box. It used to be 60vh tall,
+   which meant the same trip.json numbers put a sticker somewhere different
+   on every window; both axes are real lengths now. */
+#page-stickers{
+  position:absolute;
+  top:0;left:0;
+  width:100%;
+  height:100%;
+  overflow:visible;    /* several are meant to bleed off the edges */
+  z-index:940;         /* above every section, below #poi-overlay/#poi-card */
+  pointer-events:none;
+}
+
+/* Placed by CENTRE (hence the translate), in the canvas's own coordinates:
+   x is measured from the canvas's left edge, which is itself centred in the
+   viewport, so the scatter tracks the layout at any width. --sanchor is the
+   top of the section a sticker hangs off, written by Hero.placeStickers();
+   it's 0 for the ones measured from the top of the page. */
+.hero-sticker{
+  --sx:var(--sx-wide);
+  --sy:var(--sy-wide);
+  --sw:var(--sw-wide);
+  position:absolute;
+  left:calc(50% - var(--canvas) / 2 + var(--sx));
+  top:calc(var(--sanchor, 0px) + var(--sy));
+  width:var(--sw);
+  height:auto;
+  transform:translate(-50%,-50%) rotate(var(--rot,0deg));
+  filter:drop-shadow(-2px 3px 9px rgba(79,57,17,.3));
+}
+
+@media (max-width:1023px){
+  .hero-sticker{
+    --sx:var(--sx-narrow);
+    --sy:var(--sy-narrow);
+    --sw:var(--sw-narrow);
+  }
+  /* Figma's 375 frame drops the kangaroo rather than shrinking it */
+  .hero-sticker.is-wide-only{ display:none }
+}

@@ -18,28 +18,91 @@
 <!-- shown until the data resolves; also carries any load error -->
 <div id="boot">LOADING&hellip;</div>
 
-<!-- ============ HERO ============ -->
+<!-- Page-level decoration layer — NOT inside #hero, so stickers with
+     negative offsets aren't clipped by any section's overflow:hidden.
+     z-index sits above every section but below the POI card/overlay. -->
+<div id="page-stickers" aria-hidden="true"></div>
+
+<!-- The layout grid, for checking alignment against the mockups. Fixed to
+     the viewport and spanning the whole page rather than sitting inside the
+     map's own column, because the grid it draws is the PAGE's. Toggled by
+     the GRID dev button; removed from the DOM entirely in production. -->
+<div id="grid-overlay" data-dev hidden aria-hidden="true"></div>
+
+<!-- ============ HERO (v2) ============
+     Title + date pill, populated by src/js/hero.js. Static — the
+     interactive map/pins live below in #stage, unchanged. -->
+<section id="hero">
+  <div>
+    <h1 class="hero-title"></h1>
+    <p class="hero-pill" hidden></p>
+  </div>
+</section>
+
+<!-- ============ MAP ============ -->
 <!-- the paper grain; js bounds it to where the stacked slides begin -->
 <div id="texture" aria-hidden="true"></div>
 
 <header id="stage">
+
+  <!-- The artwork and the furniture over it are sized by two different
+       rules, so they're siblings rather than nested: #world is a fixed-px
+       box centred on one point of the map image (it bleeds past the
+       viewport on purpose — see MapView.applyMapMetrics), while #frame is
+       the 1440 column the headings, the timeline and the Google Maps link
+       are laid out in. #stage clips both. -->
+  <div id="world">
+    <img id="basemap" alt="">
+    <!-- second layer, used to crossfade between per-itinerary map variants -->
+    <img id="basemap-alt" alt="" aria-hidden="true">
+    <div class="layer" id="waves"></div>
+    <div id="inset"></div>
+    <div class="layer" id="pois"></div>
+  </div>
+
   <div id="frame">
 
-    <div id="world">
-      <img id="basemap" alt="">
-      <!-- second layer, used to crossfade between per-itinerary map variants -->
-      <img id="basemap-alt" alt="" aria-hidden="true">
-      <div class="layer" id="waves"></div>
-      <div id="inset"></div>
-      <div class="layer" id="pois"></div>
-    </div>
-
-
-    <div id="logo"><img alt=""></div>
     <!-- a div, not a nav: role=radiogroup would fight nav's implicit
-         navigation role, and radio children need a radiogroup parent -->
-    <div id="selector" role="radiogroup" aria-label="Choose an itinerary"></div>
-    <div id="grid-overlay" aria-hidden="true"></div>
+         navigation role, and radio children need a radiogroup parent.
+         Hidden for v2 — the Figma map section doesn't surface itinerary
+         switching; Cards still renders into it, just not shown (see
+         src/styles/hero.css's neighbour, main.css's #selector rule). -->
+    <div id="selector" role="radiogroup" aria-label="Choose an itinerary" hidden></div>
+
+    <!-- The section title, over the open water to the right of the route.
+         Unaccented on purpose — this trip's display face has no accented
+         glyphs (see trip.json artDirection.fonts). -->
+    <h2 class="map-heading">Itineraire</h2>
+
+    <!-- Drag to scrub through the trip — src/js/timeline.js builds this,
+         highlights the current stop on the map, and reveals the route up
+         to it. Matches the Figma "Timeline" component (node 132:610): a
+         card with the current stop, date, and a mini progress track. -->
+    <div id="map-timeline" class="map-timeline" hidden>
+      <!-- Length switcher — the Figma mock's fan of "13j/17j/21j" tabs
+           above the card. Built by Cards.renderLengthTabs() from
+           TRIP.data.itineraries, driving the same setItinerary() as the
+           (now-superseded) v1 #selector above. Hidden by JS when a trip
+           only has one itinerary. -->
+      <div id="length-tabs" class="length-tabs" role="radiogroup" aria-label="Choose trip length" hidden></div>
+      <div class="tl-card">
+        <button class="tl-link" type="button" aria-label="Voir l'itinéraire complet" disabled></button>
+        <p class="tl-city"></p>
+        <p class="tl-date"></p>
+        <div class="tl-track" tabindex="0" role="slider" aria-label="Trip timeline"
+             aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+          <div class="tl-track-fill"></div>
+          <div class="tl-dots"></div>
+          <!-- the travelling handle: a ring drawn in CSS, not an image
+               (it was the kangaroo sticker before the component redesign) -->
+          <span class="tl-marker" aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
+    <a id="map-gmaps" class="map-gmaps" hidden target="_blank" rel="noopener noreferrer">
+      <img class="map-gmaps-icon" alt="" aria-hidden="true">
+      <span>Voir tous les points<br>sur Google Maps</span>
+    </a>
 
   </div>
 
@@ -51,18 +114,6 @@
 <!-- ============ STACKED CITY CARDS ============ -->
 <!-- sticky bar that stays reachable while the cards stack -->
 <div id="to-map"><button type="button" aria-label="Back to the map">Back to the map</button></div>
-
-<!-- Final Call: appears once the hero has scrolled away, hides at the footer.
-     `hidden` until the data resolves, so it can't flash before the link exists. -->
-<aside id="final-call" hidden>
-  <!-- a split-flap board, alternating between the two messages -->
-  <span class="fc-logo"></span>
-
-  <div class="fc-actions">
-    <button class="fc-btn fc-no" type="button">NO</button>
-    <a class="fc-btn fc-yes" href="#" target="_blank" rel="noopener noreferrer">YES</a>
-  </div>
-</aside>
 
 <!-- One place at a time, opened from a pin. It replaced a stack of
      full-height cards: nine screens of scrolling for information most people
@@ -82,21 +133,35 @@
     <div class="pc-photos" aria-hidden="true"></div>
   </div>
 </aside>
+<!-- ============ HIGHLIGHTS ("L'essentiel") ============
+     Trip-level photo strip, populated by src/js/highlights.js. Replaces the
+     mood/arguments/gem pitch below for any trip that supplies `highlights`
+     (see main.js renderAll()). -->
+<section id="highlights" hidden>
+  <!-- Straight apostrophe on purpose: Sunshine Formula (this trip's display
+       face) has U+0027 but NOT U+2019, so the typographer's quote fell
+       through to a system face mid-word and drew as a spaced acute. -->
+  <h2 class="hl-heading">L'essentiel</h2>
+  <div class="hl-track" tabindex="0" aria-label="Highlights"></div>
+  <div class="hl-nav">
+    <button class="hl-arrow hl-prev" type="button" aria-label="Previous">&#8592;</button>
+    <div class="hl-progress"><div class="hl-progress-fill"></div></div>
+    <button class="hl-arrow hl-next" type="button" aria-label="Next">&#8594;</button>
+  </div>
+</section>
+
+<!-- ============ MÉTÉO ============
+     Trip-level, populated by src/js/weather.js. -->
+<section id="weather" hidden>
+  <h2 class="wx-heading">Meteo</h2>
+  <div class="wx-row"></div>
+</section>
+
 <!-- The mood and the cards: normal scroll, the continuation of the map. -->
 <div id="pitch" hidden></div>
 
-<!-- Every STACKED slide has to be a real sibling here. Sticky is contained by
-     its parent box, so the gem, the costs and the ask are physically moved into
-     this element after they render (see assembleStack in main.js) rather than
-     left in two containers — display:contents removes the box but leaves the
-     containment ambiguous, and the costs slide unstuck exactly as the ask
-     landed. -->
-<!-- The mood and the cards are the first member of the stack: sticky so they
-     hold while everything rides over them, but at their natural height. -->
-<div id="stack"></div>
-</div>
-
-<!-- where the footer renders before its slides are moved into #stack -->
+<!-- Standard document-flow scroll from here on — no sticky stack (see
+     final-call-v1-vs-v2-spec.md §9: "one scroll model"). -->
 <footer id="footer"></footer>
 
 <!-- ============ DEV TOOLS ============

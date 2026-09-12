@@ -7,147 +7,22 @@
   "defaultItineraryId": "full-21",
   "map": {
     "assetId": "japan-ink-map-v2",
-    "base": "map.png",
+    "base": "assets/map/map-japon.png",
     "baseSize": {
       "w": 3840,
-      "h": 2760
+      "h": 2556
     },
-    "cropBottom": 0,
     "inset": {
       "id": "hongkong-inset",
-      "src": "map-hk.png",
+      "src": "assets/map/map-hk.png",
       "forLocationId": "hongkong",
-      "x": 0.027,
+      "x": 0.075,
       "y": 0.3,
       "w": 0.155
     },
-    "_calibrated": true,
-    "backgroundColor": "#596D88",
-    "_canvasNote": "All trips in this project share one canvas ratio. The artwork carries its own margin so land never reaches the edge, and leaves clear space at the bottom for the dataviz. baseSize MUST match the real pixel size of base.",
-    "pin": "pin.svg",
-    "logo": "logo.png",
-    "_pathNote": "All paths here are relative to this file's folder.",
-    "waves": [],
-    "_wavesNote": "PARKED. Move entries from _wavesParked back into waves to turn them on. x/y are fractions of the map image, same space as pin coordinates — drag them in the CALIBRATE panel.",
-    "clouds": [
-      {
-        "file": "clouds/01.png",
-        "x": -18,
-        "y": 25.5,
-        "dur": 118,
-        "travel": 140
-      },
-      {
-        "file": "clouds/02.png",
-        "x": -10,
-        "y": 18.5,
-        "dur": 96,
-        "travel": 126
-      },
-      {
-        "file": "clouds/03.png",
-        "x": -24,
-        "y": 41,
-        "dur": 104,
-        "travel": 142
-      },
-      {
-        "file": "clouds/04.png",
-        "x": -13,
-        "y": 15,
-        "dur": 132,
-        "travel": 130
-      },
-      {
-        "file": "clouds/05.png",
-        "x": -20,
-        "y": 29,
-        "dur": 110,
-        "travel": 136
-      },
-      {
-        "file": "clouds/06.png",
-        "x": -28,
-        "y": 47,
-        "dur": 142,
-        "travel": 148
-      },
-      {
-        "file": "clouds/07.png",
-        "x": -15,
-        "y": 56,
-        "dur": 100,
-        "travel": 130
-      },
-      {
-        "file": "clouds/08.png",
-        "x": -18,
-        "y": 62,
-        "dur": 124,
-        "travel": 134
-      }
-    ],
-    "_cloudsNote": "Weather over the whole viewport, not features of the map: x/y and travel are percentages of the SCREEN, while size stays proportional to the map. x + travel must exceed 100 or the loop reset becomes visible.",
-    "waveScale": 0.333,
-    "_wavesParked": [
-      {
-        "file": "waves/wave-0001.png",
-        "x": 0.085,
-        "y": 1,
-        "dur": 6.5,
-        "dy": 18,
-        "dx": 10
-      },
-      {
-        "file": "waves/wave-0002.png",
-        "x": 0.7,
-        "y": 0.327,
-        "dur": 5,
-        "dy": 13,
-        "dx": -7
-      },
-      {
-        "file": "waves/wave-0003.png",
-        "x": 0.585,
-        "y": 0.2087,
-        "dur": 5.8,
-        "dy": 15,
-        "dx": 8
-      },
-      {
-        "file": "waves/wave-0004.png",
-        "x": 0.86,
-        "y": 0.9739,
-        "dur": 5.3,
-        "dy": 13,
-        "dx": -9
-      },
-      {
-        "file": "waves/wave-0005.png",
-        "x": 0.3,
-        "y": 0.8626,
-        "dur": 6.1,
-        "dy": 16,
-        "dx": 7
-      },
-      {
-        "file": "waves/wave-0006.png",
-        "x": 0.62,
-        "y": 0.7583,
-        "dur": 6.9,
-        "dy": 19,
-        "dx": -11
-      },
-      {
-        "file": "waves/wave-0007.png",
-        "x": 0.42,
-        "y": 1,
-        "dur": 4.8,
-        "dy": 12,
-        "dx": 6
-      }
-    ],
-    "_calibratedNote": "Placed by hand in the CALIBRATE panel against the 3840x2760 artwork, so these are measured rather than derived. x/y are fractions of the map image; the Hong Kong pin is a fraction of the inset box instead."
+    "waterBelowPx": 400,
+    "_calibrated": false,
+    "_calibrationNote": "Pin + inset coordinates are unverified best guesses. Use the CALIBRATE panel in the page, then paste the exported values back into this file and locations.json."
   },
   "artDirection": {
     "id": "sumi-e-ink-wash",
@@ -157,25 +32,10 @@
       "seal": "#CF4736",
       "ink": "#1E222B"
     },
-    "fonts": {
-      "_readme": "Loaded on demand — only the trip being viewed fetches its faces. `google` is a Google Fonts family+axis string; `src` is a self-hosted file under public/. `fallback` is what shows while the face loads.",
-      "display": {
-        "family": "Osaka Moji",
-        "src": "fonts/OsakaMoji-Regular.woff2",
-        "weight": "400",
-        "fallback": "'Hiragino Sans','Yu Gothic',sans-serif",
-        "_note": "no CJK glyphs — kanji fall through to the fallback"
-      },
-      "sans": {
-        "family": "Elms Sans",
-        "google": "Elms+Sans:ital,wght@0,300..700;1,400",
-        "fallback": "ui-sans-serif,system-ui,'Helvetica Neue',Arial,sans-serif"
-      }
-    },
-    "ui": {
-      "selectorPanel": "ui/panel.png",
-      "selectorTab": "ui/tab.png",
-      "_note": "Optional 9-slice frames for the itinerary selector, in this trip's own folder because they are its art direction, not the product's. Omit them and the selector falls back to a flat plate in artDirection.colors — see --sel-panel-img in styles/main.css."
+    "type": {
+      "display": "Osaka Moji",
+      "serif": "PLACEHOLDER — Georgia stands in for the intended Didone",
+      "sans": "PLACEHOLDER — system sans stands in for the intended geometric sans"
     }
   },
   "grid": {
@@ -188,131 +48,102 @@
     "contentWidth": 1484
   },
   "budget": {
-    "_readme": "The footer's cost model. Three levers, each a real choice about THIS trip.\n  sleep      not a lever in the data — it picks the cheapest / middle / dearest\n             stay at each stop, so the figure is the actual sum of real hotels\n  eat/move   per-trip bands, because a konbini breakfast in Japan is not a\n             konbini breakfast in Portugal\nFlights and activities are fixed: flights aren't optional, and activities only\nswing a few hundred against a few thousand.",
+    "_readme": "Footer budget model. Per person. `comfortTiers` scale the base figures.",
     "currency": "EUR",
-    "levers": {
-      "sleep": {
-        "label": "Where we sleep",
-        "options": [
-          {
-            "id": "cheap",
-            "label": "business hotels"
-          },
-          {
-            "id": "middle",
-            "label": "one ryokan night"
-          },
-          {
-            "id": "dear",
-            "label": "ryokan where there is one"
-          }
-        ],
-        "default": "cheap"
-      },
-      "eat": {
-        "label": "How we eat",
-        "perNight": true,
-        "options": [
-          {
-            "id": "konbini",
-            "label": "konbini and ramen",
-            "eur": [
-              18,
-              26
-            ]
-          },
-          {
-            "id": "mixed",
-            "label": "mostly casual, a few dinners",
-            "eur": [
-              35,
-              50
-            ]
-          },
-          {
-            "id": "proper",
-            "label": "eating properly",
-            "eur": [
-              70,
-              105
-            ]
-          }
-        ],
-        "default": "mixed"
-      },
-      "move": {
-        "label": "Getting around",
-        "options": [
-          {
-            "id": "local",
-            "label": "local trains",
-            "eur": [
-              300,
-              380
-            ]
-          },
-          {
-            "id": "mixed",
-            "label": "a mix",
-            "eur": [
-              450,
-              550
-            ]
-          },
-          {
-            "id": "fast",
-            "label": "shinkansen where it saves a day",
-            "eur": [
-              700,
-              850
-            ]
-          }
-        ],
-        "default": "mixed"
-      }
-    },
-    "fixed": [
+    "categories": [
       {
         "id": "flights",
         "label": "Flights",
-        "eur": [
+        "baseEUR": [
           900,
           1100
         ]
-      }
-    ],
-    "presets": [
-      {
-        "id": "comfort",
-        "label": "Comfortable",
-        "sleep": "cheap",
-        "eat": "mixed",
-        "move": "mixed"
       },
       {
-        "id": "properly",
-        "label": "Properly",
-        "sleep": "middle",
-        "eat": "proper",
-        "move": "fast"
+        "id": "stays",
+        "label": "Stays",
+        "baseEUR": [
+          1250,
+          1450
+        ],
+        "_derived": "overridden by the sum of chosen stays"
+      },
+      {
+        "id": "transport",
+        "label": "Transport",
+        "baseEUR": [
+          450,
+          550
+        ]
+      },
+      {
+        "id": "food",
+        "label": "Food",
+        "baseEUR": [
+          700,
+          850
+        ]
+      },
+      {
+        "id": "activities",
+        "label": "Activities",
+        "baseEUR": [
+          350,
+          450
+        ],
+        "_derived": "overridden by the sum of activity prices"
       }
-    ]
+    ],
+    "comfortTiers": [
+      {
+        "id": "shoestring",
+        "label": "Very poor",
+        "multiplier": 0.55
+      },
+      {
+        "id": "budget",
+        "label": "Budget friendly",
+        "multiplier": 0.78
+      },
+      {
+        "id": "comfort",
+        "label": "Comfort",
+        "multiplier": 1.0
+      },
+      {
+        "id": "midhigh",
+        "label": "Mid-high",
+        "multiplier": 1.45
+      },
+      {
+        "id": "luxury",
+        "label": "Luxury",
+        "multiplier": 2.3
+      }
+    ],
+    "defaultTierId": "comfort"
   },
   "cta": {
     "headline": "So… are you in?",
     "buttonLabel": "YES",
     "flightSearch": {
-      "_readme": "Every flight in the trip, in order. `mode` controls how they're offered: 'multiCity' builds one search across all legs (Kayak/Momondo only), 'perLeg' renders one link per leg. 'both' shows the combined search with per-leg links beneath, which is the safest default since a multi-city URL can't be verified without opening it.",
+      "_readme": "Legs are searched together as one multi-city query. `provider` is kayak | momondo | google. Google has no stable public multi-city URL format, so it falls back to searching the first leg only.",
       "provider": "kayak",
-      "passengers": 1,
+      "passengers": 2,
       "cabin": "economy",
-      "mode": "both",
-      "showLegs": false,
-      "_legsNote": "Legs live on each ITINERARY (itineraries[].flightSearch.legs), because only the first and last follow the itinerary dates — a shared list with hardcoded middle legs produced an impossible sequence the moment you switched duration. A trip-level `legs` here would still work as a fallback for an itinerary that defines none.",
-      "_passengersNote": "One ticket: the flights are booked and paid for separately. The ROOM is still for two — see cta.roomAdults."
-    },
-    "roomAdults": 2,
-    "_roomAdultsNote": "How many share a room, used for the Booking.com links. Separate from flightSearch.passengers because you fly on your own tickets and share a twin."
+      "legs": [
+        {
+          "from": "PAR",
+          "to": "HKG",
+          "dateFrom": "itineraryStart"
+        },
+        {
+          "from": "TYO",
+          "to": "PAR",
+          "dateFrom": "itineraryEnd"
+        }
+      ]
+    }
   },
   "locations": [
     {
@@ -325,8 +156,9 @@
       "epithet": "THE GATEWAY",
       "subtitle": "Kowloon · HK Island · Lantau",
       "coordinates": {
-        "x": 0.1921,
-        "y": 0.4337
+        "x": 0.46,
+        "y": 0.6,
+        "onInset": "hongkong-inset"
       },
       "tags": [
         "city",
@@ -407,27 +239,7 @@
           "bookingUrl": "https://www.booking.com/searchresults.html?ss=Hotel+ICON%2C+Hong+Kong"
         }
       ],
-      "foodNotes": "No char siu or pork buns — seafood and chicken dim sum are the safe defaults.",
-      "photos": [
-        {
-          "src": "img/hongkong-01.jpg"
-        },
-        {
-          "src": "img/hongkong-02.jpg"
-        },
-        {
-          "src": "img/hongkong-03.jpg"
-        },
-        {
-          "src": "img/hongkong-04.jpg"
-        },
-        {
-          "src": "img/hongkong-05.jpg"
-        }
-      ],
-      "scatter": 0,
-      "_photosNote": "Beauty shots of the place, 1 to 6. They fill the slots of the layout named by `scatter` (0-3, see src/js/scatter.js) in order, so three photos use the first three positions. All 1000px tall with whatever width they came with — the card crops nothing.",
-      "_staysNote": "A stay with isArea:true is a KIND of place in an area, not a named property — its link searches the area rather than a hotel that doesn't exist. Replace the name with a real property and drop isArea when you find one."
+      "foodNotes": "No char siu or pork buns — seafood and chicken dim sum are the safe defaults."
     },
     {
       "id": "japan-alps",
@@ -439,8 +251,8 @@
       "epithet": "THE DEEP ALPS",
       "subtitle": "Takayama · Kamikochi · Shin-Hotaka",
       "coordinates": {
-        "x": 0.4832,
-        "y": 0.6345
+        "x": 0.474,
+        "y": 0.638
       },
       "tags": [
         "mountains",
@@ -528,25 +340,7 @@
           "bookingUrl": "https://www.booking.com/searchresults.html?ss=Honjin+Hiranoya+Kachoan%2C+Takayama"
         }
       ],
-      "foodNotes": "Hida beef is the regional specialty — beef, not pork, so an easy no-pork base.",
-      "photos": [
-        {
-          "src": "img/japan-alps-01.jpg"
-        },
-        {
-          "src": "img/japan-alps-02.jpg"
-        },
-        {
-          "src": "img/japan-alps-03.jpg"
-        },
-        {
-          "src": "img/japan-alps-04.jpg"
-        },
-        {
-          "src": "img/japan-alps-05.jpg"
-        }
-      ],
-      "scatter": 1
+      "foodNotes": "Hida beef is the regional specialty — beef, not pork, so an easy no-pork base."
     },
     {
       "id": "kanazawa",
@@ -558,8 +352,8 @@
       "epithet": "THE GOLD COAST",
       "subtitle": "Kenroku-en · Higashi Chaya · Omicho",
       "coordinates": {
-        "x": 0.4552,
-        "y": 0.6104
+        "x": 0.456,
+        "y": 0.613
       },
       "tags": [
         "city",
@@ -641,22 +435,7 @@
           "bookingUrl": "https://www.booking.com/searchresults.html?ss=Kanazawa+Machiya+Inn+Hana%2C+Kanazawa%2C+Japan"
         }
       ],
-      "foodNotes": "Kaiseki dinners — flag no-pork when booking.",
-      "photos": [
-        {
-          "src": "img/kanazawa-01.jpg"
-        },
-        {
-          "src": "img/kanazawa-02.jpg"
-        },
-        {
-          "src": "img/kanazawa-03.jpg"
-        },
-        {
-          "src": "img/kanazawa-04.jpg"
-        }
-      ],
-      "scatter": 2
+      "foodNotes": "Kaiseki dinners — flag no-pork when booking."
     },
     {
       "id": "noto",
@@ -668,8 +447,8 @@
       "epithet": "THE QUIET SPUR",
       "subtitle": "Wakura Onsen · Nanao",
       "coordinates": {
-        "x": 0.4676,
-        "y": 0.5556
+        "x": 0.466,
+        "y": 0.562
       },
       "tags": [
         "coast",
@@ -711,10 +490,7 @@
             130,
             190
           ],
-          "bookingUrl": "https://www.booking.com/searchresults.html?ss=ryokan+Wakura+Onsen",
-          "isArea": true,
-          "area": "Wakura Onsen",
-          "kind": "ryokan"
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Wakura+Onsen+ryokan%2C+Noto+Peninsula%2C+Japan"
         },
         {
           "name": "Nanao business hotel",
@@ -723,10 +499,7 @@
             55,
             80
           ],
-          "bookingUrl": "https://www.booking.com/searchresults.html?ss=hotel+Nanao",
-          "isArea": true,
-          "area": "Nanao",
-          "kind": "hotel"
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Nanao+business+hotel%2C+Noto+Peninsula%2C+Japan"
         },
         {
           "name": "Kagaya (Wakura)",
@@ -738,19 +511,7 @@
           "bookingUrl": "https://www.booking.com/searchresults.html?ss=Kagaya+%28Wakura%29%2C+Noto+Peninsula%2C+Japan"
         }
       ],
-      "foodNotes": "Seafood-forward, no particular pork risk.",
-      "photos": [
-        {
-          "src": "img/noto-01.jpg"
-        },
-        {
-          "src": "img/noto-02.jpg"
-        },
-        {
-          "src": "img/noto-03.jpg"
-        }
-      ],
-      "scatter": 3
+      "foodNotes": "Seafood-forward, no particular pork risk."
     },
     {
       "id": "kyoto-edges",
@@ -762,8 +523,8 @@
       "epithet": "THE BACK ROADS",
       "subtitle": "Ohara · Kurama · Arashiyama",
       "coordinates": {
-        "x": 0.4363,
-        "y": 0.6779
+        "x": 0.431,
+        "y": 0.698
       },
       "tags": [
         "temples",
@@ -841,31 +602,10 @@
             140,
             200
           ],
-          "bookingUrl": "https://www.booking.com/searchresults.html?ss=ryokan+Arashiyama%2C+Kyoto",
-          "isArea": true,
-          "area": "Arashiyama, Kyoto",
-          "kind": "ryokan"
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Ryokan+near+Arashiyama%2C+Kyoto%2C+Japan"
         }
       ],
-      "foodNotes": "Shojin ryori (temple vegetarian) is a naturally no-pork option here.",
-      "photos": [
-        {
-          "src": "img/kyoto-edges-01.jpg"
-        },
-        {
-          "src": "img/kyoto-edges-02.jpg"
-        },
-        {
-          "src": "img/kyoto-edges-03.jpg"
-        },
-        {
-          "src": "img/kyoto-edges-04.jpg"
-        },
-        {
-          "src": "img/kyoto-edges-05.jpg"
-        }
-      ],
-      "scatter": 0
+      "foodNotes": "Shojin ryori (temple vegetarian) is a naturally no-pork option here."
     },
     {
       "id": "sanin-coast",
@@ -877,8 +617,8 @@
       "epithet": "THE FAR SIDE",
       "subtitle": "Tottori Dunes · Mt. Daisen",
       "coordinates": {
-        "x": 0.3438,
-        "y": 0.6715
+        "x": 0.373,
+        "y": 0.694
       },
       "tags": [
         "coast",
@@ -951,19 +691,7 @@
           "bookingUrl": "https://www.booking.com/searchresults.html?ss=Ryokan+Marumo%2C+Tottori%2C+Japan"
         }
       ],
-      "foodNotes": "",
-      "photos": [
-        {
-          "src": "img/sanin-coast-01.jpg"
-        },
-        {
-          "src": "img/sanin-coast-02.jpg"
-        },
-        {
-          "src": "img/sanin-coast-03.jpg"
-        }
-      ],
-      "scatter": 1
+      "foodNotes": ""
     },
     {
       "id": "naoshima",
@@ -975,8 +703,8 @@
       "epithet": "THE ART ISLAND",
       "subtitle": "Chichu · Benesse · Art House Project",
       "coordinates": {
-        "x": 0.3877,
-        "y": 0.7118
+        "x": 0.38,
+        "y": 0.727
       },
       "tags": [
         "islands",
@@ -1036,10 +764,7 @@
             60,
             90
           ],
-          "bookingUrl": "https://www.booking.com/searchresults.html?ss=minshuku+Naoshima",
-          "isArea": true,
-          "area": "Naoshima",
-          "kind": "minshuku"
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Naoshima+minshuku%2C+Naoshima%2C+Japan"
         },
         {
           "name": "Guesthouse Oomiyake",
@@ -1051,19 +776,7 @@
           "bookingUrl": "https://www.booking.com/searchresults.html?ss=Guesthouse+Oomiyake%2C+Naoshima%2C+Japan"
         }
       ],
-      "foodNotes": "",
-      "photos": [
-        {
-          "src": "img/naoshima-01.jpg"
-        },
-        {
-          "src": "img/naoshima-02.jpg"
-        },
-        {
-          "src": "img/naoshima-03.jpg"
-        }
-      ],
-      "scatter": 2
+      "foodNotes": ""
     },
     {
       "id": "shimanami",
@@ -1075,8 +788,8 @@
       "epithet": "THE BRIDGE RIDE",
       "subtitle": "Onomichi · Imabari · the islands",
       "coordinates": {
-        "x": 0.3594,
-        "y": 0.7246
+        "x": 0.355,
+        "y": 0.746
       },
       "tags": [
         "islands",
@@ -1127,10 +840,9 @@
             50,
             75
           ],
-          "bookingUrl": "https://www.booking.com/searchresults.html?ss=guesthouse+Onomichi",
-          "isArea": true,
-          "area": "Onomichi",
-          "kind": "guesthouse"
+          "nights": 1,
+          "base": "Onomichi",
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Onomichi+hillside+guesthouse%2C+Setouchi%2C+Japan"
         },
         {
           "name": "LOG (Onomichi)",
@@ -1139,6 +851,8 @@
             90,
             150
           ],
+          "nights": 1,
+          "base": "Onomichi",
           "bookingUrl": "https://www.booking.com/searchresults.html?ss=LOG+%28Onomichi%29%2C+Setouchi%2C+Japan"
         },
         {
@@ -1148,25 +862,12 @@
             55,
             85
           ],
-          "bookingUrl": "https://www.booking.com/searchresults.html?ss=inn+Imabari",
-          "isArea": true,
-          "area": "Imabari",
-          "kind": "inn"
+          "nights": 1,
+          "base": "Imabari",
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Cyclist-friendly+inn%2C+Imabari%2C+Setouchi%2C+Japan"
         }
       ],
-      "foodNotes": "",
-      "photos": [
-        {
-          "src": "img/shimanami-01.jpg"
-        },
-        {
-          "src": "img/shimanami-02.jpg"
-        },
-        {
-          "src": "img/shimanami-03.jpg"
-        }
-      ],
-      "scatter": 3
+      "foodNotes": ""
     },
     {
       "id": "tokyo",
@@ -1178,8 +879,8 @@
       "epithet": "THE LANDING",
       "subtitle": "Ryogoku · Meiji Jingu Gaien · Shibuya",
       "coordinates": {
-        "x": 0.5575,
-        "y": 0.6437
+        "x": 0.553,
+        "y": 0.665
       },
       "tags": [
         "city",
@@ -1251,25 +952,7 @@
           "bookingUrl": "https://www.booking.com/searchresults.html?ss=Park+Hotel+Tokyo%2C+Tokyo%2C+Japan"
         }
       ],
-      "foodNotes": "",
-      "photos": [
-        {
-          "src": "img/tokyo-01.jpg"
-        },
-        {
-          "src": "img/tokyo-02.jpg"
-        },
-        {
-          "src": "img/tokyo-03.jpg"
-        },
-        {
-          "src": "img/tokyo-04.jpg"
-        },
-        {
-          "src": "img/tokyo-05.jpg"
-        }
-      ],
-      "scatter": 0
+      "foodNotes": ""
     },
     {
       "id": "koyasan",
@@ -1281,8 +964,8 @@
       "epithet": "THE MOUNTAIN MONASTERY",
       "subtitle": "Danjo Garan · Okunoin · Shukubo",
       "coordinates": {
-        "x": 0.4306,
-        "y": 0.7262
+        "x": 0.424,
+        "y": 0.726
       },
       "tags": [
         "mountains",
@@ -1364,19 +1047,7 @@
           "bookingUrl": "https://www.booking.com/searchresults.html?ss=Fukuchi-in+Shukubo%2C+Koyasan%2C+Japan"
         }
       ],
-      "foodNotes": "Shojin ryori (Buddhist vegetarian) comes with every shukubo stay — naturally meat-free, zero pork risk.",
-      "photos": [
-        {
-          "src": "img/koyasan-01.jpg"
-        },
-        {
-          "src": "img/koyasan-02.jpg"
-        },
-        {
-          "src": "img/koyasan-03.jpg"
-        }
-      ],
-      "scatter": 1
+      "foodNotes": "Shojin ryori (Buddhist vegetarian) comes with every shukubo stay — naturally meat-free, zero pork risk."
     },
     {
       "id": "kumano-kodo",
@@ -1388,8 +1059,8 @@
       "epithet": "THE PILGRIM'S TRAIL",
       "subtitle": "Yunomine Onsen · Hongu Taisha · Nakahechi",
       "coordinates": {
-        "x": 0.4462,
-        "y": 0.7101
+        "x": 0.437,
+        "y": 0.745
       },
       "tags": [
         "mountains",
@@ -1468,28 +1139,10 @@
             150,
             220
           ],
-          "bookingUrl": "https://www.booking.com/searchresults.html?ss=ryokan+Kawayu+Onsen%2C+Wakayama",
-          "isArea": true,
-          "area": "Kawayu Onsen, Wakayama",
-          "kind": "ryokan"
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Onsen+ryokan%2C+Kawayu%2C+Wakayama%2C+Japan"
         }
       ],
-      "foodNotes": "Minshuku dinners are river-fish and mountain-vegetable based — an easy no-pork base, but flag ahead at smaller family-run inns.",
-      "photos": [
-        {
-          "src": "img/kumano-kodo-01.jpg"
-        },
-        {
-          "src": "img/kumano-kodo-02.jpg"
-        },
-        {
-          "src": "img/kumano-kodo-03.jpg"
-        },
-        {
-          "src": "img/kumano-kodo-04.jpg"
-        }
-      ],
-      "scatter": 2
+      "foodNotes": "Minshuku dinners are river-fish and mountain-vegetable based — an easy no-pork base, but flag ahead at smaller family-run inns."
     },
     {
       "id": "nachi",
@@ -1501,8 +1154,8 @@
       "epithet": "THE SACRED CASCADE",
       "subtitle": "Nachi Taisha · Seiganto-ji · Japan's tallest waterfall",
       "coordinates": {
-        "x": 0.452,
-        "y": 0.7432
+        "x": 0.448,
+        "y": 0.756
       },
       "tags": [
         "nature",
@@ -1553,10 +1206,7 @@
             50,
             75
           ],
-          "bookingUrl": "https://www.booking.com/searchresults.html?ss=guesthouse+Katsuura%2C+Wakayama",
-          "isArea": true,
-          "area": "Katsuura, Wakayama",
-          "kind": "guesthouse"
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Katsuura+seaside+guesthouse%2C+Katsuura%2C+Japan"
         },
         {
           "name": "Ryokan Nachikatsuura",
@@ -1565,10 +1215,7 @@
             90,
             130
           ],
-          "bookingUrl": "https://www.booking.com/searchresults.html?ss=ryokan+Nachikatsuura",
-          "isArea": true,
-          "area": "Nachikatsuura",
-          "kind": "ryokan"
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Ryokan+Nachikatsuura%2C+Katsuura%2C+Japan"
         },
         {
           "name": "Hotel Urashima (cave onsen)",
@@ -1580,13 +1227,7 @@
           "bookingUrl": "https://www.booking.com/searchresults.html?ss=Hotel+Urashima+%28cave+onsen%29%2C+Katsuura%2C+Japan"
         }
       ],
-      "foodNotes": "Katsuura is a major tuna port — fresh maguro sashimi is the local specialty.",
-      "photos": [
-        {
-          "src": "img/nachi-01.jpg"
-        }
-      ],
-      "scatter": 3
+      "foodNotes": "Katsuura is a major tuna port — fresh maguro sashimi is the local specialty."
     },
     {
       "id": "osaka",
@@ -1598,8 +1239,8 @@
       "epithet": "THE MERCHANT CITY",
       "subtitle": "Dotonbori · Kuromon Market · Osaka Castle",
       "coordinates": {
-        "x": 0.43,
-        "y": 0.7013
+        "x": 0.421,
+        "y": 0.708
       },
       "tags": [
         "city",
@@ -1681,16 +1322,7 @@
           "bookingUrl": "https://www.booking.com/searchresults.html?ss=Centara+Grand+Hotel+Osaka%2C+Osaka%2C+Japan"
         }
       ],
-      "foodNotes": "Kushikatsu stalls fry pork by default — ask for chicken or vegetable skewers to avoid it.",
-      "photos": [
-        {
-          "src": "img/osaka-01.jpg"
-        },
-        {
-          "src": "img/osaka-02.jpg"
-        }
-      ],
-      "scatter": 0
+      "foodNotes": "Kushikatsu stalls fry pork by default — ask for chicken or vegetable skewers to avoid it."
     }
   ],
   "itineraries": [
@@ -1708,39 +1340,6 @@
         3900,
         4650
       ],
-      "pitch": {
-        "_note": "The argument for THIS itinerary — three stacked slides between the map and the dataviz. Not a highlight reel: mood sets the feeling, arguments makes exactly three distinct claims (not the same point three ways), gem is ONE vivid moment, held singular on purpose. Each argument may carry an `image` — a print on the back of its card, revealed with the body. Optional: without one the back is just the text. Numbers describing the EXPERIENCE stay ('seventy kilometres of bridges'); numbers describing the ITINERARY go (nights, days, stop counts) — those read as a schedule, not a story, and belong on the map and in the popover instead.",
-        "mood": {
-          "headline": "The colour is moving south with you.",
-          "body": "Larches turning gold in the mountains, then ginkgo lighting up gold in Tokyo by the time you get there. You're not visiting in autumn — you're chasing the same wave of colour down the country."
-        },
-        "arguments": [
-          {
-            "headline": "Hong Kong isn't a stopover.",
-            "body": "It's a country in its own right, before Japan even starts.",
-            "image": "img/hongkong-02.jpg"
-          },
-          {
-            "headline": "There's a stretch of this with no signal at all.",
-            "body": "Alpine trail, hot water, cold stars — nothing scheduled, nothing to check.",
-            "image": "img/japan-alps-03.jpg"
-          },
-          {
-            "headline": "Built to dodge the queue, not join it.",
-            "body": "A castle town never rebuilt. A coastline still finding its feet after 2024, with almost nobody on the train.",
-            "image": "img/kanazawa-02.jpg"
-          }
-        ],
-        "gem": {
-          "headline": "You cross the sea on a bicycle.",
-          "body": "Seventy kilometres of bridges, island to island across the Inland Sea — citrus groves and fishing harbours passing on both sides, salt air the whole way.",
-          "label": "One more thing…",
-          "images": [
-            "img/shimanami-01.jpg",
-            "img/shimanami-03.jpg"
-          ]
-        }
-      },
       "stops": [
         {
           "locationId": "hongkong",
@@ -1792,36 +1391,7 @@
           "arriveBy": "flight"
         }
       ],
-      "periodDisplay": "29 Oct – 18 Nov",
-      "flightSearch": {
-        "legs": [
-          {
-            "from": "PAR",
-            "to": "HKG",
-            "dateFrom": "itineraryStart",
-            "label": "Out"
-          },
-          {
-            "from": "HKG",
-            "to": "NGO",
-            "date": "2026-11-01",
-            "label": "Hong Kong → the Alps"
-          },
-          {
-            "from": "OKJ",
-            "to": "TYO",
-            "date": "2026-11-16",
-            "label": "Inland Sea → Tokyo"
-          },
-          {
-            "from": "TYO",
-            "to": "PAR",
-            "dateFrom": "itineraryEnd",
-            "label": "Home"
-          }
-        ],
-        "_note": "Four legs. If the Kayak link fails to resolve, the domestic OKJ→TYO hop is the one to drop — it is a cheap short flight you would book separately anyway, and removing it leaves a clean 3-leg open jaw (PAR→HKG, HKG→NGO, TYO→PAR) that matches the shape of the other two itineraries."
-      }
+      "periodDisplay": "29 Oct – 18 Nov"
     },
     {
       "id": "koyasan-17",
@@ -1866,29 +1436,7 @@
           "arriveBy": "surface"
         }
       ],
-      "periodDisplay": "22 Oct – 7 Nov",
-      "flightSearch": {
-        "legs": [
-          {
-            "from": "PAR",
-            "to": "HKG",
-            "dateFrom": "itineraryStart",
-            "label": "Out"
-          },
-          {
-            "from": "HKG",
-            "to": "KIX",
-            "date": "2026-10-25",
-            "label": "Hong Kong → Koyasan"
-          },
-          {
-            "from": "KIX",
-            "to": "PAR",
-            "dateFrom": "itineraryEnd",
-            "label": "Home"
-          }
-        ]
-      }
+      "periodDisplay": "22 Oct – 7 Nov"
     },
     {
       "id": "coast-12",
@@ -1945,25 +1493,7 @@
           "arriveBy": "flight"
         }
       ],
-      "periodDisplay": "1–12 Oct",
-      "_mapNote": "Optional per-itinerary artwork. Same dimensions as map.base, so pins, crop and inset stay valid; the two are crossfaded. Uncomment when the asset exists: \"map\": { \"base\": \"map-coast.png\" }",
-      "flightSearch": {
-        "legs": [
-          {
-            "from": "PAR",
-            "to": "KMQ",
-            "dateFrom": "itineraryStart",
-            "label": "Out"
-          },
-          {
-            "from": "TYO",
-            "to": "PAR",
-            "dateFrom": "itineraryEnd",
-            "label": "Home"
-          }
-        ],
-        "_note": "No Hong Kong on this one, and Okayama→Tokyo is a surface leg here — so it is an open jaw: into Komatsu for Kanazawa, home from Tokyo."
-      }
+      "periodDisplay": "1–12 Oct"
     }
   ]
 }

@@ -16,6 +16,20 @@ export const TRIP = {
   byId: {},
 }
 
+/* Sunshine Formula / Scribble Note (the two hand-lettered display faces —
+   see artDirection.fonts.script/.hand) don't carry accented glyphs, so any
+   text set in them needs to lose its accents on 'e' or it falls back to the
+   browser's default face mid-word. A trip using the Google-hosted fallback
+   faces (no `src`, e.g. japon-2026) doesn't have this problem, so this is
+   keyed off the active trip's own font declaration rather than applied
+   everywhere. */
+export function handFontHasNoAccents(){
+  return !!TRIP.data?.artDirection?.fonts?.hand?.src
+}
+export function stripEAccents(s){
+  return s.replace(/[éèêë]/g, 'e').replace(/[ÉÈÊË]/g, 'E')
+}
+
 /* Every asset path inside a trip file is relative to that trip's own folder,
    so two trips can both ship a `pin.svg` without colliding. Anything under
    shared/ is addressed absolutely and skips this. */
@@ -59,20 +73,6 @@ export async function loadData(){
     console.info('[japon] Pin coordinates are uncalibrated guesses — use the CALIBRATE panel.')
 
   return TRIP
-}
-
-/* ---------- derived ----------
-   Nights are summed from the stops rather than stored, so the dataviz can
-   never drift out of sync with the itinerary. RENTALS is 0 by design (the
-   route is deliberately car-free). FLIGHTS is explicit in the data because
-   whether the journey home counts is a judgement call. */
-export function deriveStats(itinerary){
-  return {
-    nights:  itinerary.stops.reduce((n, s) => n + (s.nights || 0), 0),
-    places:  itinerary.stops.length,
-    rentals: 0,
-    flights: itinerary.flights ?? 0,
-  }
 }
 
 /* A stay may pin its own `nights` when a stop is split across bases
@@ -246,3 +246,55 @@ export function bookingUrl(stay, stop, dates, adults = 2){
 }
 
 export const eur = n => '\u20AC' + Math.round(n).toLocaleString('en-US')
+
+/* ============================================================
+   LEDGER BUDGET (v2)
+   A flat, itemized replacement for the old lever/comfort-tier model
+   (see final-call-v1-vs-v2-spec.md): one group per BASE stop, bundling
+   that stop's hotel + every thingsToDo entry for it and its spurs, plus
+   any `budget.fixed` line tagged to it via `locationId`. No formula, no
+   multiplier \u2014 every number here is one already authored on a location
+   or in budget.fixed.
+   ============================================================ */
+export function buildLedger(itinerary, tier = 'budget'){
+  const stops = itinerary.stops ?? []
+  const bases = stops.filter(s => !s.spur)
+  const fixed = TRIP.data.budget?.fixed ?? []
+  const adults = TRIP.data.cta?.roomAdults ?? 3
+
+  const groups = bases.map(base => {
+    const loc = TRIP.byId[base.locationId]
+    const spurIds = stops.filter(s => s.spur && s.spurFrom === base.locationId).map(s => s.locationId)
+    const items = []
+
+    if(base.nights > 0 && loc?.stays?.length){
+      const stay = loc.stays.find(s => s.tier === tier) ?? loc.stays[0]
+      items.push({
+        label: `H\u00F4tel ${loc.name?.en ?? base.locationId} \u00B7 ${base.nights} nuit${base.nights > 1 ? 's' : ''}, partag\u00E9 \u00E0 ${adults}`,
+        lo: stay.priceNightEUR[0] * base.nights,
+        hi: stay.priceNightEUR[1] * base.nights,
+      })
+    }
+
+    for(const id of [base.locationId, ...spurIds]){
+      for(const t of TRIP.byId[id]?.thingsToDo ?? []){
+        const [lo, hi] = t.priceEUR ?? [0, 0]
+        items.push({ label: t.title, lo, hi, free: !lo && !hi })
+      }
+    }
+
+    for(const f of fixed.filter(f => f.locationId === base.locationId))
+      items.push({ label: f.label, lo: f.eur[0], hi: f.eur[1] })
+
+    return { locationId: base.locationId, label: loc?.name?.en ?? base.locationId, items }
+  })
+
+  const allItems = groups.flatMap(g => g.items)
+  return {
+    groups,
+    total: {
+      lo: allItems.reduce((n, i) => n + i.lo, 0),
+      hi: allItems.reduce((n, i) => n + i.hi, 0),
+    },
+  }
+}

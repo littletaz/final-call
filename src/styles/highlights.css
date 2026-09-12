@@ -1,0 +1,186 @@
+/* ============================================================
+   HIGHLIGHTS ("L'essentiel") — draggable horizontal photo strip.
+   See src/js/highlights.js.
+   ============================================================ */
+
+#highlights{
+  position:relative;
+  padding:29px 0 27px;
+  background:var(--hero-paper,#F7F4EF);
+  overflow:hidden;
+}
+
+.hl-heading{
+  font-weight:200;
+  margin:0 0 30px;
+  text-align:center;
+  font-family:var(--script,cursive);
+  font-size:var(--heading-size);
+  line-height:1.235;
+  color:#005E32;
+}
+
+.hl-track{
+  display:flex;
+  gap:24px;
+
+  /* ---- why this is padded and then pulled back -------------------------
+     The cards are tilted, and a transform still counts towards SCROLLABLE
+     overflow even though it doesn't affect layout. So each card was
+     reaching ~38px past the track's box top and bottom — and because
+     `overflow-x:auto` forces the other axis's `visible` to compute to
+     `auto`, that overhang became a real, if tiny, vertical scroll you
+     could drag the strip around in.
+
+     The padding gives the tilt room inside the clip region; the negative
+     margins take the same amount back out of the layout, so the strip
+     still sits exactly where it did (0 above, 24 below). overflow-y then
+     pins the axis shut so it can't come back if a card's tilt or aspect
+     changes later.
+
+     56px is the tilt's own reach plus room to spare: a 570px card at the
+     steepest tilt in highlights.js (8deg) overhangs its box by
+     (570*sin8 + h*cos8 - h)/2 = ~38px. Clipping happens at the PADDING
+     box, so the padding is what has to cover it. */
+  /* No side padding: Figma bleeds the collage off both edges at every
+     desktop width (its group starts at x -71 in the 1440 frame, -191 at
+     1200, -130 at 768) rather than insetting it by the page margin. The
+     auto margins on the end cards below centre the strip on the one width
+     where it does fit instead — pinning it to --grid-margin would have
+     shoved it 1310px right at 3820, where that margin is the leftover of
+     a centred 1200px column. */
+  padding:56px 0 80px;
+  margin-block:-56px;
+  overflow-x:auto;
+  overflow-y:hidden;
+
+  /* Horizontal over-scroll must not chain to the page — running off the
+     end of the strip shouldn't move anything behind it. Only the X axis:
+     `overscroll-behavior` on both would also trap a normal downward
+     scroll that happens to start over the strip, since a non-scrollable
+     axis counts as permanently at its boundary. */
+  overscroll-behavior-x:contain;
+
+  scrollbar-width:none;
+  cursor:grab;
+  /* NOT pan-y: that let the browser hijack a drag as a page scroll the
+     moment the gesture had any vertical wobble, fighting the pointer-drag
+     JS below (highlights.js) which already owns the whole gesture. */
+  touch-action:none;
+}
+.hl-track::-webkit-scrollbar{ display:none }
+.hl-track.is-dragging{ cursor:grabbing }
+
+/* No card chrome (background/radius/matting/shadow) — each "ticket"
+   already carries its own cream border baked into the artwork; wrapping
+   it in a white box or adding a drop-shadow just showed as an unwanted
+   matte/halo around it. */
+/* One fixed size at every breakpoint: Figma keeps these ~570px wide in all
+   five frames (572.2 x 358.0 and friends, identical numbers at 375 as at
+   2156), so on a phone they deliberately run off both edges and you scroll
+   the strip rather than reading five shrunken thumbnails. The old
+   38vw/78vw pair made them 547px at 1440 and 292px at 375 instead.
+
+   What is NOT reproduced here: Figma also OVERLAPS them into a scatter
+   (five 570px cards inside a 2410px group on desktop, 1726px on mobile,
+   with vertical offsets up to ~230px). That's a collage, not a strip —
+   it needs per-card x/y/rotation in the trip data, not a media query, so
+   it's left as its own change. The tilts in highlights.js stand in. */
+.hl-card{
+  flex:0 0 auto;
+  margin:0;
+  width:570px;
+  transform:rotate(var(--tilt,0deg));
+}
+/* Centre the strip when it fits, bleed off both edges when it doesn't.
+   `justify-content:center` can't do this — it centres the overflow too,
+   which cuts the first card off past the scroll origin. Auto margins
+   resolve to 0 the moment there is no free space, so the same rule covers
+   both cases. */
+.hl-card:first-child{ margin-inline-start:auto }
+.hl-card:last-child{ margin-inline-end:auto }
+.hl-card img{
+  display:block;
+  width:100%;
+  height:auto;
+  pointer-events:none; /* dragging the strip shouldn't start an image drag */
+  -webkit-user-drag:none;
+}
+
+/* ---- the slider ----
+   Figma redraws this for small screens (nodes 169:1721 desktop, 169:1240
+   at 768 and 169:1019 at 375 — the two mobile ones are identical, just
+   centred in their own width). What changes is the RAIL: a 328x7 hairline
+   on desktop becomes a 187x36 bar you can actually put a thumb on. The
+   arrows keep their ~36px disc throughout and only their hit area grows.
+
+   Both arrow files are one 50.912px box with a 36px disc centred in it —
+   Figma composes them as that box rotated 45deg, which is baked into the
+   asset (see img/highlights/) so the file is usable as-is. The button is
+   sized to the BOX, so the disc lands at 36.836px on desktop and 36px on
+   mobile, exactly as drawn. */
+
+/* Hidden by highlights.js when the whole strip fits and there is nothing
+   to scrub. Needs saying explicitly: an author `display:flex` beats the UA
+   stylesheet's [hidden]{display:none} no matter the specificity. */
+.hl-nav[hidden]{ display:none }
+.hl-nav{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:21.4px;          /* box-to-rail; 29px between the disc and the rail */
+  margin-top:40px;
+  padding:0 var(--grid-margin);
+}
+.hl-arrow{
+  width:52.094px;
+  height:52.094px;
+  flex:none;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:var(--hl-arrow-next) center / contain no-repeat;
+  cursor:pointer;
+  font-size:0;         /* the label is for screen readers only */
+}
+.hl-prev{ background-image:var(--hl-arrow-prev) }
+.hl-arrow:hover{ filter:brightness(1.1) }
+.hl-arrow:focus-visible{ outline:2px solid #00824B; outline-offset:3px }
+
+/* A rail with a draggable stick, not a fill bar — dragging the stick (or
+   clicking the rail) scrubs the strip directly. See src/js/highlights.js. */
+.hl-progress{
+  position:relative;
+  width:328px;
+  height:7px;
+  max-width:100%;
+  border-radius:40px;
+  background:#DDD5C4;
+}
+.hl-progress-fill{
+  position:absolute;
+  top:0;left:0;
+  width:31%;
+  height:100%;
+  background:#00824B;
+  border-radius:inherit;
+  cursor:grab;
+  touch-action:none;
+}
+.hl-progress-fill:active{ cursor:grabbing }
+
+@media (max-width:1023px){
+  #highlights{ padding:24px 0 27px }
+  .hl-track{ padding-inline:var(--gutter-mobile) }
+  .hl-nav{ gap:2.544px; padding-inline:var(--gutter-mobile) }
+  /* 72px of touch target for a 50.912px box — the overhang is pulled back
+     out of the layout so the row still measures what Figma draws */
+  .hl-arrow{
+    width:72px;
+    height:72px;
+    margin-inline:-10.544px;
+    background-size:50.912px 50.912px;
+  }
+  /* the redesign: a bar, not a hairline */
+  .hl-progress{ width:187px; height:36px }
+}

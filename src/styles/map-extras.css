@@ -1,0 +1,101 @@
+/* ============================================================
+   MAP EXTRAS — the "02 — Map" section furniture over the artwork: the
+   "Itineraire" title and the Google Maps link under it. The teaser card
+   lives inside the timeline component now (map-extras.css owned it
+   before the timeline was redesigned to match Figma's actual "Timeline"
+   node — see timeline.css / src/js/timeline.js).
+
+   ---- how the positions here were derived -------------------------------
+   All offsets are measured off Figma's "Mediaqueries" section (node
+   169:2327) and are relative to #frame, which is exactly the visible map
+   band (see main.css's #stage.has-map-crop rules).
+
+   The title and the link share a right edge at every width, and the link
+   sits a fixed distance below the title's top — 73px on the desktop
+   canvas, 45px on the mobile one, which is just the title's own box
+   getting smaller — so only ONE pair of numbers is authored per
+   breakpoint and the link is derived from it.
+
+   Between the 375 and 768 frames the values interpolate linearly, which is
+   what the `calc(A + B vw)` forms below are: A and B solved from the two
+   authored positions, so each is exact at 375 AND at 768 rather than
+   correct at one and eyeballed at the other. Same trick as
+   MapView.mapScale().
+   ============================================================ */
+
+#frame{
+  /* #frame is the 1440 column, centred and capped, so `right` is an inset
+     into the COLUMN — which is why 128px lands 128 from the viewport edge
+     at 1440, 486 at 2156 and 1318 at 3820, all three exactly where Figma
+     draws them, with no breakpoint.
+
+     Below 1440 the column is clipped and Figma re-lays the pair out against
+     the viewport instead: 160px from the edge in its 1200 frame. Rather
+     than step between the two at 1440 — a 32px pop as you cross it, and
+     1024-1799 is meant to be one band now — the inset is the line through
+     both authored values, floored at 128 so it stops the moment the column
+     stops being clipped:
+        1200 → 320 − 160 = 160      1440 → 320 − 192 = 128
+     From 1440 up the floor takes over and the column does the rest. */
+  --map-furniture-right:max(128px, calc(320px - 13.333vw));
+  /* Measured DOWN FROM THE WINDOW, not from the page: Figma has the
+     heading 349px below the window's top edge in every desktop frame
+     (592−243 at 1440 and 2156, 602−254 at 1200), and the window sits
+     120px into the band. One value for the whole desktop range. */
+  --map-furniture-top:469px;     /* 120 + 349 */
+  --map-furniture-gap:73px;      /* title top → link top */
+}
+
+/* ≤1023 — the mobile canvas. 40px/533px at 768, 20px/210px at 375. */
+@media (max-width:1023px){
+  #frame{
+    --map-furniture-right:calc(.92px + 5.09vw);
+    --map-furniture-top:calc(-98.2px + 82.19vw);
+    --map-furniture-gap:45px;
+  }
+}
+
+.map-heading{
+  font-weight:200;
+  position:absolute;
+  top:var(--map-furniture-top);
+  right:var(--map-furniture-right);
+  z-index:45;
+  margin:0;
+  font-family:var(--script,cursive);
+  font-size:var(--heading-size);
+  line-height:1;
+  color:#00824B;
+  text-align:right;
+}
+
+.map-gmaps{
+  position:absolute;
+  top:calc(var(--map-furniture-top) + var(--map-furniture-gap));
+  right:var(--map-furniture-right);
+  z-index:45;
+  display:flex;
+  align-items:center;
+  gap:0;
+  box-sizing:border-box;
+  width:142px;
+  height:40px;
+  background:#fff;
+  border:1px solid #CDC5B9;
+  border-radius:5px;
+  padding:0 10px 0 5px;
+  text-decoration:none;
+  color:#000;
+  /* The SCRIPT face at 10px, not the hand one — Figma 169:1681. The hand
+     font at .7rem was both the wrong family and a size too big for a
+     142x40 pill, which is why it read as cramped. */
+  font-family:var(--script,cursive);
+  font-weight:200;
+  font-size:10px;
+  line-height:normal;
+}
+.map-gmaps-icon{ width:34px; height:34px; border-radius:50%; flex:none }
+
+/* Nothing here changes on mobile: Figma draws the pill at 141x40 with the
+   same 34px icon and the same 10px type in all five frames. The old
+   shrink-on-mobile rule was invented, not measured. */

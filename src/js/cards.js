@@ -1,6 +1,5 @@
 import { MapView } from './map.js'
-import { TRIP, deriveStats } from './data.js'
-import { countUp } from './countup.js'
+import { TRIP, tripAsset } from './data.js'
 
 /* ============================================================
    SELECTOR · DATAVIZ · STACKED CITY CARDS
@@ -15,9 +14,10 @@ export const Cards = {
   el: {},
 
   init(){
-    this.el.selector = document.getElementById('selector')
-    this.el.stats    = document.getElementById('stats')
-    this.el.cards    = document.getElementById('cards')
+    this.el.selector   = document.getElementById('selector')
+    this.el.lengthTabs = document.getElementById('length-tabs')
+    this.el.stats      = document.getElementById('stats')
+    this.el.cards      = document.getElementById('cards')
   },
 
   /* A single-choice filter, so it's a radiogroup rather than a list of buttons:
@@ -103,28 +103,37 @@ export const Cards = {
     marker.style.transform = `translateY(${y}px)`
   },
 
-  /* #stats is rebuilt by the footer on every render, so the element has to be
-     looked up now rather than cached at init — a stale reference silently
-     renders into a detached node. */
-  renderStats(itinerary){
-    const host = document.getElementById('stats')
-    if(!host) return
-    this.el.stats = host
-    const s = deriveStats(itinerary)
-    const items = [
-      ['NIGHTS',  s.nights],
-      ['PLACES',  s.places],
-      ['RENTALS', s.rentals],
-      ['FLIGHTS', s.flights],
-    ]
-    this.el.stats.innerHTML = items.map(([key, val]) => `
-      <div class="stat">
-        <div class="val" data-count-to="${val}">0</div>
-        <div class="key">${key}</div>
-        <div class="rule"></div>
-      </div>`).join('')
+  /* v2 — the Figma "13j/17j/21j" tab fan above the timeline card (node
+     132:601-608). Same data and onPick as renderSelector() above; this
+     just renders it differently and lives in a different spot in the
+     DOM. A trip with only one itinerary has nothing to switch, so the
+     whole row stays hidden. */
+  renderLengthTabs(active, onPick){
+    if(!this.el.lengthTabs) return
+    const items = TRIP.data.itineraries
+    if(items.length < 2){ this.el.lengthTabs.hidden = true; return }
 
-    countUp(this.el.stats.querySelectorAll('[data-count-to]'))
+    /* Trip-owned art (same convention as --tl-link-icon in timeline.js) —
+       a trip without these files just falls back to the plain CSS pill
+       in .lt-tab's own background. Absolute, not relative: see the note
+       on applyUiArt() in main.js for why. */
+    if(!this.lengthTabArtSet){
+      this.lengthTabArtSet = true
+      const abs = file => new URL(tripAsset(file), document.baseURI).href
+      const root = document.documentElement
+      root.style.setProperty('--lt-tab-underline', `url('${abs('img/timeline/tab-underline.svg')}')`)
+      root.style.setProperty('--lt-tab-underline-active', `url('${abs('img/timeline/tab-underline-active.svg')}')`)
+    }
+
+    this.el.lengthTabs.hidden = false
+    this.el.lengthTabs.innerHTML = items.map(it => `
+      <button type="button" role="radio"
+              class="lt-tab${it.id === active.id ? ' lt-tab--active' : ''}"
+              data-itinerary="${it.id}"
+              aria-checked="${it.id === active.id}">${it.days}j</button>`).join('')
+
+    this.el.lengthTabs.querySelectorAll('button').forEach(b =>
+      b.addEventListener('click', () => onPick(b.dataset.itinerary)))
   },
 
   /* On overnight stops we show the total for the stay; on day-trip spurs

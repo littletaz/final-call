@@ -1,0 +1,33 @@
+/* ============================================================
+   PAGE GRID — the unified grid for the whole page, read directly from
+   the "Mockup v2" Figma frame's own layout grid (see tokens.css:
+   --grid-margin/--grid-gutter, same source). 12 columns, 20px gutter.
+
+   Use `.grid-12` on any container that needs real column placement
+   (not just centred max-width), then span children with `grid-column`.
+   A grid span is immune to content changes — unlike a max-width guess,
+   it can never drift when something inside is added, removed, or
+   collapsed.
+   ============================================================ */
+:root{
+  --page-cols: 12;
+  --page-gap: 20px;
+}
+.grid-12{
+  display:grid;
+  grid-template-columns:repeat(var(--page-cols), 1fr);
+  gap:var(--page-gap);
+  width:100%;
+  max-width:var(--artboard);
+  margin:0 auto;
+  /* NOT `var(--grid-margin)` directly: percentage padding resolves against
+     the containing block's width, not this box's own (clamped) width — once
+     a parent is wider than the artboard, that inflates the margin past its
+     intended 120px-at-1440 (e.g. 144px in a 1728px-wide parent). `min(100%,
+     var(--artboard))` first clamps to the artboard, in absolute px, THEN
+     takes 8.3333% of that — so it's pinned to 120px past 1440 wide, same as
+     every other size the grid was measured against. */
+  padding:0 calc(min(100%, var(--artboard)) * 0.083333);
+  box-sizing:border-box;
+}
+.grid-12 > .col-full{ grid-column:1 / -1 }

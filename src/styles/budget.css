@@ -1,0 +1,154 @@
+/* ============================================================
+   BUDGET LEDGER (v2) — flat itemized list, one <details> per base
+   stop. Renders into #bud inside .f-costs (footer.js:renderLedger).
+   Distinct class names from the old .bud-* lever UI in main.css, so
+   the two never collide even though only one renders per trip.
+   ============================================================ */
+
+/* Overrides main.css's .f-costs (v1's dusk-blue #D5DDE8) only when the
+   ledger renders — japon-2026's lever UI keeps the old colour untouched.
+   Figma "05 — Budget" (node 169:1749 / 169:1058): 80px above the heading
+   and 103px below the list on the desktop canvas, 70/105 on the mobile
+   one, at both of its widths. */
+.f-costs:has(.ledger-list){ background:#005E32; padding:80px 0 103px }
+@media (max-width:1023px){
+  .f-costs:has(.ledger-list){ padding:70px 0 105px }
+}
+
+/* #bud (.grid-12) renders inside .f-inner, which ALSO centres to the artboard
+   and insets by --grid-margin (it does that job for the v1 lever layout,
+   which isn't a grid). Nested inside it, .grid-12's own max-width/padding
+   would inset a second time — squeezing the 12-column math into a narrower
+   box than Figma's actual 1200px content area, which is what made
+   .ledger-list read as too narrow/tight. Cancel the outer wrapper's own
+   inset here so .grid-12 gets the full content box Figma's grid was
+   measured against. */
+.f-inner:has(> .grid-12){ max-width:none; padding-inline:0 }
+/* .grid-12 then insets by its own 8.3333% margin, which is right for a
+   12-column layout but not for the ledger: the list is a fixed 794/511px
+   box that centres on the page, so at 375 the grid's 31px margins were
+   eating into the `100% - 40px` floor and leaving it 272px instead of the
+   335 Figma draws. It spans the full grid anyway (grid-column 1/-1). */
+.grid-12:has(.ledger-list){ padding-inline:0 }
+
+.ledger-head{
+  text-align:center;
+  margin-bottom:88px;
+}
+.ledger-title{
+  font-weight:200;
+  margin:0 0 18px;
+  font-family:var(--script,cursive);
+  font-size:var(--heading-size);
+  line-height:1.22;
+  color:#F5EFE4;
+}
+/* Fixed width regardless of the label's length, so it never resizes —
+   the chevron sits on the right, matching the Figma "dropdown" affordance.
+   199.547 x 43 in every one of the five frames: like the hero's date pill,
+   this control is one of the handful Figma never rescales. */
+.ledger-origin{
+  display:inline-flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  width:199.547px;
+  height:43px;
+  box-sizing:border-box;
+  border:1px solid rgba(245,239,228,.3);
+  border-radius:4px;
+  padding:0 14px;
+  font-family:var(--hand,cursive);
+  font-size:.95rem;
+  color:#F5EFE4;
+}
+@media (max-width:1023px){
+  .ledger-head{ margin-bottom:68px }
+  .ledger-title{ margin-bottom:11px }
+}
+.ledger-origin-chevron{
+  flex:none;
+  width:8px;height:8px;
+  border-right:2px solid #F5EFE4;
+  border-bottom:2px solid #F5EFE4;
+  transform:rotate(45deg);
+  margin-top:-4px;
+}
+
+/* 794px wide, centred — which is exactly columns 3-10 of the page's
+   12-column grid at the 1440 reference (8 x 81.667 + 7 x 20 = 793.3), so
+   it still sits on the grid; it just stops shrinking with the viewport
+   below 1440, where Figma keeps it at 794 and simply lets the canvas clip.
+   511 on the mobile canvas — which is the same min() at 768, and resolves
+   to the 335 Figma draws at 375. */
+.ledger-list{
+  grid-column: 1 / -1;
+  width:min(794px, 100% - 40px);
+  margin-inline:auto;
+}
+@media (max-width:1023px){
+  .ledger-list{ width:min(511px, 100% - 40px) }
+}
+/* The one element besides the map that Figma actually grows on a wide
+   screen (173:2633) — everything else just stays centred. */
+@media (min-width:3200px){
+  .ledger-list{ width:min(1184px, 100% - 40px) }
+}
+
+.ledger-group{ border-bottom:1px solid rgba(245,239,228,.15) }
+.ledger-group + .ledger-group{ margin-top:12px }
+
+/* Toggle on the RIGHT, matching the Figma mock — a fixed-geometry CSS arrow,
+   rotated via transform only, so toggling never changes the row's box size
+   (a text-glyph swap did, before). */
+.ledger-group-name{
+  font-weight:200;
+  cursor:pointer;
+  list-style:none;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 0;
+  font-family:var(--script,cursive);
+  font-size:1.4rem;
+  color:#FBD456;
+}
+.ledger-group-name::-webkit-details-marker{ display:none }
+.ledger-group-name::marker{ content:'' }
+.ledger-chevron{
+  /* It's first in the markup (footer.js) but last in the design, and
+     space-between was putting it on the left with the city pushed right —
+     the opposite of the mock this rule's own comment describes. */
+  order:1;
+  flex:none;
+  width:9px;height:9px;
+  margin-bottom:2px;
+  border-right:2px solid #FBD456;
+  border-bottom:2px solid #FBD456;
+  transform:rotate(45deg);       /* pointing down — open */
+  transition:transform .15s ease;
+}
+.ledger-group:not([open]) .ledger-chevron{ transform:rotate(-45deg) } /* pointing right — closed */
+
+.ledger-items{ list-style:none; margin:0; padding:0 0 14px }
+.ledger-items li{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  padding:8px 0;
+  font-family:var(--hand,cursive);
+  font-size:1rem;
+  border-top:1px solid rgba(245,239,228,.08);
+}
+.ledger-items li span:first-child{ color:rgba(245,239,228,.85) }
+.ledger-items li span:last-child{ color:#F5EFE4; white-space:nowrap }
+
+.ledger-total{
+  display:flex;
+  justify-content:space-between;
+  padding-top:16px;
+  font-family:var(--hand,cursive);
+  font-size:1.2rem;
+  color:#F5EFE4;
+}

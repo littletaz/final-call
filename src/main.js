@@ -1,7 +1,13 @@
 import './styles/tokens.css'
+import './styles/grid.css'
 import './styles/main.css'
-import './styles/flapboard.css'
 import './styles/pitch.css'
+import './styles/hero.css'
+import './styles/map-extras.css'
+import './styles/highlights.css'
+import './styles/weather.css'
+import './styles/budget.css'
+import './styles/timeline.css'
 
 import { TRIP, tripAsset, loadData } from './js/data.js'
 import { MapView } from './js/map.js'
@@ -9,8 +15,12 @@ import { Cards } from './js/cards.js'
 import { PoiCard } from './js/poicard.js'
 import { Footer } from './js/footer.js'
 import { Pitch } from './js/pitch.js'
+import { Hero } from './js/hero.js'
+import { MapExtras } from './js/mapExtras.js'
+import { Highlights } from './js/highlights.js'
+import { Weather } from './js/weather.js'
+import { Timeline } from './js/timeline.js'
 import { loadFonts } from './js/fonts.js'
-import { FinalCall } from './js/finalcall.js'
 import { scrollToEl } from './js/scroll.js'
 
 /* ============================================================
@@ -23,82 +33,63 @@ let active = null
 /* The selector's frames are a trip's own art direction, so they live in its
    folder and are named in its data. A trip that doesn't supply them gets a flat
    plate instead — see --sel-panel-img in styles/main.css. */
-/* The grain covers the sea-blue part of the page and stops where the stacked
-   slides begin. That boundary is the top of .p-gem, which only layout knows —
-   so it's measured rather than guessed, and re-measured when the itinerary
-   changes (a different pitch is a different height). */
+/* Standard document-flow scroll (final-call-v1-vs-v2-spec.md §9: "one scroll
+   model") — no sticky stack, so the grain just needs to cover the map +
+   highlights band and stop before the flow sections below (pitch/footer),
+   which carry their own backgrounds. */
 function sizeTexture(){
   const tex = document.getElementById('texture')
   if(!tex) return
-  /* The sheet covers everything that SCROLLS — map, mood, cards — and stops at
-     #stack. Past there each slide locks to the top, and a scrolling sheet would
-     drag its grain across held type. The floor slide carries the same sea blue,
-     so the join is invisible. */
-  /* The scrolling sheet covers the MAP and stops at the stack. The cards carry
-     their own grain from there (.p-cards::after) because they're held — a
-     scrolling sheet would drag across them. */
-  const stack = document.querySelector('#stack')
-  if(!stack){ tex.style.height = '' ; return }
+  const highlights = document.getElementById('highlights')
+  const bounds = (highlights && !highlights.hidden) ? highlights : document.getElementById('stage')
+  if(!bounds){ tex.style.height = ''; return }
 
-  const top = Math.max(0, Math.round(stack.getBoundingClientRect().top + window.scrollY))
-  tex.style.height = top + 'px'
-
-  /* The cards' own sheet picks up where this one stops, so the paper runs
-     unbroken from the map into the cards rather than restarting. */
-  const open = document.querySelector('.p-cards')
-  if(open){
-    const w = document.getElementById('stage')?.clientWidth || window.innerWidth
-    const tile = w * (1981 / 1440)
-    open.style.setProperty('--tex-offset', `${-(top % tile).toFixed(1)}px`)
-  }
-
-
+  const bottom = Math.max(0, Math.round(bounds.getBoundingClientRect().bottom + window.scrollY))
+  tex.style.height = bottom + 'px'
 }
 
-/* Every stacked slide is exactly one screen. That's a content constraint, not a
-   layout one: the slides are fixed at 100vh in css, so content that doesn't fit
-   is CLIPPED rather than scrollable — writing less is the only fix.
-
-   This checks the content against the slide it's in and says so, since a
-   clipped slide looks fine until the thing that got cut off mattered. */
-function checkSlideHeights(){
-  document.querySelectorAll('.p-gem, .f-costs, .f-ask').forEach(el => {
-    const over = el.scrollHeight - el.clientHeight
-    if(over > 8){
-      console.warn(`[final-call] .${el.className.split(' ')[0]} overflows its screen `
-        + `by ${Math.round(over)}px — that content is clipped, not scrollable`)
-    }
-  })
-}
+/* The hero/map overlap used to be computed here, as a proportion of the
+   hero's measured height, because the hero's height was fluid. Both halves
+   are fixed px now — see hero.css for the hero and MapView.applyMapMetrics
+   for the map band — so the overlap is a plain negative margin on #stage,
+   in main.css, with no measuring and no resize listener. */
 
 let texRaf
 function scheduleTexture(){
   cancelAnimationFrame(texRaf)
-  texRaf = requestAnimationFrame(() => { checkSlideHeights(); sizeTexture() })
+  texRaf = requestAnimationFrame(() => {
+    sizeTexture()
+    /* the lower stickers hang off sections whose tops just moved */
+    Hero.placeStickers()
+  })
 }
 
-/* Sticky is contained by the parent BOX, so the three stacked slides have to be
-   real siblings. Pitch and Footer each render into their own element, then their
-   stacked sections are moved here — which keeps both renderers independent
-   while giving the stack one honest container.
+/* The page grid, straight from the trip's own data (grid.columns/margin/
+   gutter, read off the Figma frame's layoutGrids — see trip.json). Written
+   as *-base custom properties rather than the real ones, because an inline
+   style on :root would beat the media queries in tokens.css that step the
+   column count down to 8 and then 4. The margin is stored in artboard px
+   and published as vw, so it scales the way the mockup's does. */
+/* The page grid, from the trip's own Figma layout grid (trip.json `grid`).
+   Two margin models, because the two trips are drawn differently:
 
-   `.p-cards` leads the stack. The mood above it stays in #pitch as ordinary
-   scroll — it belongs with the map, not with the slides. */
-function assembleStack(){
-  const stack = document.getElementById('stack')
-  if(!stack) return
-  const slides = [
-    document.querySelector('#pitch .p-cards'),  /* the cards hold the stack open */
-    document.querySelector('#pitch .p-gem'),
-    document.querySelector('#footer .f-costs'),
-    document.querySelector('#footer .f-ask'),
-  ].filter(Boolean)
-
-  /* replaceChildren, not append: a re-render creates NEW sections, and appending
-     them left the previous set in place — two budget blocks stacked on each
-     other after one change of duration. This also drops the gem when an
-     itinerary has no pitch written. */
-  stack.replaceChildren(...slides)
+   - `minMargin` present — a FIXED content column, centred, never tighter
+     than that margin. australia-2027's frames all draw one 1200px column
+     (Météo spans 120-1320 at 1440, 478-1678 at 2156, 0-1200 at 1200), so
+     the margin is whatever is left over.
+   - `minMargin` absent — the old proportional margin, a percentage of the
+     artboard. japon-2026 keeps it; nothing has been measured against a
+     fixed column there. */
+function applyGrid(g){
+  if(!g) return
+  const root = document.documentElement.style
+  if(g.columns) root.setProperty('--grid-cols-base', g.columns)
+  if(g.gutter != null) root.setProperty('--grid-gutter-base', g.gutter + 'px')
+  if(g.margin == null || !g.artboard) return
+  const content = g.contentWidth ?? (g.artboard - 2 * g.margin)
+  root.setProperty('--grid-margin-base', g.minMargin != null
+    ? `max(${g.minMargin}px, calc((100vw - ${content}px) / 2))`
+    : `${g.margin / g.artboard * 100}vw`)
 }
 
 function applyUiArt(ui){
@@ -133,20 +124,30 @@ function setItinerary(id){
 
 function renderAll(){
   Cards.renderSelector(active, setItinerary)
+  Cards.renderLengthTabs(active, setItinerary)
   PoiCard.init(active)
-  Pitch.render(active)        /* the argument changes with the itinerary */
+  /* v2 trips (with `highlights`) use the Highlights carousel instead — see
+     src/js/highlights.js — rendered once at boot, not per-itinerary. */
+  if(!TRIP.data.highlights?.length) Pitch.render(active)
   Footer.render(active)
-  assembleStack()             /* both just re-rendered; re-collect their slides */
-  FinalCall.update(active)
-  FinalCall.watchAsk()        /* the footer was just rebuilt — re-observe it */
+  MapExtras.render(active)
   MapView.setVariant(active)
   MapView.renderPins(active, goToCard)
+  Timeline.setItinerary(active)
   scheduleTexture()           /* the pitch just changed height */
   if(Calib?.on) Calib.enableDrag()
 }
 
 /* set once the calibration module loads; stays null in production */
 let Calib = null
+
+/* Every rebuild of the pins drops the timeline's active-day highlight —
+   it's a class on a button MapView has just replaced — so the three call
+   sites outside renderAll() put it back. */
+function repaintPins(){
+  MapView.renderPins(active, goToCard)
+  Timeline.refresh()
+}
 
 /* a pin opens its card; clicking the same pin again closes it */
 function goToCard(locationId){
@@ -169,10 +170,10 @@ async function initDevTools(){
   document.querySelectorAll('[data-dev]').forEach(n => n.removeAttribute('hidden'))
   const mod = await import('./js/calibrate.js')
   Calib = mod.Calib
-  Calib.init(() => MapView.renderPins(active, goToCard))
+  Calib.init(repaintPins)
   Calib.apply()
   MapView.placeInset()
-  MapView.renderPins(active, goToCard)
+  repaintPins()
 }
 
 /* The back-to-map bar only appears once the map has scrolled away, so it
@@ -200,30 +201,31 @@ function initBackToMap(){
     /* first, so the faces are already in flight while the rest renders */
     loadFonts(t.artDirection?.fonts)
     applyUiArt(t.artDirection?.ui)
+    applyGrid(t.grid)
 
     document.title = t.subtitle ? `${t.title} — ${t.subtitle}` : t.title
     document.querySelector('meta[name="description"]')
       ?.setAttribute('content', t.subtitle ?? t.title)
-    document.querySelector('#logo img')?.setAttribute('alt', t.title)
+    Hero.render(t)
+    Highlights.render(t)
+    Weather.render(t)
 
     await MapView.init()
+    await Timeline.init()
+    MapExtras.initIcon()
     Cards.init()
     Footer.init()
     Pitch.init()
-    /* Before the first render: init only grabs elements from the static shell,
-       and update() bails silently if they aren't there yet — which is exactly
-       what left the YES button on its placeholder href. The ask observer is a
-       separate call, because THAT does need the footer to exist. */
-    FinalCall.init()
     addEventListener('resize', scheduleTexture)
     if(document.fonts?.ready) document.fonts.ready.then(scheduleTexture)
 
     setItinerary(TRIP.data.defaultItineraryId)
     await initDevTools()
 
+    Hero.watchStickers()
     initBackToMap()
     /* crossing the mobile breakpoint changes the crop, which moves every pin */
-    MapView.watchBreakpoint(() => MapView.renderPins(active, goToCard))
+    MapView.watchBreakpoint(repaintPins)
 
     window.addEventListener('resize', () => {
       MapView.placeInset()

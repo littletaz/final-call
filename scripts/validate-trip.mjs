@@ -295,6 +295,35 @@ function validateTrip(path){
                   `but these pins sit there: ${below.join(', ')}`)
     }
   }
+  /* dayPlan, when authored, is what the timeline scrubs through — a wrong
+     locationId there is a day that silently falls back to its stay. */
+  for(const it of t.itineraries ?? []){
+    const plan = it.dayPlan
+    if(plan == null) continue
+    const tag = `itineraries.${it.id}.dayPlan`
+    if(!Array.isArray(plan)){ err(name, `${tag} must be an array, one entry per day`); continue }
+    if(plan.length > it.days)
+      err(name, `${tag} has ${plan.length} entries but the itinerary is ${it.days} days`)
+    else if(plan.length < it.days)
+      warn(name, `${tag} covers ${plan.length} of ${it.days} days — the rest fall back to their stay`)
+    const known = new Set((t.locations ?? []).map(l => l.id))
+    plan.forEach((e, i) => {
+      if(e?.at != null && !known.has(e.at))
+        err(name, `${tag}[${i}]: unknown locationId "${e.at}"`)
+    })
+  }
+
+  /* How wide the artwork is drawn at the narrowest mockup (375) as a
+     fraction of map.baseSize.w — see MapView.mapScale(). Only meaningful
+     alongside contentSize, which is what puts the map on the fixed-px path. */
+  const ns = t.map?.narrowScale
+  if(ns != null){
+    if(typeof ns !== 'number' || ns <= 0 || ns > 1)
+      err(name, `map.narrowScale must be a number in (0, 1] (got ${ns})`)
+    if(!t.map?.contentSize)
+      warn(name, 'map.narrowScale is set but map.contentSize is not — it has no effect')
+  }
+
   /* fonts are per-trip; a typo means silently falling back forever */
   const fonts = t.artDirection?.fonts
   if(!fonts) warn(name, 'no artDirection.fonts — the page will use fallback faces')
