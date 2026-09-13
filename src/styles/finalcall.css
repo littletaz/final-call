@@ -1,0 +1,110 @@
+/* ============================================================
+   FINAL CALL — the sticky call to action
+   Restored from v1 (src/js/finalcall.js, removed in 89c0684). A
+   split-flap board alternating FINAL CALL / ARE U IN?, with the
+   two buttons under it, parked top-right until the footer's own,
+   larger version of the same question comes into view.
+
+   Its own file rather than a block in main.css: v2 splits a
+   section's styles out per section (hero, weather, budget,
+   timeline, itinerary), and this is one.
+   ============================================================ */
+/* Everything hangs off ONE number: the width of the board. From the mockup at
+   1920 — board 216px, padding 10, gutter 1, tile gap -1 — so:
+
+     panel  = board + 2 x padding
+     button = (board - gutter) / 2
+     tile h = (board - (slots-1) x gap) / (slots x .689)
+
+   Deriving them rather than setting each independently is what keeps the panel
+   in proportion; clamped values drift apart and the padding ends up dominating.
+   The gap is negative because the housings butt into each other, same as the
+   wall — just -1px here rather than -2px, because the tiles are smaller. */
+/* Sizing is driven from src/js/finalcall.js, working forward from a whole-pixel
+   tile: --flap-w, --flap-h, --fc-gap, --fc-gut and --fc-pad are all set there.
+   The panel is fit-content, so it takes exactly whatever the board comes to
+   rather than being computed separately and disagreeing with it. */
+#final-call{
+  position:fixed;
+  top:24px;right:24px;
+  /* v2's layers moved under it: the sticker scatter is 940 and the POI
+     overlay 960, so 950 is the one gap that puts the panel above the
+     decoration drifting past it and still below an open card, which should
+     dim it. (v1 used 930, which now sits UNDER the stickers.) */
+  z-index:950;
+  width:fit-content;
+  padding:var(--fc-pad, 10px);
+  background:#464646;
+  border-radius:8px;
+
+  filter:
+    drop-shadow(-47px 138px 41px rgba(0, 0, 0, 0.01))
+    drop-shadow(-30px 88px 37px rgba(0, 0, 0, 0.05))
+    drop-shadow(-17px 50px 31px rgba(0, 0, 0, 0.17))
+    drop-shadow(-7px 22px 23px rgba(0, 0, 0, 0.28))
+    drop-shadow(-2px 6px 13px rgba(0, 0, 0, 0.32));
+
+  transform-origin:right top;
+  opacity:0;
+  transform:translateY(-10px) scale(.98);
+  pointer-events:none;
+  transition:opacity .3s ease, transform .3s ease-in-out;
+}
+#final-call.is-visible{
+  opacity:1;
+  transform:translateY(0) scale(1);
+  pointer-events:auto;
+}
+#final-call.is-compact{transform:translateY(0) scale(.7)}
+
+/* The board sets the panel's width; nothing here may override the tile size,
+   which is why --flap-w and --flap-h are left alone. */
+#final-call .fc-logo{
+  display:flex;
+  /* The tile size the module solved, mapped onto the component's own names.
+     It has to be done HERE, on the board, and with a selector that outranks
+     `:where(.flapboard){--flap-h:28px}` — that declaration sits on this very
+     element, so it beats anything inherited from the panel no matter how
+     specific. This is the one place the two can meet. */
+  --flap-h:var(--fc-flap-h, 32px);
+  --flap-w:var(--fc-flap-w, 22px);
+  --flap-gap:var(--fc-gap, -1px);
+  margin-bottom:var(--fc-stack, 2px);
+}
+
+/* two buttons filling the board's width exactly */
+.fc-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:var(--fc-gut, 1px);
+}
+.fc-btn{
+  display:flex;align-items:center;justify-content:center;
+  height:var(--fc-btn-h, 30px);
+  border:0;border-radius:1px;cursor:pointer;
+  font-family:var(--sans);font-weight:700;
+  font-size:calc(var(--flap-h) * .47);letter-spacing:.06em;
+  text-decoration:none;
+  transition:filter .2s, transform .12s;
+}
+.fc-no {background:#FF3030;color:#fff}
+.fc-yes{background:#fff;color:#1E1E1E}
+.fc-btn:hover{filter:brightness(1.08)}
+.fc-btn:active{transform:translateY(1px)}
+.fc-btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.fc-yes[aria-disabled="true"]{background:#8F8F8F;color:#EEE}
+
+/* one ladder — the project's narrow line, not v1's own 860 (see
+   src/js/finalcall.js, which reads the same constant) */
+@media(max-width:1023px){
+  #final-call{
+    top:auto;bottom:14px;left:50%;right:auto;
+    transform:translateX(-50%) translateY(0) scale(1);
+  }
+  #final-call.is-visible{transform:translateX(-50%) translateY(0) scale(1)}
+  #final-call.is-compact{transform:translateX(-50%) scale(.85)}
+}
+@media(prefers-reduced-motion:reduce){
+  #final-call{transition:none}
+  .fc-btn{transition:none}
+}

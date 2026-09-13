@@ -1398,8 +1398,8 @@
       "flights": 2,
       "_flightsNote": "Two flights inside the trip: into Sydney, and Sydney to Queenstown on 7 Jan. The Christchurch flight home is treated as going home rather than a trip leg — change to 3 if you'd rather count it.",
       "budgetPerPersonEUR": [
-        4750,
-        7400
+        3400,
+        5320
       ],
       "_datesNote": "Nineteen nights on the ground, 30 Dec to 18 Jan. The draft's 'day 20-21, Jan 18-19' is the journey home across the date line, which sits outside the itinerary the way the return flight does.",
       "pitch": {
@@ -1532,7 +1532,8 @@
           ],
           "locationId": "queenstown"
         }
-      ]
+      ],
+      "_budgetNote": "The ledger's own total, from the default departure city (Paris) — the two used to disagree by thousands. Lyon adds ~100 and Antananarivo ~100-300 more; the dropdown above the list is what re-prices it. Flights, hotels and activities only: no food, no daily spending."
     },
     {
       "id": "coach-18",
@@ -1547,8 +1548,8 @@
       "flights": 3,
       "_flightsNote": "Into Sydney, Sydney to Queenstown on 7 Jan, Queenstown to Christchurch on 14 Jan. The flight home is excluded, same convention as the other two.",
       "budgetPerPersonEUR": [
-        2900,
-        4600
+        3630,
+        5600
       ],
       "_note": "The no-car version, tightened from 21 days to 18: Port Stephens loses two of its five nights and Queenstown one of its eight. Nothing else goes — all four bases, both fiords and every activity are still here, they are just less padded. Queenstown at seven nights still covers Milford, Doubtful and the two free valley days with a spare.",
       "pitch": {
@@ -1682,7 +1683,8 @@
           ],
           "locationId": "christchurch"
         }
-      ]
+      ],
+      "_budgetNote": "The ledger's own total, from the default departure city (Paris) — the two used to disagree by thousands. Lyon adds ~100 and Antananarivo ~100-300 more; the dropdown above the list is what re-prices it. Flights, hotels and activities only: no food, no daily spending."
     },
     {
       "id": "east-coast-14",
@@ -1696,8 +1698,8 @@
       "flights": 2,
       "_flightsNote": "Two flights inside the trip: into Sydney, and Sydney to Ballina on 6 Jan. The flight home is treated as going home rather than a trip leg, the same convention as the other two.",
       "budgetPerPersonEUR": [
-        2550,
-        4150
+        2790,
+        4490
       ],
       "_note": "The short version, and the cheapest: two bases joined by one 90-minute hop, no trans-Tasman crossing and no rental car to drop in another city. Built to come in under the €3,500 cap.",
       "_dayPlanNote": "One entry per day, in order, naming what that day IS — a day trip moves the card and the active pin to the spur while the route stays put at the base it belongs to.",
@@ -1837,7 +1839,7 @@
         ],
         "_note": "Open jaw into Sydney and out of the Gold Coast, with the Ballina hop in the middle. PAR is the search origin because two of the three of us start there — the ledger’s own dropdown is what re-prices the fare per person."
       },
-      "_budgetNote": "Matches what the ledger itemises for the default departure city (Paris). Lyon adds ~100 and Antananarivo ~100-300 more — the dropdown above the list is what re-prices it.",
+      "_budgetNote": "The ledger's own total, from the default departure city (Paris) — the two used to disagree by thousands. Lyon adds ~100 and Antananarivo ~100-300 more; the dropdown above the list is what re-prices it. Flights, hotels and activities only: no food, no daily spending.",
       "fixed": [
         {
           "id": "flight-syd-bnk",

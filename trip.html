@@ -136,6 +136,19 @@
     <div class="pc-content"></div>
   </div>
 </aside>
+<!-- The sticky call to action. Parked top-right until the footer's own,
+     larger version of the same question scrolls in — two on screen at once
+     just compete. Populated by src/js/finalcall.js. -->
+<aside id="final-call" hidden>
+  <!-- a split-flap board, alternating between the two messages -->
+  <span class="fc-logo"></span>
+
+  <div class="fc-actions">
+    <button class="fc-btn fc-no" type="button">NO</button>
+    <a class="fc-btn fc-yes" href="#" target="_blank" rel="noopener noreferrer">YES</a>
+  </div>
+</aside>
+
 <!-- ============ ITINERARY MODAL ============
      The whole trip day by day, opened from the arrow on the timeline card.
      Populated by src/js/itinerary.js. -->

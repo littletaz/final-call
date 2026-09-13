@@ -100,6 +100,20 @@ export const Footer = {
     const lv = TRIP.data?.budget?.levers
     if(lv) this.choice = Object.fromEntries(
       Object.entries(lv).map(([k, v]) => [k, v.default]))
+
+    /* The departure-city control, bound ONCE and here — on #footer, which is
+       in the shell and outlives everything drawn into it. It cannot live on
+       #bud: render() below rewrites this.el.innerHTML on every itinerary
+       switch, which replaces #bud wholesale and takes any listener on it
+       with it. Bound there, the dropdown worked until you changed trip
+       length and was dead silently after. */
+    this.el?.addEventListener('change', e => {
+      const sel = e.target.closest?.('.ledger-origin-select')
+      if(!sel || !this.itinerary) return
+      this.originId = sel.value
+      const host = document.getElementById('bud')
+      if(host) this.renderLedger(host, this.itinerary)
+    })
   },
 
   /* The shell is built ONCE. Adjusting a lever only redraws the cost block —
@@ -186,26 +200,12 @@ export const Footer = {
         <div class="ledger-total"><span>Total estime</span><span>${eur(total.lo)}–${eur(total.hi)}</span></div>
       </div>`
 
-    /* Delegated, and bound ONCE to the host rather than to the select: this
-       method rewrites host.innerHTML on every itinerary switch and on every
-       origin change, so a listener attached to the element itself is thrown
-       away and re-made constantly, and any path that re-renders without
-       coming back through here would silently leave a dead control. The host
-       outlives all of it.
-
-       Re-render rather than patch the one line: the fare moves the total too,
-       and the group it sits in is rebuilt by the same call. The ledger's
+    /* The change handler is bound once in init(), on #footer — see there for
+       why it cannot live on this host. Re-rendering is the right response to
+       a change rather than patching the one line: the fare moves the total
+       too, and the group it sits in is rebuilt by the same call. The ledger's
        height changes with it, but the lower stickers need nothing here —
        Hero.watchStickers() observes body and re-places them. */
-    if(!this.originBound){
-      this.originBound = true
-      host.addEventListener('change', e => {
-        const sel = e.target.closest?.('.ledger-origin-select')
-        if(!sel) return
-        this.originId = sel.value
-        this.renderLedger(host, this.itinerary ?? itinerary)
-      })
-    }
     this.itinerary = itinerary
   },
 

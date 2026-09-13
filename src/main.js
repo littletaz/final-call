@@ -9,6 +9,11 @@ import './styles/weather.css'
 import './styles/budget.css'
 import './styles/timeline.css'
 import './styles/itinerary.css'
+/* the split-flap board the Final Call panel is built from — dropped from
+   this page when the widget was removed in 89c0684, so the tiles rendered
+   as plain text until it came back */
+import './styles/flapboard.css'
+import './styles/finalcall.css'
 
 import { TRIP, tripAsset, loadData } from './js/data.js'
 import { MapView } from './js/map.js'
@@ -18,6 +23,7 @@ import { Footer } from './js/footer.js'
 import { Pitch } from './js/pitch.js'
 import { Hero } from './js/hero.js'
 import { Boot } from './js/boot.js'
+import { FinalCall } from './js/finalcall.js'
 import { MapExtras } from './js/mapExtras.js'
 import { Highlights } from './js/highlights.js'
 import { Weather } from './js/weather.js'
@@ -132,6 +138,8 @@ function renderAll(){
      src/js/highlights.js — rendered once at boot, not per-itinerary. */
   if(!TRIP.data.highlights?.length) Pitch.render(active)
   Footer.render(active)
+  /* after Footer.render, which has just replaced the .f-ask it watches */
+  FinalCall.update(active)
   MapExtras.render(active)
   MapView.setVariant(active)
   MapView.renderPins(active, goToCard)
@@ -222,6 +230,7 @@ function initBackToMap(){
     MapExtras.initIcon()
     Cards.init()
     Footer.init()
+    FinalCall.init()
     Pitch.init()
     addEventListener('resize', scheduleTexture)
     if(document.fonts?.ready) document.fonts.ready.then(scheduleTexture)

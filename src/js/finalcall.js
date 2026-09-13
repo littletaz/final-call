@@ -1,0 +1,199 @@
+import { TRIP } from './data.js'
+import { flightSearchUrl } from './footer.js'
+import { scrollToEl } from './scroll.js'
+import { Flapboard } from './flapboard.js'
+import { NARROW_MQ, isNarrow } from './breakpoints.js'
+
+/* ============================================================
+   FINAL CALL
+   A sticky panel that appears once the hero has scrolled away
+   and hides again when the footer arrives — the footer has its
+   own, larger version of the same call to action, so two on
+   screen at once would just compete.
+   ============================================================ */
+
+export const FinalCall = {
+  el: null,
+  btn: null,
+  board: null,
+  atFooter: false,
+  pastHero: false,
+  msgIndex: 0,
+
+  /* both are 10 slots, so the board never resizes between them */
+  MESSAGES: ['FINAL CALL', 'ARE U IN?'],
+  CYCLE: 3000,
+
+  /* Sizing works FORWARD from a whole-pixel tile, and is FIXED — the panel is
+     231px on a 1280 screen and on a 2560 one. It's a physical object, not a
+     layout element, so scaling it with the viewport just made it inconsistent.
+
+       tile        22 x 32   (22 x 90/62 = 31.94, rounded)
+       board       10 tiles + 9 gutters of -1  = 211px
+       stack       4px between board and buttons
+       buttons     30px tall
+       panel       211 + 2 x 10 padding        = 231px
+       buttons     (211 - 1) / 2               = 105px each
+
+     Only the mobile breakpoint changes anything, and it swaps one constant.
+     That line is NARROW_MQ (1023) rather than v1's own 860: the panel is a
+     fixed overlay and either width works for it, but a second mobile line in
+     the codebase is exactly the inconsistency v2 spent this pass removing. */
+  SLOTS: 10,
+  RATIO: 90 / 62,          /* from the tile artwork */
+  GUTTER: -1,              /* housings butt into each other */
+  STACK: 4,                /* board to buttons */
+  BTN_H: 30,               /* button height */
+  TILE: { wide: 22, narrow: 19 },
+  PAD:  { wide: 10, narrow: 9 },
+
+  init(){
+    this.el  = document.getElementById('final-call')
+    this.btn = this.el?.querySelector('.fc-yes')
+    this.no  = this.el?.querySelector('.fc-no')
+    if(!this.el) return
+
+    /* tick and stagger are independent: tick is one fold, stagger is the wave */
+    this.sizeBoard()
+    this.board = Flapboard.mount(this.el.querySelector('.fc-logo'),
+                                 this.MESSAGES[0],
+                                 { length: this.SLOTS, tick: 90, stagger: 55 })
+
+    /* nothing to recompute on resize — only crossing the breakpoint changes it */
+    const mq = window.matchMedia(NARROW_MQ)
+    const onBreak = () => this.sizeBoard()
+    mq.addEventListener ? mq.addEventListener('change', onBreak) : mq.addListener(onBreak)
+
+
+    /* Visible from the first frame. The only thing that hides it is the ASK —
+       "So… are you in?" — not the whole footer, which starts at the dataviz and
+       is in view almost immediately on a short screen. */
+    this.watchAsk()
+
+    /* full size over the hero, compact once you're into the cards */
+    const stage = document.getElementById('stage')
+    if(stage) new IntersectionObserver(([e]) => {
+      this.pastHero = !e.isIntersecting
+      this.apply()
+    }, { threshold: 0 }).observe(stage)
+
+    /* NO goes to its own page. It was a section of the footer for a while,
+       but as a fixed layer behind the trip it fought the card parallax and
+       the reveal never settled. */
+    this.no?.addEventListener('click', () => {
+      clearInterval(this.timer)
+      const id = new URLSearchParams(location.search).get('trip')
+      location.href = './no.html' + (id ? `?trip=${encodeURIComponent(id)}` : '')
+    })
+
+    this.apply()
+    this.startCycle()
+  },
+
+  /* Footer.render() replaces the footer's innerHTML, which destroys the element
+     this was observing — leaving the observer pointed at a detached node that
+     could never fire again. So it re-binds whenever the footer is rebuilt. */
+  watchAsk(){
+    const ask = document.querySelector('.f-ask')
+    if(!ask || ask === this.watched) return
+    this.watched = ask
+    this.askObserver?.disconnect()
+    this.askObserver = new IntersectionObserver(([e]) => {
+      this.atFooter = e.isIntersecting
+      this.apply()
+    }, { threshold: 0 })
+    this.askObserver.observe(ask)
+  },
+
+  /* Whole-pixel tiles at every viewport — CSS can't round, so this is done
+     here and written back as custom properties. */
+  sizeBoard(){
+    const narrow = isNarrow()
+    const w = narrow ? this.TILE.narrow : this.TILE.wide
+    const h = Math.round(w * this.RATIO)
+    const pad = narrow ? this.PAD.narrow : this.PAD.wide
+
+    /* --fc-flap-*, not --flap-* directly: flapboard.css declares --flap-h on
+       the board ITSELF (`:where(.flapboard)`), and a declaration on an element
+       beats a value inherited from its parent whatever the specificity — so
+       writing --flap-h here never reached the tiles, and the board silently
+       kept the component's 28px default. These land in the panel's scope and
+       finalcall.css maps them onto the real names on the board, where a rule
+       CAN outrank that default. */
+    const st = this.el.style
+    st.setProperty('--fc-flap-w', w + 'px')
+    st.setProperty('--fc-flap-h', h + 'px')
+    st.setProperty('--fc-gap', this.GUTTER + 'px')
+    st.setProperty('--fc-gut', Math.abs(this.GUTTER) + 'px')
+    st.setProperty('--fc-stack', this.STACK + 'px')
+    st.setProperty('--fc-btn-h', this.BTN_H + 'px')
+    st.setProperty('--fc-pad', pad + 'px')
+  },
+
+  /* Alternates the two messages. Paused whenever the widget isn't on screen —
+     flipping a board nobody can see is just work. */
+  startCycle(){
+    clearInterval(this.timer)
+    this.timer = setInterval(() => {
+      if(!this.visible) return
+      this.msgIndex = (this.msgIndex + 1) % this.MESSAGES.length
+      this.board?.set(this.MESSAGES[this.msgIndex])
+    }, this.CYCLE)
+  },
+
+  /* Called on every itinerary change: the search follows the active variant,
+     and an undated one has nothing to link to. It also re-binds the observer,
+     because Footer.render() has just replaced the .f-ask this was watching —
+     see watchAsk(). */
+  update(itinerary){
+    this.watchAsk()
+    /* Silent here once cost an afternoon: init() had been moved after the first
+       render, so this bailed and the YES button kept its placeholder href. */
+    if(!this.btn){
+      console.warn('[final-call] FinalCall.update() before init() — the YES link '
+        + 'will keep its placeholder href')
+      return
+    }
+    const url = flightSearchUrl(itinerary)
+    const label = TRIP.data?.cta?.buttonLabel
+
+    if(url){
+      this.btn.href = url
+      this.btn.removeAttribute('aria-disabled')
+      this.btn.textContent = 'YES'
+      this.btn.title = ''
+    } else {
+      /* no dates — fall back to the footer, where the budget and the dated
+         options live, rather than dead-ending on a broken link */
+      this.btn.removeAttribute('href')
+      this.btn.setAttribute('aria-disabled', 'true')
+      this.btn.textContent = 'COSTS'
+      this.btn.title = 'This itinerary has no exact dates yet'
+    }
+    void label
+  },
+
+  apply(){
+    if(!this.el) return
+    const wasVisible = this.visible
+    const show = !this.atFooter
+    this.visible = show
+    this.el.hidden = false          /* only ever hidden before the first render */
+    this.el.classList.toggle('is-visible', show)
+    /* re-flap on return, so it reads as a board waking up */
+    if(show && !wasVisible) this.board?.set(this.MESSAGES[this.msgIndex])
+    this.el.classList.toggle('is-compact', this.pastHero)
+
+    this.el.setAttribute('aria-hidden', show ? 'false' : 'true')
+    /* keep it out of the tab order while it's off screen */
+    this.btn?.setAttribute('tabindex', show ? '0' : '-1')
+  },
+}
+
+/* clicking with no link scrolls to the footer instead */
+document.addEventListener('click', e => {
+  const btn = e.target.closest('#final-call .fc-btn')
+  if(!btn || btn.getAttribute('aria-disabled') !== 'true') return
+  e.preventDefault()
+  scrollToEl(document.getElementById('footer'))
+})
