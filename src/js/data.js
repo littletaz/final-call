@@ -247,6 +247,22 @@ export function bookingUrl(stay, stop, dates, adults = 2){
 
 export const eur = n => '\u20AC' + Math.round(n).toLocaleString('en-US')
 
+/* The departure cities a trip offers, and the one to start on. Everything
+   reads the list through here so the ledger, the control above it and the
+   validator can never disagree about what a valid origin is. An unknown id
+   (a stale value, a trip that dropped a city) falls back to the declared
+   default rather than pricing nothing. */
+export function tripOrigins(){
+  return TRIP.data.budget?.origins ?? []
+}
+export function resolveOrigin(id){
+  const list = tripOrigins()
+  if(!list.length) return null
+  return list.find(o => o.id === id)
+      ?? list.find(o => o.id === TRIP.data.budget?.defaultOriginId)
+      ?? list[0]
+}
+
 /* ============================================================
    LEDGER BUDGET (v2)
    A flat, itemized replacement for the old lever/comfort-tier model
@@ -256,11 +272,23 @@ export const eur = n => '\u20AC' + Math.round(n).toLocaleString('en-US')
    multiplier \u2014 every number here is one already authored on a location
    or in budget.fixed.
    ============================================================ */
-export function buildLedger(itinerary, tier = 'budget'){
+export function buildLedger(itinerary, tier = 'budget', originId = null){
   const stops = itinerary.stops ?? []
   const bases = stops.filter(s => !s.spur)
-  const fixed = TRIP.data.budget?.fixed ?? []
+  const budget = TRIP.data.budget ?? {}
+  /* Trip-wide lines, then the itinerary's own. Internal flights belong to the
+     ITINERARY, not the trip: the same city can be flown into on one variant
+     and driven to on another (Christchurch is), so a trip-level line keyed
+     only by locationId would bill a flight nobody takes. */
+  const fixed = [...(budget.fixed ?? []), ...(itinerary.fixed ?? [])]
   const adults = TRIP.data.cta?.roomAdults ?? 3
+
+  /* The long-haul fare is the one line that depends on WHO is reading the
+     page — the three of us leave from three different cities. It is filed
+     under the stop we fly into (budget.originLocationId, defaulting to the
+     first base) so it lands in that group like any other line. */
+  const origin = resolveOrigin(originId)
+  const originAt = budget.originLocationId ?? bases[0]?.locationId
 
   const groups = bases.map(base => {
     const loc = TRIP.byId[base.locationId]
@@ -282,6 +310,12 @@ export function buildLedger(itinerary, tier = 'budget'){
         items.push({ label: t.title, lo, hi, free: !lo && !hi })
       }
     }
+
+    if(origin && base.locationId === originAt)
+      items.push({
+        label: `Vols long-courriers (aller-retour, ${origin.label})`,
+        lo: origin.eur[0], hi: origin.eur[1],
+      })
 
     for(const f of fixed.filter(f => f.locationId === base.locationId))
       items.push({ label: f.label, lo: f.eur[0], hi: f.eur[1] })

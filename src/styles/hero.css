@@ -213,7 +213,12 @@
   top:calc(var(--sanchor, 0px) + var(--sy));
   width:var(--sw);
   height:auto;
-  transform:translate(-50%,-50%) rotate(var(--rot,0deg));
+  /* --py is the scroll parallax, written per-frame by Hero.parallax(). It
+     rides INSIDE the centring translate so the rotation still happens about
+     the sticker's own centre, exactly as it did before — and it defaults to
+     0, so with JS idle (or reduced motion) every sticker sits on the
+     coordinate Figma gives it. */
+  transform:translate(-50%,calc(-50% + var(--py,0px))) rotate(var(--rot,0deg));
   filter:drop-shadow(-2px 3px 9px rgba(79,57,17,.3));
 }
 

@@ -15,6 +15,22 @@
   .f-costs:has(.ledger-list){ padding:70px 0 105px }
 }
 
+/* The same between-frame paper that sits above #weather (the reasoning is
+   written out there): Figma leaves 102px at 1440 and 93 at 2156/3820
+   between the Météo frame and the top of the green, and none at all on
+   either mobile canvas, where Météo stacks straight onto the budget.
+   The padding above is the green's own, inside the frame — this is the
+   paper outside it, so it has to be a margin on the section rather than
+   more padding on either side of the seam.
+
+   On #footer, not .f-costs: .f-costs is #footer's first child, so a margin
+   there would collapse out through it and the spacing would depend on
+   #footer never gaining padding. Scoped with :has() like the rest of this
+   file, so japon-2026's lever footer is untouched. */
+#footer:has(.ledger-list){ margin-top:102px }
+@media (min-width:1800px){ #footer:has(.ledger-list){ margin-top:93px } }
+@media (max-width:1023px){ #footer:has(.ledger-list){ margin-top:0 } }
+
 /* #bud (.grid-12) renders inside .f-inner, which ALSO centres to the artboard
    and insets by --grid-margin (it does that job for the v1 lever layout,
    which isn't a grid). Nested inside it, .grid-12's own max-width/padding
@@ -59,14 +75,58 @@
   border-radius:4px;
   padding:0 14px;
   font-family:var(--hand,cursive);
-  font-size:.95rem;
+  /* 22px on every canvas, mobile included — the same "never rescaled"
+     treatment as the box around it, described above. */
+  font-size:22px;
   color:#F5EFE4;
 }
 @media (max-width:1023px){
   .ledger-head{ margin-bottom:68px }
   .ledger-title{ margin-bottom:11px }
 }
+/* The control is a real <select> so it brings keyboard support, the phone's
+   native picker and the right screen-reader role with it. Everything visible
+   is stripped back to the Figma box: the platform arrow is hidden
+   (appearance:none) and the chevron beside it is ours, so the two can't both
+   show. The select fills the box and carries the click, which is why the
+   chevron is pointer-events:none — a click on it still opens the menu. */
+.ledger-origin{ position:relative }
+/* The select COVERS the whole control, chevron included. As a flex child it
+   stopped short of the arrow, so a click on the arrow — the one part of the
+   box that looks like the thing you press — landed on the wrapper and did
+   nothing. Absolute and inset:0 means every pixel of the box opens the menu;
+   the right padding is what keeps its text clear of the chevron drawn on top. */
+.ledger-origin-select{
+  appearance:none;
+  -webkit-appearance:none;
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  box-sizing:border-box;
+  padding:0 34px 0 14px;
+  border:0;
+  background:none;
+  font:inherit;
+  color:inherit;
+  cursor:pointer;
+}
+.ledger-origin-select:focus-visible{
+  outline:2px solid #FBD456;
+  outline-offset:2px;
+  border-radius:4px;
+}
+/* the menu itself is drawn by the OS, which does not inherit the page's
+   colours — give the options a readable pair rather than cream on cream */
+.ledger-origin-select option{ color:#1C2321; background:#F5EFE4 }
+
 .ledger-origin-chevron{
+  /* drawn OVER the select, and transparent to the pointer so the click it
+     invites goes to the select underneath */
+  position:relative;
+  z-index:1;
+  margin-left:auto;
+  pointer-events:none;
   flex:none;
   width:8px;height:8px;
   border-right:2px solid #F5EFE4;
@@ -80,11 +140,31 @@
    it still sits on the grid; it just stops shrinking with the viewport
    below 1440, where Figma keeps it at 794 and simply lets the canvas clip.
    511 on the mobile canvas — which is the same min() at 768, and resolves
-   to the 335 Figma draws at 375. */
+   to the 335 Figma draws at 375.
+
+   Vertically it is an auto-layout column with a 50px gap between categories
+   (node 169:1754 at 1440, 169:1063 at 375). The two frames have the
+   IDENTICAL vertical structure — groups at y 0/436/820/994/1210 and the
+   total at 1426 — so every gap is 50 on both canvases and one value serves
+   the whole ladder; only the width changes. The gap also falls between the
+   last category and the total, which is why it belongs to the container
+   rather than to an adjacent-sibling margin.
+
+   It was 12px, which ran the five categories together into one long list
+   instead of five blocks. Nothing else may add space below a group: the
+   14px tail .ledger-items used to carry, and the hairline .ledger-group
+   used to close with, were both doing part of this job and disagreeing
+   about the total. Neither is in the mockup — the hairline only read as a
+   terminator because the groups were 12px apart; at 50 the space ends the
+   block and a rule floating 50px above the next heading would read as
+   underlining it. */
 .ledger-list{
   grid-column: 1 / -1;
   width:min(794px, 100% - 40px);
   margin-inline:auto;
+  display:flex;
+  flex-direction:column;
+  gap:50px;
 }
 @media (max-width:1023px){
   .ledger-list{ width:min(511px, 100% - 40px) }
@@ -94,9 +174,6 @@
 @media (min-width:3200px){
   .ledger-list{ width:min(1184px, 100% - 40px) }
 }
-
-.ledger-group{ border-bottom:1px solid rgba(245,239,228,.15) }
-.ledger-group + .ledger-group{ margin-top:12px }
 
 /* Toggle on the RIGHT, matching the Figma mock — a fixed-geometry CSS arrow,
    rotated via transform only, so toggling never changes the row's box size
@@ -111,7 +188,11 @@
   gap:10px;
   padding:10px 0;
   font-family:var(--script,cursive);
-  font-size:1.4rem;
+  /* 28px in all six frames — it does not step, so no token and no query.
+     It has to stay clear of the rows above it: at the old 22.4px it was
+     only 0.4px larger than the 22px items and stopped reading as a label
+     for them at all. */
+  font-size:28px;
   color:#FBD456;
 }
 .ledger-group-name::-webkit-details-marker{ display:none }
@@ -131,24 +212,36 @@
 }
 .ledger-group:not([open]) .ledger-chevron{ transform:rotate(-45deg) } /* pointing right — closed */
 
-.ledger-items{ list-style:none; margin:0; padding:0 0 14px }
+/* padding-bottom stays 0: the list's 50px gap is the only spacer below a
+   group, so the two can't disagree about how far apart categories sit. */
+.ledger-items{ list-style:none; margin:0; padding:0 }
+/* 22px on the desktop canvas, 16px on the mobile one — which is exactly
+   --body-size, stepping on the same 1024 line the token already does, so
+   this needs no query of its own. Every frame agrees: the row text is 22
+   at 1200/1440/2156/3820 and 16 at 375/768. It was a hardcoded 1rem, i.e.
+   the mobile size at every width, which is what made the list unreadable
+   on a desktop screen. */
 .ledger-items li{
   display:flex;
   justify-content:space-between;
   gap:16px;
   padding:8px 0;
   font-family:var(--hand,cursive);
-  font-size:1rem;
+  font-size:var(--body-size);
   border-top:1px solid rgba(245,239,228,.08);
 }
 .ledger-items li span:first-child{ color:rgba(245,239,228,.85) }
 .ledger-items li span:last-child{ color:#F5EFE4; white-space:nowrap }
 
+/* Figma's total frame (169:1849) is 52 tall with its text at y 20 — i.e.
+   20px of padding above it, on top of the list's 50px gap. */
 .ledger-total{
   display:flex;
   justify-content:space-between;
-  padding-top:16px;
+  padding-top:20px;
   font-family:var(--hand,cursive);
-  font-size:1.2rem;
+  /* 26px in all six frames, and the largest text in the list — at the old
+     19.2px it came out SMALLER than the 22px rows it totals. */
+  font-size:26px;
   color:#F5EFE4;
 }

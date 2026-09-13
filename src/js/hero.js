@@ -1,5 +1,8 @@
 import { tripAsset } from './data.js'
 
+/* Same read as src/js/scroll.js — checked once, at module scope. */
+const REDUCED = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
 /* ============================================================
    HERO
    Static title screen above the map — title (split on " & "),
@@ -94,6 +97,90 @@ export const Hero = {
       el.style.setProperty('--sanchor',
         (target ? target.getBoundingClientRect().top + window.scrollY : 0) + 'px')
     }
+    this.measureParallax()
+  },
+
+  /* ---- scroll parallax -----------------------------------------------------
+     The scatter sits on the page rather than on any one section, so drifting
+     it slightly against the scroll is what stops it reading as printed onto
+     the background. Deliberately small: this is paper lifting off paper, not
+     a depth effect.
+
+     Each sticker gets its own rate, from its own width — a bigger sticker
+     reads as nearer, and nearer things move more. The numbers below put the
+     widest sticker in this trip (the sheep, 207px) at 0.10 and the narrowest
+     (the kangaroo, 107.5px) at 0.04.
+
+     `base` is the scroll position at which the sticker sits EXACTLY where
+     Figma draws it, and the trip data already says which that is. An
+     ANCHORED sticker hangs off a section, so its design position is the one
+     you see when that section is in front of you — its centre on the
+     viewport's centre line. The hero's four have no anchor: they are drawn
+     against the top of the page, so theirs is the one at rest, at scroll 0.
+     Splitting on `anchor` rather than on measured position is what keeps the
+     hero pixel-exact on load — by distance alone the Sydney badge, 563px
+     down a 900px viewport, would start 10px adrift of the mockup.
+
+     The anchored case is clamped into the document so a sticker near the
+     bottom, which can never reach the middle of the viewport, settles at its
+     drawn position when you reach the end of the page rather than hanging
+     permanently below it.
+
+     offsetTop, not getBoundingClientRect: the rect already has the parallax
+     transform baked in, so measuring it here would feed the offset back into
+     itself. offsetTop is the resolved `top` — the sticker's design centre in
+     page coordinates, since #page-stickers is its offsetParent at page 0 and
+     the -50% translate centres it on that line. */
+  /* Travel across a full viewport of scrolling is +-(innerHeight / 2) * rate,
+     so roughly 13px for the narrowest sticker and 31px for the widest on a
+     900px screen. Enough to come unstuck from the paper, not enough to read
+     as a separate moving layer. */
+  PARALLAX_SLOW: 0.03,
+  PARALLAX_FAST: 0.07,
+
+  measureParallax(){
+    const list = this.stickers ?? []
+    if(!list.length) return
+    const widths = list.map(s => s.el.offsetWidth || 0)
+    const min = Math.min(...widths), max = Math.max(...widths)
+    const span = max - min
+    const maxScroll = Math.max(0, document.documentElement.scrollHeight - innerHeight)
+
+    list.forEach((s, i) => {
+      const t = span ? (widths[i] - min) / span : 0
+      s.depth = this.PARALLAX_SLOW + (this.PARALLAX_FAST - this.PARALLAX_SLOW) * t
+      s.base  = s.anchor
+        ? Math.min(Math.max(s.el.offsetTop - innerHeight / 2, 0), maxScroll)
+        : 0
+    })
+    this.parallax()
+  },
+
+  parallax(){
+    if(REDUCED) return
+    for(const s of this.stickers ?? []){
+      if(s.depth == null) continue
+      s.el.style.setProperty('--py', ((scrollY - s.base) * s.depth).toFixed(1) + 'px')
+    }
+  },
+
+  /* One listener for the whole scatter, coalesced onto a frame — scroll fires
+     far more often than the screen repaints, and this writes to seven
+     elements. Reduced motion opts out entirely rather than shortening the
+     travel: --py is then never written, so the stickers keep the exact
+     coordinates the trip file gives them. */
+  watchParallax(){
+    if(REDUCED || this.parallaxWatching) return
+    this.parallaxWatching = true
+
+    let raf = 0
+    addEventListener('scroll', () => {
+      if(raf) return
+      raf = requestAnimationFrame(() => { raf = 0; this.parallax() })
+    }, { passive: true })
+    /* No resize listener of its own: `base` depends on the viewport height,
+       but main.js already re-runs placeStickers() on resize (scheduleTexture)
+       and that re-measures. */
   },
 
   /* The page's height changes on its own — late images, webfonts, an

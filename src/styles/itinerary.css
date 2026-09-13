@@ -1,0 +1,125 @@
+/* ============================================================
+   ITINERARY MODAL — the whole trip, day by day
+   Opened from the arrow on the timeline card. See src/js/itinerary.js.
+
+   A centred panel rather than the POI card's side-docked one: this is
+   the page's only modal that you READ rather than glance at, so it gets
+   the middle of the screen and a scroll of its own.
+   ============================================================ */
+
+#itin-overlay{
+  position:fixed; inset:0; z-index:970;
+  background:rgba(28,35,33,.42);
+  opacity:0; transition:opacity .3s ease;
+}
+#itin-overlay.is-open{ opacity:1 }
+
+#itin-modal{
+  position:fixed; inset:0; z-index:971;
+  display:grid; place-items:center;
+  padding:40px 20px;
+  pointer-events:none;
+}
+.im-panel{
+  position:relative;
+  width:min(680px, 100%);
+  max-height:100%;
+  overflow-y:auto;
+  background:#fff; color:#1C2321;
+  /* the same 10px the timeline and POI cards use — one card language */
+  border-radius:10px;
+  box-shadow:0 24px 60px rgba(0,0,0,.3);
+  padding:34px 34px 30px;
+  pointer-events:auto;
+  opacity:0;
+  transform:translateY(10px) scale(.985);
+  transition:opacity .3s ease, transform .3s cubic-bezier(.22,.9,.28,1);
+}
+#itin-modal.is-open .im-panel{ opacity:1; transform:none }
+@media (prefers-reduced-motion:reduce){
+  #itin-modal .im-panel, #itin-overlay{ transition:none }
+}
+
+.im-close{
+  position:absolute; top:6px; right:6px; z-index:2;
+  width:44px; height:44px; padding:0;
+  background:none; border:0; cursor:pointer;
+  color:#1C2321; opacity:.5; transition:opacity .2s;
+}
+.im-close:hover{ opacity:1 }
+.im-close:focus-visible{ outline:2px solid var(--seal); outline-offset:-4px; opacity:1 }
+.im-close svg{ display:block; width:100%; height:100% }
+
+.im-head{ margin:0 0 26px; padding-right:40px }
+.im-eyebrow{
+  margin:0; font-family:var(--hand,cursive); font-size:14px;
+  letter-spacing:.04em; color:#7A7A70;
+}
+.im-title{
+  margin:2px 0 0; font-family:var(--script,cursive); font-weight:200;
+  font-size:34px; line-height:1.1; color:#005E32;
+}
+.im-range{ margin:6px 0 0; font-family:var(--hand,cursive); font-size:15px; color:#7A7A70 }
+
+/* ---- one stay ---- */
+.im-group{ margin:0 0 22px }
+.im-group:last-child{ margin-bottom:0 }
+.im-grouphead{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:14px; flex-wrap:wrap;
+  padding:0 0 8px;
+  border-bottom:1px solid var(--hairline);
+}
+.im-place{
+  margin:0; font-family:var(--script,cursive); font-weight:200;
+  font-size:24px; line-height:1.1; color:#1C2321;
+}
+.im-meta{
+  margin:0; display:flex; gap:10px; align-items:baseline; flex-wrap:wrap;
+  font-family:var(--hand,cursive); font-size:14px; color:#7A7A70;
+}
+/* how you got there — the travel day, called out rather than buried */
+.im-arrive{
+  color:#005E32;
+  background:rgba(0,130,75,.1);
+  border-radius:20px;
+  padding:2px 9px;
+}
+.im-span{ font-variant-numeric:tabular-nums }
+
+/* ---- the days ---- */
+.im-days{ list-style:none; margin:0; padding:6px 0 0 }
+.im-day{
+  display:grid;
+  grid-template-columns:64px 96px 1fr auto;
+  gap:12px; align-items:baseline;
+  padding:6px 0;
+  font-family:var(--hand,cursive); font-size:15px;
+}
+.im-daynum{ color:#A8A8A0; font-variant-numeric:tabular-nums }
+.im-date{ color:#7A7A70; font-variant-numeric:tabular-nums }
+.im-where{ color:#1C2321 }
+/* a day OUT of the stay it belongs to reads differently from a day in it */
+.im-day.is-trip .im-where{ color:#005E32 }
+.im-tag{
+  font-size:12px; color:#7A7A70;
+  background:var(--ph-a); border-radius:20px; padding:2px 8px;
+}
+
+@media (max-width:1023px){
+  #itin-modal{ padding:0; place-items:end stretch }
+  .im-panel{
+    width:100%;
+    max-height:92vh; max-height:92dvh;
+    border-radius:16px 16px 0 0;
+    padding:28px 6% 24px;
+    transform:translateY(100%);
+  }
+  .im-title{ font-size:26px }
+  .im-day{ grid-template-columns:52px 1fr auto; row-gap:0 }
+  /* the date moves under the place on a narrow screen rather than
+     squeezing four columns into 335px */
+  .im-date{ grid-column:2; grid-row:2; font-size:13px }
+  .im-where{ grid-column:2; grid-row:1 }
+  .im-tag{ grid-column:3; grid-row:1 }
+}

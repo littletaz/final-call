@@ -8,6 +8,7 @@ import './styles/highlights.css'
 import './styles/weather.css'
 import './styles/budget.css'
 import './styles/timeline.css'
+import './styles/itinerary.css'
 
 import { TRIP, tripAsset, loadData } from './js/data.js'
 import { MapView } from './js/map.js'
@@ -16,6 +17,7 @@ import { PoiCard } from './js/poicard.js'
 import { Footer } from './js/footer.js'
 import { Pitch } from './js/pitch.js'
 import { Hero } from './js/hero.js'
+import { Boot } from './js/boot.js'
 import { MapExtras } from './js/mapExtras.js'
 import { Highlights } from './js/highlights.js'
 import { Weather } from './js/weather.js'
@@ -191,8 +193,13 @@ function initBackToMap(){
 
 ;(async function boot(){
   const bootEl = document.getElementById('boot')
+  Boot.init()
   try{
     await loadData()
+
+    /* The stack is filled and started the moment the DATA is in, which is
+       long before the artwork is — that gap is exactly what it covers. */
+    Boot.start(TRIP.data)
 
     /* the shell is trip-agnostic — the real title comes from the data, so a
        second trip doesn't need its own index.html */
@@ -223,6 +230,7 @@ function initBackToMap(){
     await initDevTools()
 
     Hero.watchStickers()
+    Hero.watchParallax()
     initBackToMap()
     /* crossing the mobile breakpoint changes the crop, which moves every pin */
     MapView.watchBreakpoint(repaintPins)
@@ -231,7 +239,13 @@ function initBackToMap(){
       MapView.placeInset()
       Cards.positionMarker()   /* the marker is measured, so it re-measures */
     })
-    bootEl.classList.add('hide')
+
+    /* Everything above has RUN, but the images it points at have not
+       necessarily arrived — and the first screen is almost entirely image.
+       Hold until they have (capped, so a slow line gets the page late
+       rather than never), then fade out onto a finished page. */
+    await Boot.whenReady()
+    Boot.finish()
   }catch(err){
     console.error(err)
     bootEl.innerHTML = `<div class="err">

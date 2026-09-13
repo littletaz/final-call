@@ -1,4 +1,5 @@
-import { TRIP, tripBudget, sleepOptionCost, buildLedger, eur } from './data.js'
+import { TRIP, tripBudget, sleepOptionCost, buildLedger, eur,
+         tripOrigins, resolveOrigin } from './data.js'
 
 /* ============================================================
    FOOTER
@@ -138,17 +139,38 @@ export const Footer = {
      data.js:buildLedger(). No levers: every number is already authored on
      a location (stays/thingsToDo) or in budget.fixed. */
   renderLedger(host, itinerary){
-    const { groups, total } = buildLedger(itinerary)
-    const origin = TRIP.data.budget?.originLabel
+    /* Sticky across re-renders: switching itinerary rebuilds this whole
+       block, and a reader who picked Lyon should not be put back on Paris
+       by choosing a different trip length. */
+    this.originId ??= TRIP.data.budget?.defaultOriginId
+    const origin  = resolveOrigin(this.originId)
+    const origins = tripOrigins()
+    const { groups, total } = buildLedger(itinerary, 'budget', origin?.id)
+
+    /* A real <select>, not a div dressed as one: it comes with keyboard
+       support, the platform's own picker on a phone and a screen-reader
+       role for free. The chevron beside it is ours (the native arrow is
+       hidden in budget.css) so it still matches the Figma control. */
+    const control = origins.length > 1
+      ? `<div class="ledger-origin">
+           <select class="ledger-origin-select" aria-label="Ville de depart">
+             ${origins.map(o => `<option value="${o.id}"${o.id === origin?.id ? ' selected' : ''}
+                >Depart : ${o.label}</option>`).join('')}
+           </select>
+           <span class="ledger-origin-chevron" aria-hidden="true"></span>
+         </div>`
+      : origin
+        ? `<div class="ledger-origin">
+             <span>Depart : ${origin.label}</span>
+             <span class="ledger-origin-chevron" aria-hidden="true"></span>
+           </div>`
+        : ''
 
     host.className = 'bud grid-12'
     host.innerHTML = `
       <header class="ledger-head col-full">
         <p class="ledger-title">Le budget</p>
-        ${origin ? `<div class="ledger-origin">
-          <span>Depart : ${origin}</span>
-          <span class="ledger-origin-chevron" aria-hidden="true"></span>
-        </div>` : ''}
+        ${control}
       </header>
       <div class="ledger-list">
         ${groups.map(g => `
@@ -163,6 +185,28 @@ export const Footer = {
           </details>`).join('')}
         <div class="ledger-total"><span>Total estime</span><span>${eur(total.lo)}–${eur(total.hi)}</span></div>
       </div>`
+
+    /* Delegated, and bound ONCE to the host rather than to the select: this
+       method rewrites host.innerHTML on every itinerary switch and on every
+       origin change, so a listener attached to the element itself is thrown
+       away and re-made constantly, and any path that re-renders without
+       coming back through here would silently leave a dead control. The host
+       outlives all of it.
+
+       Re-render rather than patch the one line: the fare moves the total too,
+       and the group it sits in is rebuilt by the same call. The ledger's
+       height changes with it, but the lower stickers need nothing here —
+       Hero.watchStickers() observes body and re-places them. */
+    if(!this.originBound){
+      this.originBound = true
+      host.addEventListener('change', e => {
+        const sel = e.target.closest?.('.ledger-origin-select')
+        if(!sel) return
+        this.originId = sel.value
+        this.renderLedger(host, this.itinerary ?? itinerary)
+      })
+    }
+    this.itinerary = itinerary
   },
 
   /* v1 — formula/lever model. Unchanged, still used by any trip whose

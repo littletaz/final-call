@@ -26,6 +26,30 @@
   overflow:hidden;
 }
 
+/* ---- the paper between the sections -------------------------------------
+   Figma draws the page as separate frames with empty paper BETWEEN them,
+   and that gap belongs to neither: the padding above already matches the
+   mockup exactly (59/64, and #highlights' own 29/27 likewise), but the two
+   frames were butting straight together, so the page lost the whole seam —
+   ~100px of air on every desktop width. Measured between the frame boxes:
+
+       375   768   1200   1440   2156   3820
+        11    41    115    102     93     93
+
+   1024-1799 takes the 1440 frame and >=1800 the 2156/3820 pair, which
+   agree — the one-band rule in src/js/breakpoints.js. The two mobile
+   frames genuinely differ, so they are solved as a line between them, the
+   same way the other offsets in this file are.
+
+   A margin rather than padding on either neighbour, because the gap is
+   outside both frames; it shows the page ground, which is the same paper
+   the sections sit on (body's --sea, set from map.backgroundColor). */
+#weather{ margin-top:102px }
+@media (min-width:1800px){ #weather{ margin-top:93px } }
+@media (max-width:1023px){
+  #weather{ margin-top:calc(-17.63px + 7.634vw) }   /* 11 @375 -> 41 @768 */
+}
+
 .wx-heading{
   font-weight:200;
   margin:0 0 56px;

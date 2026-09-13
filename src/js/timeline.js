@@ -1,4 +1,6 @@
 import { TRIP, tripAsset, stopDates, handFontHasNoAccents, stripEAccents } from './data.js'
+import { MapView } from './map.js'
+import { ItineraryModal } from './itinerary.js'
 
 /* ============================================================
    TIMELINE
@@ -47,12 +49,12 @@ const readLeg = v => typeof v === 'string' ? { mode: v, badge: true } : (v ?? {}
 
 export const Timeline = {
   root: null, track: null, fill: null, dots: null, marker: null,
-  svg: null, route1: null, route2: null, route1Base: null, route2Base: null,
-  len1: 0, len2: 0,
+  svg: null,
+  /* one entry per hop between consecutive base stops — see buildRoute() */
+  legs: [], totalLen: 0,
   poiLengths: [],
   ranges: [],
   maxDay: 0,
-  boundaryFrac: 0,   /* where leg 1 ends and leg 2 begins on the mini-track, 0-1 */
   cache: null,       /* parsed route.svg, reused across itineraries */
 
   async init(){
@@ -65,7 +67,15 @@ export const Timeline = {
     if(!this.track) return
 
     this.bindDrag()
-    await this.buildRoute()
+    /* The route is generated per itinerary now (see buildRoute), so it is
+       built from setItinerary() rather than once here. */
+    this.root?.removeAttribute('hidden')
+
+    /* The card shows one day; the arrow opens all of them. */
+    ItineraryModal.init()
+    this.root?.querySelector('.tl-link')?.addEventListener('click', () => {
+      ItineraryModal.open(this.itinerary, this.schedule, this.ranges)
+    })
   },
 
   bindDrag(){
@@ -92,121 +102,157 @@ export const Timeline = {
     })
   },
 
-  async buildRoute(){
-    const cfg = TRIP.data.map.route
-    const host = document.getElementById('pois')
-    if(!cfg || !host) return
+  /* ---- the route on the map ------------------------------------------------
+     DRAWN FROM THE PINS, not from an SVG asset. It used to be one authored
+     path (img/map/route.svg) with a fixed five POI marks on it, which meant
+     exactly one itinerary could use it: the other two either got a line to
+     places they never visit, or — because the POI count had to match the
+     base-stop count — lost the scrubber card entirely. Every itinerary now
+     gets its own route, because every itinerary already carries what a route
+     needs: the coordinates of its base stops, in order.
 
-    /* Trip-owned art for the link icon — set as a CSS custom property
-       (same pattern as --sel-panel-img in main.js/main.css) so timeline.css
-       stays trip-agnostic. Only done when this trip actually has a route
-       (i.e. the timeline will show), so a trip without one never 404s. */
+     The geometry is a quadratic through each pair of consecutive bases,
+     bowed perpendicular to the chord so the hops arc like the drawn one
+     rather than reading as a bar chart of straight lines. The bow is a
+     fraction of each chord's own length, so a short hop curves less than a
+     long one and the whole path stays in proportion at any zoom.
+
+     Coordinates are the pins' own, in the BASE IMAGE's pixel space: the
+     viewBox is map.baseSize, which is exactly the aspect #world is drawn at,
+     so the mapping is uniform and a circle stays a circle. (A 0-100 box
+     stretched over the same rect is not: it is 1.45:1 here, which turns the
+     marker into an ellipse and breaks the dash pattern the reveal depends
+     on into visible segments.) Strokes are therefore in user units, and the
+     artwork renders about 1:1 on the desktop canvas.
+
+     Mode per leg comes from the stop you are arriving AT — stops[].arriveBy,
+     which every itinerary already declares — so a flight yellows in and a
+     drive greens, with no new field to author and nothing to keep in sync. */
+  BOW: 0.17,
+
+  async buildRoute(itinerary){
+    const host = document.getElementById('pois')
+    this.svg?.remove()
+    this.svg = null
+    this.legs = []
+    this.badges = []
+    this.totalLen = 0
+    this.poiLengths = []
+    if(!host || !itinerary) return
+
+    const bases = itinerary.stops.filter(s => !s.spur)
+    if(bases.length < 2) return
+
+    const size = TRIP.data.map?.baseSize
+    if(!size) return
+    const visible = MapView.visible()
+    const pts = bases.map(st => {
+      const c = TRIP.byId[st.locationId]?.coordinates
+      /* a stop pinned on the inset map is not on this canvas */
+      return (!c || c.onInset) ? null : { x: c.x * size.w, y: c.y * size.h }
+    })
+    if(pts.some(p => !p)) return
+
+    /* Trip-owned art for the link icon — set as a CSS custom property (same
+       pattern as --sel-panel-img in main.js/main.css) so timeline.css stays
+       trip-agnostic. */
     const abs = file => new URL(tripAsset(file), document.baseURI).href
     document.documentElement.style.setProperty(
       '--tl-link-icon', `url('${abs('img/timeline/link-icon.svg')}')`)
 
-    if(!this.cache){
-      try{
-        const res = await fetch(tripAsset(cfg.src))
-        if(!res.ok) throw new Error(`HTTP ${res.status}`)
-        this.cache = new DOMParser().parseFromString(await res.text(), 'image/svg+xml')
-      }catch(e){
-        console.warn(`[final-call] missing asset: ${cfg.src} — timeline route disabled`)
-        return
-      }
-    }
-    const src = this.cache
-    const d1 = src.getElementById('route-1')?.getAttribute('d')
-    const d2 = src.getElementById('route-2')?.getAttribute('d')
-    if(!d1 || !d2) return
-
     const svg = document.createElementNS(NS, 'svg')
-    svg.setAttribute('viewBox', src.documentElement.getAttribute('viewBox'))
+    /* the visible band of the artwork, in the artwork's own pixels — the
+       same box #world is drawn at, so no stretch in either axis */
+    svg.setAttribute('viewBox', `0 0 ${size.w} ${size.h * visible}`)
     svg.setAttribute('preserveAspectRatio', 'none')
     svg.classList.add('route-layer')
-    svg.style.left   = (cfg.x * 100) + '%'
-    svg.style.top    = (cfg.y * 100) + '%'
-    svg.style.width  = (cfg.w * 100) + '%'
-    svg.style.height = (cfg.h * 100) + '%'
+    svg.style.inset = '0'
+    svg.style.width = '100%'
+    svg.style.height = '100%'
 
-    /* The travelled copy is a pixel wider than the black one it covers, so
-       the leg visibly thickens as well as colours as you pass it — and the
-       black never peeks out from under it along the curve. */
-    const mk = (id, d, color, width) => {
+    const mk = (d, color, width) => {
       const p = document.createElementNS(NS, 'path')
       p.setAttribute('d', d)
-      p.setAttribute('id', id)
       p.setAttribute('stroke', color)
       p.setAttribute('stroke-width', width)
+      p.setAttribute('stroke-linecap', 'round')
       p.setAttribute('fill', 'none')
       return p
     }
-    /* The route is ALWAYS fully drawn, in black, so it never looks "lost" —
-       a second copy on top reveals via dasharray as you scrub past it, so
-       the travelled portion colours itself in by transport. */
-    const leg1 = readLeg(cfg.legs?.['route-1'])
-    const leg2 = readLeg(cfg.legs?.['route-2'])
-    this.route1Base = mk('route-1-base', d1, ROUTE_BLACK, ROUTE_W)
-    this.route2Base = mk('route-2-base', d2, ROUTE_BLACK, ROUTE_W)
-    this.route1 = mk('route-1', d1, legColor(leg1), ROUTE_W_ACTIVE)
-    this.route2 = mk('route-2', d2, legColor(leg2), ROUTE_W_ACTIVE)
 
-    /* the card's mini-track mirrors the map's two-tone split, so it reads
-       its colours from the same place rather than repeating them */
-    this.track?.style.setProperty('--leg-1', legColor(leg1))
-    this.track?.style.setProperty('--leg-2', legColor(leg2))
+    for(let i = 0; i < pts.length - 1; i++){
+      const a = pts[i], b = pts[i + 1]
+      const dx = b.x - a.x, dy = b.y - a.y
+      /* control point: the chord's midpoint, pushed along the chord's own
+         normal. One consistent sign, so every hop bows the same way round
+         and the path reads as one journey rather than a zigzag. */
+      const cx = (a.x + b.x) / 2 + dy * this.BOW
+      const cy = (a.y + b.y) / 2 - dx * this.BOW
+      const d = `M${a.x} ${a.y} Q${cx} ${cy} ${b.x} ${b.y}`
+
+      const mode = bases[i + 1].arriveBy === 'flight' ? 'plane' : 'car'
+      const color = legColor({ mode })
+      const base = mk(d, ROUTE_BLACK, ROUTE_W)
+      const path = mk(d, color, ROUTE_W_ACTIVE)
+      svg.append(base, path)
+      this.legs.push({ base, path, mode, color, start: 0, len: 0 })
+    }
+
     this.mapMarker = document.createElementNS(NS, 'circle')
     this.mapMarker.setAttribute('r', '9')
     this.mapMarker.setAttribute('fill', '#fff')
     this.mapMarker.setAttribute('stroke', '#1C2321')
     this.mapMarker.setAttribute('stroke-width', '2.5')
     this.mapMarker.classList.add('route-marker')
+    svg.appendChild(this.mapMarker)
 
-    svg.append(this.route1Base, this.route2Base, this.route1, this.route2, this.mapMarker)
     host.appendChild(svg)
     this.svg = svg
 
-    this.len1 = this.route1.getTotalLength()
-    this.len2 = this.route2.getTotalLength()
-    /* The dash pattern is each leg's whole length and never changes — only
-       the OFFSET moves, and moving it is what reveals the route. Set once
-       here rather than on every scrub, so the tween has nothing to fight. */
-    this.route1.setAttribute('stroke-dasharray', this.len1)
-    this.route2.setAttribute('stroke-dasharray', this.len2)
+    /* lengths are only measurable once the paths are in the document */
+    let at = 0
+    for(const leg of this.legs){
+      leg.len = leg.path.getTotalLength()
+      leg.start = at
+      at += leg.len
+      /* The dash pattern is the leg's whole length and never changes — only
+         the OFFSET moves, and moving it is what reveals the route. */
+      leg.path.setAttribute('stroke-dasharray', leg.len)
+      leg.path.setAttribute('stroke-dashoffset', leg.len)
+    }
+    this.totalLen = at
+
+    /* A base stop sits at the join between its legs, which is a length we
+       already know exactly — no nearest-point search needed now the path is
+       built from those very points. */
+    this.poiLengths = [0, ...this.legs.map(l => l.start + l.len)]
+
+    /* the card's mini-track mirrors the map's colour walk, so it reads its
+       stops from the same lengths rather than repeating them. Before the
+       badges, because everything past the first await is not guaranteed to
+       have run by the time setItinerary() continues. */
+    this.trackGradient()
 
     /* ---- transport badges ----
-       Figma pins a 22px black disc with a white glyph at the middle of the
-       flight arc (node 169:1655), which is the leg's "how you get there"
-       told in one mark. Which legs get one, and which glyph, is data —
-       map.route.legs maps a path id in route.svg to a file in
-       img/transport/ (plane, car, bus, train) — so a trip that drives its
-       second leg just says so rather than needing code.
-
-       Drawn in the route's own user units: route.svg is stretched with
-       preserveAspectRatio="none", but its box and viewBox agree to within
-       half a percent, so a circle stays a circle. */
-    this.badges = []
-    for(const [pathId, raw] of Object.entries(cfg.legs ?? {})){
-      const leg = readLeg(raw)
-      if(!leg.badge) continue
-      const isSecond = pathId === 'route-2'
-      const path = isSecond ? this.route2 : pathId === 'route-1' ? this.route1 : null
-      if(!path) continue
-
-      const half = path.getTotalLength() / 2
-      const mid = path.getPointAtLength(half)
+       Figma pins a 22px disc with a white glyph at the middle of the flight
+       arc (node 169:1655): the leg's "how you get there" told in one mark.
+       Only flights are badged, as Figma draws it — a drive reads from the
+       line's colour alone. */
+    for(const leg of this.legs){
+      if(leg.mode !== 'plane') continue
+      const half = leg.len / 2
+      const mid = leg.path.getPointAtLength(half)
       const g = document.createElementNS(NS, 'g')
       g.classList.add('route-badge')
       const disc = document.createElementNS(NS, 'circle')
       disc.setAttribute('cx', mid.x); disc.setAttribute('cy', mid.y)
-      disc.setAttribute('r', '11.2')          /* 22px across on the 1440 canvas */
+      disc.setAttribute('r', '11.2')        /* 22px across on the 1440 canvas */
       disc.setAttribute('fill', ROUTE_BLACK)
       g.appendChild(disc)
 
-      /* The glyph is INLINED rather than referenced as an <image>, because
-         it has to recolour: an external image can't be restyled from here,
-         and the icon turns its leg's colour once you've travelled past it.
-         Its own fills become currentColor so one property drives it. */
+      /* The glyph is INLINED rather than referenced as an <image>, because it
+         has to recolour: an external image can't be restyled from here, and
+         the icon turns its leg's colour once you've travelled past it. */
       const glyph = await this.loadGlyph(leg.mode)
       if(glyph){
         glyph.setAttribute('transform',
@@ -214,28 +260,22 @@ export const Timeline = {
         g.appendChild(glyph)
       }
       svg.appendChild(g)
-      /* where this badge sits along the COMBINED path, so drawRoute() can
-         tell when the reveal has reached it */
-      this.badges.push({ el: g, disc, at: (isSecond ? this.len1 : 0) + half, color: legColor(leg) })
+      this.badges.push({ el: g, disc, at: leg.start + half, color: leg.color })
     }
+  },
 
-    /* The container (which also holds #length-tabs) is shown as soon as the
-       trip has route art at all. Per-itinerary route/POI mismatches below
-       only hide the CARD (see setItinerary()) — the length switcher must
-       stay reachable so a trip stuck on a mismatched variant can still
-       switch back to one that works. */
-    this.root?.removeAttribute('hidden')
-
-    /* Map each POI rect (in the order Figma authored them — start to end
-       of the journey) to how far along the combined path it sits, by
-       finding the closest sampled point. 200 samples is plenty for a
-       couple of smooth bezier curves. */
-    const rects = [...src.querySelectorAll('rect[id^="POI"]')]
-    this.poiLengths = rects.map(r => {
-      const cx = Number(r.getAttribute('x')) + Number(r.getAttribute('width')) / 2
-      const cy = Number(r.getAttribute('y')) + Number(r.getAttribute('height')) / 2
-      return this.nearestLength(cx, cy)
+  /* The mini-track is the route seen end-on, so it carries the same colours
+     in the same proportions: one gradient with a hard stop at every leg
+     boundary. Built here rather than as two fixed spans, which could only
+     ever describe a two-leg trip. */
+  trackGradient(){
+    if(!this.fillY || !this.totalLen) return
+    const stops = this.legs.flatMap(l => {
+      const a = (l.start / this.totalLen * 100).toFixed(3)
+      const b = ((l.start + l.len) / this.totalLen * 100).toFixed(3)
+      return [`${l.color} ${a}%`, `${l.color} ${b}%`]
     })
+    this.fillY.style.background = `linear-gradient(to right, ${stops.join(',')})`
   },
 
   /* Fetches one transport glyph and hands back a <g> of its contents, with
@@ -274,25 +314,17 @@ export const Timeline = {
     return proto ? proto.cloneNode(true) : null
   },
 
-  nearestLength(x, y){
-    const total = this.len1 + this.len2
-    let best = 0, bestDist = Infinity
-    const STEPS = 200
-    for(let i = 0; i <= STEPS; i++){
-      const len = total * i / STEPS
-      const p = len <= this.len1
-        ? this.route1.getPointAtLength(len)
-        : this.route2.getPointAtLength(len - this.len1)
-      const dist = (p.x - x) ** 2 + (p.y - y) ** 2
-      if(dist < bestDist){ bestDist = dist; best = len }
-    }
-    return best
-  },
-
+  /* Which leg a length falls on, and where along it. Clamped at both ends so
+     the marker parks on the first/last pin rather than vanishing. */
   pointAt(len){
-    return len <= this.len1
-      ? this.route1.getPointAtLength(len)
-      : this.route2.getPointAtLength(Math.min(len - this.len1, this.len2))
+    if(!this.legs.length) return { x:0, y:0 }
+    const clamped = Math.max(0, Math.min(len, this.totalLen))
+    for(const leg of this.legs){
+      if(clamped <= leg.start + leg.len)
+        return leg.path.getPointAtLength(clamped - leg.start)
+    }
+    const last = this.legs[this.legs.length - 1]
+    return last.path.getPointAtLength(last.len)
   },
 
   /* Rebuilds day ranges, the mini-track's dots, and the quick-jump tabs
@@ -300,13 +332,20 @@ export const Timeline = {
      stopDates() so this can never drift from the dates shown elsewhere. */
   setItinerary(itinerary){
     const bases = itinerary.stops.filter(s => !s.spur)
-    if(!this.svg || bases.length !== this.poiLengths?.length){
-      /* route.svg's POI count doesn't match this itinerary's base-stop
-         count — the two are only guaranteed to line up for the itinerary
-         the route was drawn against. Hide the CARD rather than show
-         something wrong — not the whole container, so #length-tabs (a
-         sibling inside it) stays usable to switch to a variant that
-         does line up. */
+
+    /* The route is this itinerary's own now, generated from its stops, so it
+       is rebuilt on every switch. It is also awaited nowhere: buildRoute's
+       only async step is fetching a transport glyph for a badge, and the
+       line, the lengths and the card are all in place before that resolves.
+       Everything below reads this.poiLengths, which buildRoute has already
+       written synchronously. */
+    this.buildRoute(itinerary)
+
+    if(!this.legs.length || bases.length !== this.poiLengths.length){
+      /* Fewer than two base stops, or a stop with no coordinates on this
+         canvas — there is no line to scrub along. Hide the CARD, not the
+         whole container, so #length-tabs (a sibling inside it) stays usable
+         to switch to a variant that does work. */
       this.card?.toggleAttribute('hidden', true)
       return
     }
@@ -327,7 +366,6 @@ export const Timeline = {
       }
     })
     this.maxDay = Math.max(itinerary.days - 1, this.ranges.at(-1)?.end ?? 0)
-    this.boundaryFrac = this.ranges.length > 1 ? this.ranges[1].start / this.maxDay : 1
     this.schedule = this.buildSchedule(itinerary)
     this.routeLen = null
 
@@ -444,9 +482,12 @@ export const Timeline = {
   ROUTE_MS: 1000,
 
   drawRoute(len){
-    if(!this.route1 || !this.route2) return
-    this.route1.setAttribute('stroke-dashoffset', this.len1 - Math.min(len, this.len1))
-    this.route2.setAttribute('stroke-dashoffset', this.len2 - Math.max(0, len - this.len1))
+    if(!this.legs.length) return
+    /* each leg reveals only its own share of the sweep */
+    for(const leg of this.legs){
+      const done = Math.max(0, Math.min(len - leg.start, leg.len))
+      leg.path.setAttribute('stroke-dashoffset', leg.len - done)
+    }
     const p = this.pointAt(len)
     this.mapMarker.setAttribute('cx', p.x)
     this.mapMarker.setAttribute('cy', p.y)
@@ -463,7 +504,7 @@ export const Timeline = {
   },
 
   animateRoute(target){
-    if(!this.route1 || !this.route2) return
+    if(!this.legs.length) return
     cancelAnimationFrame(this.routeRaf)
 
     /* routeLen is null until the first paint of an itinerary, so switching
@@ -505,15 +546,12 @@ export const Timeline = {
     document.querySelectorAll('#pois .poi').forEach(btn =>
       btn.classList.toggle('is-current', btn.dataset.locationId === activeId))
 
-    /* the mini track's own fill/marker — two-tone, same split as the map route */
+    /* The mini track's own fill — the whole colour walk is painted once as a
+       gradient (trackGradient) and revealed by clipping, so the colours stay
+       anchored to their legs instead of stretching as the fill grows. */
     const dayFrac = this.maxDay > 0 ? t / this.maxDay : 0
-    if(this.fillY){
-      const yellowFrac = Math.min(dayFrac, this.boundaryFrac)
-      const greenFrac = Math.max(0, dayFrac - this.boundaryFrac)
-      this.fillY.style.width = `${yellowFrac * 100}%`
-      this.track.style.setProperty('--green-left', `${this.boundaryFrac * 100}%`)
-      this.track.style.setProperty('--green-width', `${greenFrac * 100}%`)
-    }
+    if(this.fillY)
+      this.fillY.style.clipPath = `inset(0 ${((1 - dayFrac) * 100).toFixed(3)}% 0 0)`
     if(this.marker) this.marker.style.left = `${dayFrac * 100}%`
     this.track.setAttribute('aria-valuenow', t)
 

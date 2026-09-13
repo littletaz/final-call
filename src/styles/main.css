@@ -45,7 +45,9 @@ body{
 
 /* ---------- loading / error ---------- */
 #boot{
-  position:fixed;inset:0;z-index:900;background:var(--sea);
+  /* above everything including the sticker layer (940) and the POI card
+     (960) — it is covering the whole page while it assembles */
+  position:fixed;inset:0;z-index:1000;background:var(--sea);
   display:flex;align-items:center;justify-content:center;
   font-family:var(--sans);font-weight:500;font-size:11px;letter-spacing:.16em;
   color:rgba(255,255,255,.7);text-align:center;padding:8vw;
@@ -160,12 +162,17 @@ body{
    192px of empty paper under the map that the 1440 mockup doesn't draw.
    So the base is the narrow band and ≥1800 is the exception.
 
-   The 45px left under the window is tighter than the fade needs — exactly
-   as Figma draws it, and invisible because the section below is the same
-   paper. Mobile has no window, so there it falls back to the whole
-   image's own height. */
-#stage.has-map-crop{ height:1285px }                               /* 1408 − 123 */
-@media(min-width:1800px){ #stage.has-map-crop{ height:1477px } }   /* 1600 − 123 */
+   206px is left under the window, which is what the fade actually needs:
+   the map frame RENDERS 1440x1446 at 1440 and 2156x1446 at 2156 (its own
+   bounds, not the 1273 the layer box reports — the mask group reaches past
+   it top and bottom), so the band is 1569 − 123 = 1446 at every desktop
+   width and the bottom ramp finishes inside it instead of being cut at 45.
+   That is also why this no longer steps at 1800: the map frame is the same
+   height in the 1440, 2156 and 3820 frames alike, and what changes past
+   1800 is only where the section BELOW starts — which is now the overlap
+   in highlights.css, not this height. Mobile has no window, so there it
+   falls back to the whole image's own height. */
+#stage.has-map-crop{ height:1446px }                       /* 1569 − 123 */
 @media(max-width:1023px){ #stage.has-map-crop{ height:var(--map-band-h) } }
 
 #stage.has-map-crop #world{
@@ -227,10 +234,7 @@ body{
   --map-fade:120px;
   --map-window-x:calc((100% - 1908px) / 2);
   --map-window-top:120px;
-  --map-window-bottom:45px;     /* 1285 band − 120 − 1120 */
-}
-@media(min-width:1800px){
-  #stage.has-map-crop{ --map-window-bottom:237px }  /* 1477 − 120 − 1120 */
+  --map-window-bottom:206px;    /* 1446 band − 120 − 1120 */
 }
 /* Mobile has no window at all — the 768 and 375 frames show the whole
    image unmasked — so the vertical stops collapse and only the (already
@@ -331,7 +335,17 @@ body{
 /* ---------- POIs ---------- */
 #pois{z-index:8;pointer-events:none}
 #pois .poi{pointer-events:auto}
+/* ---- what sits on top of what, inside #pois ----
+   The route is drawn INTO #pois (Timeline.buildRoute) and so shares a
+   stacking context with the pins. Order, bottom to top: the line, then the
+   day-trip dots, then the stop pins — a pin is the thing you click and must
+   never be crossed by the line it is the endpoint of, and a dot is smaller
+   than a pin so it loses when they overlap. Without this the route paints
+   over every marker, because it is appended last. */
+.route-layer{ z-index:1 }
+.poi[data-pin-type="daytrip"]{ z-index:2 }
 .poi{
+  z-index:3;
   /* --poi-anchor-y lets a pin's own viewBox override WHERE on itself the
      coordinate lands — the dot, not the button's own box centre, is the
      real anchor (see the per-type overrides below); anything without one
@@ -709,11 +723,14 @@ body{
    scrollbar, the viewport widens by its width, and everything on the page
    shifts. Reserving the gutter permanently means locking changes nothing. */
 html{scrollbar-gutter:stable}
-body.has-poi{overflow:hidden}
+body.has-poi,body.has-itin{overflow:hidden}
 
-/* Fixed heights, not a percentage of the viewport: the card holds a title,
-   three hotels and a date, and that content wants a set amount of room. A vh
-   height makes it gangly on a tall screen and cramped on a short one. */
+/* Height comes from the content now, within bounds: the card holds a title,
+   three hotels, up to five things to do and a date, and a location with two
+   things to do should not leave half a card of white under them. The floor
+   keeps it from looking flimsy for a short one; the ceiling keeps it on
+   screen. (It was a fixed 600/775px when the lower half was always filled by
+   photo prints — see poicard.js.) */
 #poi-card{
   position:fixed;
   right:var(--grid-margin);
@@ -721,26 +738,22 @@ body.has-poi{overflow:hidden}
   transform:translateY(-50%);
   z-index:960;
   width:clamp(300px, 26vw, 420px);
-  height:600px;                    /* 1440-ish */
+  height:auto;
+  min-height:420px;
   max-height:calc(100vh - 60px);
   opacity:0;
   pointer-events:none;
   transition:opacity .28s ease;
 }
-@media(min-width:1600px){
-  #poi-card{height:775px}
-}
 #poi-card.is-open{opacity:1;pointer-events:auto}
 
-/* The wrapper crops everything. That's the whole trick: the prints are
-   absolutely placed against it and can hang past any edge, and overflow:hidden
-   decides what's seen — rather than me positioning them to line up with an
-   edge I can't see. */
 .pc-body{
   position:relative;
   height:100%;
   background:#fff;color:#111;
-  border-radius:3px;
+  /* the same 10px the timeline card uses (timeline.css) — the two are the
+     same object in the design language: a white card laid on the map */
+  border-radius:10px;
   overflow:hidden;
   box-shadow:0 18px 50px rgba(0,0,0,.28);
 }
@@ -759,31 +772,42 @@ body.has-poi{overflow:hidden}
 .pc-close:focus-visible{outline:2px solid var(--seal);outline-offset:-4px;opacity:1}
 .pc-close svg{display:block;width:100%;height:100%}
 
-/* the words, from the top */
+/* the words — the whole card now */
 .pc-content{
   position:relative;z-index:2;
-  margin-top:80px;
-  padding:0 24px;
+  padding:64px 24px 26px;
+  /* a location with a long list scrolls inside the card rather than pushing
+     it past max-height and losing the bottom of it off screen */
+  max-height:calc(100vh - 60px);
+  overflow-y:auto;
 }
 
-/* the prints, along the bottom */
-.pc-photos{
-  position:absolute;z-index:1;
-  left:0;right:0;bottom:0;
-  height:42%;
-  pointer-events:none;
+/* ---- what there is to do there ----
+   Under the hotels, because where you sleep is the decision and this is the
+   reason. Name on the left, price on the right, on the same read as the
+   budget ledger's rows — a free entry says so rather than showing nothing,
+   since "free" next to a headland walk is the selling point. */
+.pc-todo{
+  list-style:none;
+  margin:18px 0 0;
+  padding:14px 0 0;
+  border-top:1px solid var(--hairline);
 }
-.pc-photo{
-  /* left, bottom, rotation and depth all come from the markup — see TILT in
-     js/poicard.js. Only the size and frame live here. */
-  position:absolute;
-  width:78%;margin:0;
-  aspect-ratio:3/2;
-  transform:rotate(var(--tilt, 0deg));
-  border:10px solid #F7F7F7;
-  overflow:hidden;
+.pc-todo-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:14px;
+  padding:5px 0;
+  font-size:13px;
+  line-height:1.35;
 }
-.pc-photo img{display:block;width:100%;height:100%;object-fit:cover}
+.pc-todo-name{ color:#3A3A34 }
+.pc-todo-price{
+  flex:none;
+  color:#7A7A70;
+  font-variant-numeric:tabular-nums;
+}
 
 .pc-title{
   font-family:var(--sans);font-weight:500;
@@ -1026,14 +1050,11 @@ body.has-poi{overflow:hidden}
 
   /* ---- the poi card ---- */
   /* A sheet across the bottom, not a floating card: at this width a card with
-     margins is just a smaller card, and the page behind it is locked anyway. */
-  /* A sheet across the bottom, with the prints inside it rather than hanging
-     out — so it reads taller and can never exceed the viewport. */
-  /* a sheet across the bottom, prints on top, words below — same order as the
-     desktop card, just filling the width and capped at the viewport */
+     margins is just a smaller card, and the page behind it is locked anyway.
+     It is as tall as its content, capped at the viewport. */
   #poi-card{
     left:0;right:0;bottom:0;top:auto;
-    width:auto;height:auto;
+    width:auto;height:auto;min-height:0;
     max-height:100vh;max-height:100dvh;
     transform:translateY(100%);
     transition:opacity .28s ease, transform .3s cubic-bezier(.3,1,.4,1);
@@ -1044,11 +1065,7 @@ body.has-poi{overflow:hidden}
     border-radius:16px 16px 0 0;
     box-shadow:0 -12px 40px rgba(0,0,0,.3);
   }
-  /* on the sheet the prints are in flow, so it can never exceed the viewport */
-  .pc-photos{position:relative;height:24vh;margin-top:18px}
-  /* bottom comes from the markup and would win anyway — only the size differs */
-  .pc-photo{width:62%}
-  .pc-content{margin-top:44px;padding:0 6%}
+  .pc-content{padding:44px 6% 22px;max-height:100vh;max-height:100dvh}
   .pc-title{font-size:26px;margin-bottom:16px}
   .hotel{padding:10px 14px 12px}
   .hotel .name{font-size:15px}
@@ -1253,3 +1270,71 @@ img.is-missing{
   object-fit:contain !important;
   background:#1E222B;
 }
+
+/* ============================================================
+   BOOT — the sticker stack
+   See src/js/boot.js. Every sticker runs the SAME animation over the
+   same cycle and is offset into it by its own delay, so they share one
+   timeline and cannot drift apart however long the load takes.
+
+   The motion is scale only. Each sticker materialises at the position
+   it will keep — no sliding, no rotation into place, no drifting in
+   from outside the frame — and the whole sense of life comes from a
+   bump so small you would struggle to name it: 94% up past 100 to
+   103, then settling back. The overshoot is 3%, which on a 150px
+   sticker is four and a half pixels.
+
+   The easing is doing the real work. The rise uses a curve that
+   starts fast and decelerates hard, so the sticker arrives with
+   weight rather than floating up; the settle is gentler still, so it
+   comes to rest instead of springing. Nothing here is elastic — a
+   cubic-bezier with a y overshoot would add a second, smaller bounce,
+   which is exactly the playful register to avoid.
+   ============================================================ */
+.boot-stack{
+  position:relative;
+  display:grid;
+  place-items:center;
+  width:min(58vw, 300px);
+  aspect-ratio:1;
+}
+.boot-sticker{
+  /* every sticker on the same cell, so they stack rather than flow */
+  grid-area:1 / 1;
+  width:46%;
+  height:auto;
+  /* the offsets are the pile's own geometry and never animate — only
+     scale does, so the sticker cannot appear to travel */
+  translate:var(--dx) var(--dy);
+  rotate:var(--rot);
+  filter:drop-shadow(-2px 4px 10px rgba(79,57,17,.34));
+  opacity:0;
+  transform:scale(.94);
+}
+.boot-stack.is-running .boot-sticker{
+  animation:boot-place var(--boot-cycle, 3s) linear infinite;
+}
+
+@keyframes boot-place{
+  /* not here yet */
+  0%   { opacity:0; transform:scale(.94) }
+  /* Materialise: opacity is a step, not a fade — the brief is that the
+     sticker appears rather than fades in, so the eye reads the scale,
+     not the alpha. */
+  0.1% { opacity:1; transform:scale(.94) }
+  /* up past its size, decelerating — the weight of being set down */
+  9%   { opacity:1; transform:scale(1.03); animation-timing-function:cubic-bezier(.22,.9,.28,1) }
+  /* and settling back, slower than it rose */
+  20%  { opacity:1; transform:scale(1);    animation-timing-function:cubic-bezier(.33,0,.25,1) }
+  /* perfectly still for the rest of the cycle while the others land */
+  100% { opacity:1; transform:scale(1) }
+}
+
+/* Reduced motion gets the finished stack, held — the information is
+   "something is loading", and that survives without the movement. */
+@media (prefers-reduced-motion:reduce){
+  .boot-sticker{ opacity:1; transform:none }
+}
+
+#boot{ transition:opacity .42s ease }
+#boot.is-done{ opacity:0; pointer-events:none }

@@ -207,6 +207,25 @@ function validateTrip(path){
     }
 
     if(it.flights == null) warn(name, `${tag}: no flights count — dataviz will show 0`)
+
+    /* An internal flight is a real cost and an easy one to forget: every base
+       stop after the first that you ARRIVE AT by air should have a line to
+       pay for it, on this itinerary (not the trip — see buildLedger). */
+    const flown = (it.stops ?? []).filter((s, i) => !s.spur && i > 0 && s.arriveBy === 'flight')
+    for(const s of flown){
+      const paid = (it.fixed ?? []).some(f => f.locationId === s.locationId)
+      if(!paid)
+        warn(name, `${tag}: you fly into ${s.locationId} but no itineraries.${it.id}.fixed line pays for it`)
+    }
+    for(const [i, f] of (it.fixed ?? []).entries()){
+      if(!f?.id) err(name, `${tag}.fixed[${i}]: id is required`)
+      if(!f?.label) err(name, `${tag}.fixed[${i}]: label is required`)
+      if(!Array.isArray(f?.eur) || f.eur.length !== 2)
+        err(name, `${tag}.fixed[${i}]: eur must be [lo, hi]`)
+      else if(f.eur[0] > f.eur[1]) err(name, `${tag}.fixed[${i}]: lo > hi`)
+      if(f?.locationId && !ids.has(f.locationId))
+        err(name, `${tag}.fixed[${i}]: unknown locationId "${f.locationId}"`)
+    }
   }
   ok(`${t.itineraries.length} itineraries`)
 
@@ -230,7 +249,12 @@ function validateTrip(path){
   const ui = t.artDirection?.ui
   if(ui?.selectorPanel) checkAsset(ui.selectorPanel, 'artDirection.ui.selectorPanel')
   if(ui?.selectorTab)   checkAsset(ui.selectorTab,   'artDirection.ui.selectorTab')
-  checkAsset(t.map?.logo || 'logo.png', 'map.logo')
+  /* v1 drew the title as an image inside the map frame; v2's Hero renders it
+     as real text or as hero.logo, and trip.html no longer ships a #logo at
+     all. So this is only worth checking when a trip still declares one —
+     defaulting to 'logo.png' just warned every v2 trip about a file it has
+     no use for. See MapView.build(). */
+  if(t.map?.logo) checkAsset(t.map.logo, 'map.logo')
 
   /* sprites moved into the data, so they're worth checking */
   for(const [key, arr] of [['clouds', t.map?.clouds], ['waves', t.map?.waves]]){
@@ -349,6 +373,69 @@ function validateTrip(path){
   if(!t.map?.backgroundColor)
     warn(name, 'no map.backgroundColor — falls back to the --sea token, which may not match the artwork')
 
+  /* ---------- v2 sections: hero, highlights, weather, route ----------
+     Everything below is drawn straight from the data or from a fixed path by
+     convention, and every one of them fails quietly — a placeholder, a bare
+     disc, a missing glyph — so a typo survives a whole review. Each check is
+     gated on the section actually being present: a trip without highlights
+     owes no arrows. */
+
+  if(t.hero?.logo) checkAsset(t.hero.logo, 'hero.logo')
+  for(const [i, sticker] of (t.hero?.stickers ?? []).entries()){
+    if(!sticker.src){ err(name, `hero.stickers[${i}]: src is required`); continue }
+    checkAsset(sticker.src, `hero.stickers[${i}].src`)
+    /* wide is the desktop canvas and isn't optional — narrow is (Figma's 375
+       frame drops the kangaroo), and a sticker with neither is never drawn. */
+    if(!sticker.wide) err(name, `hero.stickers[${i}] ("${sticker.src}"): no wide block — it will never be drawn`)
+    for(const bp of ['wide', 'narrow']){
+      const b = sticker[bp]
+      if(!b) continue
+      for(const k of ['x', 'y', 'w'])
+        if(typeof b[k] !== 'number') err(name, `hero.stickers[${i}].${bp}.${k} must be a number`)
+    }
+  }
+
+  if(t.highlights?.length){
+    for(const [i, h] of t.highlights.entries()){
+      if(!h.src){ err(name, `highlights[${i}]: src is required`); continue }
+      checkAsset(h.src, `highlights[${i}].src`)
+      if(!h.alt) warn(name, `highlights[${i}] ("${h.src}"): no alt text`)
+    }
+    /* the rail's own chrome, loaded by path — see Highlights.mount() */
+    for(const a of ['prev', 'next'])
+      checkAsset(`img/highlights/arrow-${a}.svg`, 'highlights arrow')
+  }
+
+  /* the postcard between the two weather cards — Weather.render() */
+  if(t.weather?.length) checkAsset('img/weather/postcard.png', 'weather postcard')
+
+  const route = t.map?.route
+  if(route){
+    checkAsset(route.src, 'map.route.src')
+    for(const k of ['x', 'y', 'w', 'h'])
+      if(typeof route[k] !== 'number')
+        err(name, `map.route.${k} must be a number (fraction of the map image)`)
+    /* one glyph file per distinct mode, fetched by name — Timeline.loadGlyph() */
+    const MODES = ['plane', 'car', 'bus', 'train']
+    const modes = new Set()
+    for(const [id, leg] of Object.entries(route.legs ?? {})){
+      if(id.startsWith('_')) continue
+      const mode = typeof leg === 'string' ? leg : leg?.mode
+      if(!mode){ err(name, `map.route.legs.${id}: no mode`); continue }
+      if(!MODES.includes(mode))
+        err(name, `map.route.legs.${id}: mode "${mode}" isn't one of ${MODES.join(' | ')}`)
+      else modes.add(mode)
+    }
+    for(const m of modes)
+      checkAsset(`img/transport/${m}.svg`, 'transport glyph')
+  }
+
+  /* trip-owned chrome the timeline and its tabs load by path, whenever a trip
+     has itineraries at all — see Timeline.mount() and Cards.mount() */
+  if(t.itineraries?.length)
+    for(const f of ['link-icon.svg', 'tab-underline.svg', 'tab-underline-active.svg'])
+      checkAsset(`img/timeline/${f}`, 'timeline chrome')
+
   /* ---------- budget ---------- */
   if(t.budget){
     const tierIds = (t.budget.comfortTiers ?? []).map(x => x.id)
@@ -358,6 +445,35 @@ function validateTrip(path){
       const b = c.baseEUR
       if(!Array.isArray(b) || b.length !== 2) err(name, `budget "${c.id}": baseEUR must be [lo, hi]`)
       else if(b[0] > b[1]) err(name, `budget "${c.id}": lo > hi`)
+    }
+    /* The departure cities the ledger's dropdown offers. A default that
+       names no city silently falls back to the first one, which is a
+       different fare than the author meant to show first. */
+    const origins = t.budget.origins
+    if(origins){
+      if(!Array.isArray(origins) || !origins.length)
+        err(name, 'budget.origins must be a non-empty array')
+      else {
+        const seen = new Set()
+        for(const [i, o] of origins.entries()){
+          if(!o?.id){ err(name, `budget.origins[${i}]: id is required`); continue }
+          if(seen.has(o.id)) err(name, `budget.origins: duplicate id "${o.id}"`)
+          seen.add(o.id)
+          if(!o.label) err(name, `budget.origins[${i}] ("${o.id}"): label is required`)
+          const e = o.eur
+          if(!Array.isArray(e) || e.length !== 2)
+            err(name, `budget.origins[${i}] ("${o.id}"): eur must be [lo, hi]`)
+          else if(e[0] > e[1])
+            err(name, `budget.origins[${i}] ("${o.id}"): lo > hi`)
+        }
+        if(t.budget.defaultOriginId && !seen.has(t.budget.defaultOriginId))
+          err(name, `budget.defaultOriginId "${t.budget.defaultOriginId}" isn't in budget.origins`)
+        else if(!t.budget.defaultOriginId)
+          warn(name, 'no budget.defaultOriginId — the ledger opens on the first city listed')
+        const at = t.budget.originLocationId
+        if(at && !ids.has(at))
+          err(name, `budget.originLocationId "${at}" is not a known location`)
+      }
     }
   } else warn(name, 'no budget block — the footer will fall back to defaults')
 

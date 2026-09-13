@@ -6,8 +6,42 @@
 #highlights{
   position:relative;
   padding:29px 0 27px;
-  background:var(--hero-paper,#F7F4EF);
+  /* Transparent, not paper: the section OVERLAPS the map band (below), so
+     anything opaque here would hide the very thing the overlap exists to
+     show. It resolves to the same colour either way — the band's own
+     background and the page ground are both --sea, which MapView sets from
+     map.backgroundColor, and that is the paper the map fades into. */
+  background:transparent;
   overflow:hidden;
+}
+
+/* ---- the overlap onto the map ------------------------------------------
+   The map frame is taller than the band used to be and the next section
+   rides UP over its bottom, so the artwork dissolves behind the photos
+   instead of stopping at a seam. The band now runs to the map frame's real
+   bottom (1569 at every desktop width — see main.css), and this margin puts
+   this section back exactly where it was, so nothing below it moves:
+
+       band ends   this starts   margin
+       1024-1799        1569          1408    -161
+       >=1800           1569          1600     +31   (a gap, not an overlap)
+
+   Past 1800 Figma stops overlapping and leaves 31px of paper instead — the
+   map frame is the same height there, but "03 — why" starts 192px lower.
+
+   On mobile the band is the whole image and the overlap is smaller: the 375
+   frame starts this section 26px into the map, the 768 one 116px. They
+   differ, so they are solved as a line between the two authored frames the
+   way the other mobile offsets in this pass are. There the photos overlap
+   real artwork rather than the fade, which is exactly what those frames
+   draw. */
+#stage.has-map-crop ~ #highlights{ margin-top:-161px }
+@media (min-width:1800px){
+  #stage.has-map-crop ~ #highlights{ margin-top:31px }
+}
+@media (max-width:1023px){
+  /* -26 @375 -> -116 @768 */
+  #stage.has-map-crop ~ #highlights{ margin-top:calc(59.88px - 22.9vw) }
 }
 
 .hl-heading{

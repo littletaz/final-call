@@ -1,5 +1,4 @@
-import { TRIP, tripAsset, stayTotal, stopDates, bookingUrl, eur } from './data.js'
-import { watchImages } from './placeholder.js'
+import { TRIP, stayTotal, stopDates, bookingUrl, eur } from './data.js'
 import { isNarrow } from './breakpoints.js'
 
 /* ============================================================
@@ -9,18 +8,16 @@ import { isNarrow } from './breakpoints.js'
    position is the same every time — a card that moves is a card
    you have to find.
 
-   Photos sit behind it at an angle, a couple showing past the
-   edge, rather than being the content.
+   Where to sleep, then what to actually do there. The tilted photo
+   prints that used to fill the lower half are gone: they were
+   decoration in the one place on the page with something concrete
+   to say, and the things-to-do list now has that room.
    ============================================================ */
 
-const PHOTOS = 2          /* how many show below the card */
-/* Pinned to the bottom of the card and cropped by it — the wrapper's overflow
-   does the cropping, so the prints can hang past every edge and simply
-   disappear. Placed by hand, front to back. */
-const TILT = [
-  { r: 13,  x: -14, y: -21, z: 3 },
-  { r: -15, x: 34,  y: 10,  z: 2 },
-]
+/* Enough to show the place is worth a day, few enough to read at a glance
+   while the map is still the thing you are looking at. A location with more
+   keeps them for the ledger, which lists every one with its price. */
+const TODO_MAX = 5
 
 /* the same line the card's own bottom-sheet styles switch at — see
    src/js/breakpoints.js, and main.css's #poi-card rules */
@@ -29,13 +26,12 @@ const narrow = isNarrow
 const fmt = d => d?.toLocaleDateString('en-GB', { day:'numeric', month:'short' }) ?? ''
 
 export const PoiCard = {
-  el: null, photos: null, body: null,
+  el: null, body: null,
   openId: null,
 
   init(itinerary, onClose){
-    this.el     = document.getElementById('poi-card')
-    this.photos = this.el?.querySelector('.pc-photos')
-    this.body   = this.el?.querySelector('.pc-content')
+    this.el   = document.getElementById('poi-card')
+    this.body = this.el?.querySelector('.pc-content')
     if(!this.el) return
     this.itinerary = itinerary
     this.onClose = onClose
@@ -82,15 +78,6 @@ export const PoiCard = {
       ? 'day trip'
       : `${stop.nights} night${stop.nights === 1 ? '' : 's'}`
 
-    this.photos.innerHTML = (loc.photos ?? []).slice(0, PHOTOS).map((ph, i) => {
-      const t = TILT[i] ?? { r: 0, x: 0, y: 0, z: 1 }
-      return `<figure class="pc-photo" style="
-              --tilt:${t.r}deg;left:${t.x}%;bottom:${t.y}%;z-index:${t.z}">
-        ${ph.src ? `<img src="${tripAsset(ph.src)}" alt="" loading="lazy">` : ''}
-      </figure>`
-    }).join('')
-    watchImages(this.photos, img => img.getAttribute('src')?.split('/').pop())
-
     const stays = loc.stays.slice(0, 3).map(st => {
       const t = stayTotal(st, stop)
       const amount = t
@@ -110,9 +97,21 @@ export const PoiCard = {
         : `<div class="hotel">${inner}</div>`
     }).join('')
 
+    /* Free entries keep their place in the list — "gratuit" next to a walk
+       is a selling point, not a missing price. */
+    const todo = (loc.thingsToDo ?? []).slice(0, TODO_MAX).map(t => {
+      const [lo, hi] = t.priceEUR ?? [0, 0]
+      const price = !lo && !hi ? 'free' : `${eur(lo)}\u2013${eur(hi)}`
+      return `<li class="pc-todo-item">
+        <span class="pc-todo-name">${t.title}</span>
+        <span class="pc-todo-price">${price}</span>
+      </li>`
+    }).join('')
+
     this.body.innerHTML = `
       <h2 class="pc-title">${loc.name.en}</h2>
       <div class="pc-stays">${stays}</div>
+      ${todo ? `<ul class="pc-todo">${todo}</ul>` : ''}
       <p class="pc-when">
         ${dates ? `<span class="pc-dates">${fmt(dates.from)} to ${fmt(dates.to)}</span>` : ''}
         <span class="pc-nights">${nights}</span>

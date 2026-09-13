@@ -24,7 +24,6 @@
     "cropBottom": 0,
     "backgroundColor": "#F7F4EF",
     "pin": "pin.svg",
-    "logo": "logo.png",
     "route": {
       "src": "img/map/route.svg",
       "x": 0.393,
@@ -44,7 +43,7 @@
     },
     "_canvasNote": "map.png exported from Figma node 157:3380 — the same artwork as before (127:483) re-exported with more surrounding canvas/margin, which was making the map feel cropped at the edges. The two are pixel-for-pixel identical, just translated and on a bigger canvas (2238x1545 vs 1440x1351). All coordinates below (and the route overlay's x/y/w/h) were recomputed from that exact translation, not re-eyeballed. contentSize/contentOffset are the VISIBLE WINDOW onto that canvas: the 1908x1120 soft-edged box every desktop frame in Figma's Mediaqueries section now masks the artwork with (nodes 176:2921/2925/2929 and 173:2864), sitting at base-image (165.44, 155). Figma places it identically in all four — 674px right and 160px down inside the placed image rect at 1200, 1440, 2156 and 3820 alike — so one window serves the whole desktop ladder and only the viewport around it changes. contentOffset.x + contentSize.w/2 = 1119.44 is therefore still the anchor: the one point of the image that lands on the viewport's centre line at every width, which is what keeps the crop symmetric instead of scaling to fit. contentOffset.y positions the window vertically the same way — see MapView.applyMapMetrics(). narrowScale is how wide the artwork is drawn in the 375 frame (1180px of 2238 = 0.52725); mobile drops the window entirely and shows the whole image, 1:1 at 768 and interpolating below.",
     "_calibrated": true,
-    "_calibrationNote": "All 11 locations (base stops and day-trip spurs alike) are exact — derived by translating the previous exact calibration onto the new, less-cropped map.png (see _canvasNote), then visually verified against the new artwork."
+    "_calibrationNote": "All 11 locations (base stops and day-trip spurs alike) are exact — derived by translating the previous exact calibration onto the new, less-cropped map.png (see _canvasNote), then visually verified against the new artwork. Byron Bay, Nimbin and the Gold Coast were added later and placed from the ARTWORK's own geography rather than by eye: the landmass bounding box in map.png gives Cape York, Wilsons Promontory, Steep Point and Cape Byron, and those four real extremes fix a lat/lon scale across 28 degrees. Cross-checked two ways — the easternmost land pixel in the image (Cape Byron is the mainland's most easterly point) lands within 2px of what that scale predicts for Byron Bay."
   },
   "artDirection": {
     "id": "australia-nz-v2",
@@ -153,7 +152,7 @@
         "wide": {
           "x": 162.19,
           "y": 62.37,
-          "w": 191.0
+          "w": 191
         },
         "narrow": {
           "x": -46.24,
@@ -164,9 +163,9 @@
       {
         "src": "img/stickers/nz.png",
         "wide": {
-          "x": 1305.0,
-          "y": 71.0,
-          "w": 132.0
+          "x": 1305,
+          "y": 71,
+          "w": 132
         },
         "narrow": {
           "x": 336.45,
@@ -215,7 +214,7 @@
       {
         "src": "img/stickers/surf.png",
         "anchor": "#footer .f-costs",
-        "rotate": -30.0,
+        "rotate": -30,
         "wide": {
           "x": 184.43,
           "y": -12.86,
@@ -232,8 +231,8 @@
         "anchor": ".f-ask",
         "wide": {
           "x": 737.5,
-          "y": 0.0,
-          "w": 207.0
+          "y": 0,
+          "w": 207
         },
         "narrow": {
           "x": 163.93,
@@ -313,12 +312,12 @@
           "note": "Opal card fare both ways. The cheapest harbour cruise in Sydney is the scheduled ferry."
         },
         {
-          "title": "Transports en commun (Opal card, ~8 jours)",
+          "title": "Public transport (Opal card)",
           "priceEUR": [
             70,
             90
           ],
-          "note": "Buses, ferries and trains, Opal weekly capping applied across the stay."
+          "note": "Trains, buses and the harbour ferries on one card, fare-capped daily and weekly. Priced for a week in the city — it was labelled \"~8 jours\", which was true of one itinerary and wrong on the other two, and was the only French title in a list of English ones."
         },
         {
           "title": "Royal Botanic Garden and Mrs Macquarie's Chair",
@@ -469,7 +468,11 @@
         },
         {
           "title": "Hot air balloon over the vineyards at dawn",
-          "note": "OPTIONAL, deliberately left unpriced so it stays out of the budget total. Reckon €180-240 a head — leave it out unless the budget has room. Would need an overnight in the valley to be worth the 4am start."
+          "note": "About an hour aloft at sunrise, then breakfast. The single most expensive thing anyone does on this trip — it was priced at zero here, which is what a free walk costs, not a balloon.",
+          "priceEUR": [
+            250,
+            330
+          ]
         }
       ],
       "stays": [
@@ -794,7 +797,7 @@
             400,
             490
           ],
-          "note": "Shared quad-share cabin, two meals, kayaks off the back. Dolphins and fur seals are near-certain; the Fiordland crested penguins breed July-Nov, so a January sighting would be luck, not the plan. The Queenstown room stays booked for the night."
+          "note": "Sails mid-afternoon, sleeps aboard in the fiord, back the next afternoon. Counted as a day trip out of Queenstown and priced with the bed included — so the Queenstown night it overlaps is paid twice, once here and once in the hotel line. Left as-is deliberately: most people keep the room rather than pack it up for one night."
         }
       ],
       "stays": [
@@ -1149,6 +1152,236 @@
         }
       ],
       "foodNotes": "No pork. Riverside Market covers everyone; the thing to check is the Canterbury pub menus, which put bacon in most things."
+    },
+    {
+      "id": "byron-bay",
+      "pin": "12",
+      "pinColor": "#FDC816",
+      "name": {
+        "en": "Byron Bay"
+      },
+      "subtitle": "Cape Byron · Main Beach · the hinterland",
+      "coordinates": {
+        "x": 0.4243,
+        "y": 0.354
+      },
+      "scatter": 0,
+      "tags": [
+        "beach",
+        "surf",
+        "rainforest",
+        "slow"
+      ],
+      "intro": "The deliberate change of gear. Seven days of a city of five million, then a town you can cross on foot in twenty minutes, where the main street runs out at the sand. The mainland’s most easterly point is a half-hour walk from the pub.",
+      "thingsToDo": [
+        {
+          "title": "Cape Byron lighthouse walk",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free, about 3.7km round the headland from Main Beach. Go at sunrise — it is the first place on the mainland the sun hits, and the dolphins are usually in the bay."
+        },
+        {
+          "title": "Surf lesson at Main Beach",
+          "priceEUR": [
+            45,
+            70
+          ],
+          "note": "Two hours, board and wetsuit in. A long, forgiving beach break — this is the place to learn rather than the Gold Coast’s points."
+        },
+        {
+          "title": "Wategos and The Pass",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free. The two swimming beaches round the headland, both calmer than Main Beach and both a walk rather than a drive."
+        },
+        {
+          "title": "Crystal Castle botanic gardens",
+          "priceEUR": [
+            25,
+            35
+          ],
+          "note": "Twenty minutes inland. Worth it for the rainforest walk and the view back over the hinterland."
+        }
+      ],
+      "stays": [
+        {
+          "name": "Wake Up! Byron Bay",
+          "tier": "budget",
+          "priceNightEUR": [
+            40,
+            65
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Wake+Up!+Byron+Bay"
+        },
+        {
+          "name": "Byron Springs Guesthouse",
+          "tier": "middle",
+          "priceNightEUR": [
+            95,
+            140
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Byron+Springs+Guesthouse"
+        },
+        {
+          "name": "Elements of Byron",
+          "tier": "dear",
+          "priceNightEUR": [
+            190,
+            260
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Elements+of+Byron"
+        }
+      ],
+      "_staysNote": "Byron leans casual — beach shacks, eco-stays and guesthouses rather than chains. A shared flat near the centre often beats all three on a three-way split."
+    },
+    {
+      "id": "nimbin",
+      "pin": "13",
+      "pinColor": "#00824B",
+      "name": {
+        "en": "Nimbin"
+      },
+      "subtitle": "Rainforest · waterfalls · the hinterland",
+      "coordinates": {
+        "x": 0.421,
+        "y": 0.3536
+      },
+      "scatter": 0,
+      "tags": [
+        "rainforest",
+        "waterfalls",
+        "offbeat"
+      ],
+      "intro": "An hour inland and a long way from the coast in every other sense: a village that never quite left 1973, at the foot of an extinct volcano, surrounded by rainforest and waterfalls.",
+      "thingsToDo": [
+        {
+          "title": "Nimbin and Minyon Falls day trip",
+          "priceEUR": [
+            55,
+            90
+          ],
+          "note": "Full day out of Byron. The falls drop 100m into rainforest and are the reason to go; the village is the story you tell afterwards."
+        }
+      ],
+      "stays": [
+        {
+          "name": "Nimbin Rox YHA",
+          "tier": "budget",
+          "priceNightEUR": [
+            30,
+            48
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Nimbin+Rox+YHA"
+        },
+        {
+          "name": "Grey Gum Lodge Nimbin",
+          "tier": "middle",
+          "priceNightEUR": [
+            70,
+            95
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Grey+Gum+Lodge+Nimbin"
+        },
+        {
+          "name": "Mavis's Kitchen and Cabins",
+          "tier": "dear",
+          "priceNightEUR": [
+            120,
+            165
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Mavis's+Kitchen+and+Cabins"
+        }
+      ],
+      "_staysNote": "Listed because every location carries them, not because we are staying — this is a day out of Byron. If it ever became an overnight, the hinterland is where you would sleep, not the village."
+    },
+    {
+      "id": "gold-coast",
+      "pin": "14",
+      "pinColor": "#FDC816",
+      "name": {
+        "en": "Gold Coast"
+      },
+      "subtitle": "Burleigh Heads · Surfers Paradise · Currumbin",
+      "coordinates": {
+        "x": 0.423,
+        "y": 0.3462
+      },
+      "scatter": 0,
+      "tags": [
+        "beach",
+        "surf",
+        "theme parks",
+        "city"
+      ],
+      "intro": "Byron with the volume up: high-rises straight onto the sand, a theme park every ten minutes, and at Burleigh Heads one of the best right-hand points in the country. The last three days are deliberately easy ones.",
+      "thingsToDo": [
+        {
+          "title": "Burleigh Heads headland walk",
+          "priceEUR": [
+            0,
+            0
+          ],
+          "note": "Free, 30 minutes through the national park round the point. Best at the end of the day, watching the surfers on the point below."
+        },
+        {
+          "title": "Movie World or Dreamworld",
+          "priceEUR": [
+            65,
+            95
+          ],
+          "note": "One park, one day — they are ten minutes apart and doing both is a waste of a beach. Book online, it is materially cheaper than the gate."
+        },
+        {
+          "title": "Currumbin Wildlife Sanctuary",
+          "priceEUR": [
+            35,
+            50
+          ],
+          "note": "The one place on this trip to actually see koalas and kangaroos without pretending a zoo is a national park."
+        },
+        {
+          "title": "SkyPoint at Surfers Paradise",
+          "priceEUR": [
+            15,
+            25
+          ],
+          "note": "77 floors up for the length of the coast at sunset. Twenty minutes, then leave."
+        }
+      ],
+      "stays": [
+        {
+          "name": "Bunk Surfers Paradise",
+          "tier": "budget",
+          "priceNightEUR": [
+            35,
+            60
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Bunk+Surfers+Paradise"
+        },
+        {
+          "name": "Peppers Soul Surfers Paradise",
+          "tier": "middle",
+          "priceNightEUR": [
+            110,
+            160
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=Peppers+Soul+Surfers+Paradise"
+        },
+        {
+          "name": "The Langham Gold Coast",
+          "tier": "dear",
+          "priceNightEUR": [
+            200,
+            290
+          ],
+          "bookingUrl": "https://www.booking.com/searchresults.html?ss=The+Langham+Gold+Coast"
+        }
+      ],
+      "_staysNote": "Apartment-style high-rises are the norm here and they split three ways better than anywhere else on the trip — two bedrooms, a kitchen and a pool for the price of two hotel rooms."
     }
   ],
   "itineraries": [
@@ -1288,25 +1521,36 @@
           }
         ],
         "_note": "An open jaw into Sydney and out of Christchurch, with the trans-Tasman hop in the middle. PAR is the search origin because two of the three of us start there — from Antananarivo it's TNR with a Johannesburg or Nairobi connection, and from Lyon it's LYS or a short hop to CDG. Everyone books their own."
-      }
+      },
+      "fixed": [
+        {
+          "id": "flight-syd-zqn",
+          "label": "Vol Sydney → Queenstown",
+          "eur": [
+            90,
+            180
+          ],
+          "locationId": "queenstown"
+        }
+      ]
     },
     {
-      "id": "coach-21",
-      "days": 21,
+      "id": "coach-18",
+      "days": 18,
       "_dayPlanNote": "Optional: one entry per day, in order, naming what that day IS. {\"at\":\"blue-mountains\"} is a day trip — the card and the map's active pin move to it while the route stays put at the stay it hangs off. {\"at\":\"sydney\",\"place\":\"Bondi Beach\"} keeps you in Sydney but titles the day. `at` takes any locationId, base or day trip; `place` is free text that overrides the name on the card. Omit dayPlan entirely and Timeline.buildSchedule() derives one: each base fills its own nights and its day trips are spread evenly through them, skipping the arrival day — right about where you sleep, a guess about which day each trip falls on. Fill this in to pin that down.",
       "label": "No-car version",
       "dateRange": {
         "start": "2026-12-30",
-        "end": "2027-01-19"
+        "end": "2027-01-16"
       },
-      "periodDisplay": "30 déc. 2026 / 19 janv. 2027",
+      "periodDisplay": "30 déc. 2026 / 16 janv. 2027",
       "flights": 3,
-      "_flightsNote": "Into Sydney, Sydney to Queenstown on 9 Jan, Queenstown to Christchurch on 17 Jan. The flight home is excluded, same convention as the other itinerary.",
+      "_flightsNote": "Into Sydney, Sydney to Queenstown on 7 Jan, Queenstown to Christchurch on 14 Jan. The flight home is excluded, same convention as the other two.",
       "budgetPerPersonEUR": [
-        5050,
-        7800
+        2900,
+        4600
       ],
-      "_note": "The earlier plan, kept as the alternative: nobody drives anything. Four bases instead of six, Port Stephens as a real stay rather than a day trip, and the Doubtful Sound overnight in place of the Wanaka-Tekapo road.",
+      "_note": "The no-car version, tightened from 21 days to 18: Port Stephens loses two of its five nights and Queenstown one of its eight. Nothing else goes — all four bases, both fiords and every activity are still here, they are just less padded. Queenstown at seven nights still covers Milford, Doubtful and the two free valley days with a spare.",
       "pitch": {
         "mood": {
           "headline": "Nobody has to drive.",
@@ -1357,13 +1601,13 @@
         },
         {
           "locationId": "port-stephens",
-          "nights": 5,
+          "nights": 3,
           "arriveBy": "surface",
           "stopType": "basecamp"
         },
         {
           "locationId": "queenstown",
-          "nights": 8,
+          "nights": 7,
           "arriveBy": "flight",
           "stopType": "basecamp"
         },
@@ -1401,8 +1645,14 @@
           {
             "from": "SYD",
             "to": "ZQN",
-            "date": "2027-01-09",
+            "date": "2027-01-07",
             "label": "Sydney → Queenstown"
+          },
+          {
+            "from": "ZQN",
+            "to": "CHC",
+            "date": "2027-01-14",
+            "label": "Queenstown → Christchurch"
           },
           {
             "from": "CHC",
@@ -1411,36 +1661,236 @@
             "label": "Home"
           }
         ],
-        "_note": "Three legs so the multi-city search resolves cleanly. The Queenstown → Christchurch hop on 17 Jan is a cheap domestic you'd book separately anyway — or take the InterCity coach and see the Lindis Pass from a window."
-      }
+        "_note": "Open jaw into Sydney and out of Christchurch, with both internal hops in between. PAR is the search origin because two of the three of us start there — the ledger’s own dropdown is what re-prices the long-haul per person."
+      },
+      "fixed": [
+        {
+          "id": "flight-syd-zqn",
+          "label": "Vol Sydney → Queenstown",
+          "eur": [
+            90,
+            180
+          ],
+          "locationId": "queenstown"
+        },
+        {
+          "id": "flight-zqn-chc",
+          "label": "Vol Queenstown → Christchurch",
+          "eur": [
+            80,
+            150
+          ],
+          "locationId": "christchurch"
+        }
+      ]
+    },
+    {
+      "id": "east-coast-14",
+      "days": 14,
+      "label": "East coast, two bases",
+      "dateRange": {
+        "start": "2026-12-30",
+        "end": "2027-01-12"
+      },
+      "periodDisplay": "30 déc. 2026 / 12 janv. 2027",
+      "flights": 2,
+      "_flightsNote": "Two flights inside the trip: into Sydney, and Sydney to Ballina on 6 Jan. The flight home is treated as going home rather than a trip leg, the same convention as the other two.",
+      "budgetPerPersonEUR": [
+        2550,
+        4150
+      ],
+      "_note": "The short version, and the cheapest: two bases joined by one 90-minute hop, no trans-Tasman crossing and no rental car to drop in another city. Built to come in under the €3,500 cap.",
+      "_dayPlanNote": "One entry per day, in order, naming what that day IS — a day trip moves the card and the active pin to the spur while the route stays put at the base it belongs to.",
+      "dayPlan": [
+        {
+          "at": "sydney"
+        },
+        {
+          "at": "sydney"
+        },
+        {
+          "at": "sydney"
+        },
+        {
+          "at": "blue-mountains"
+        },
+        {
+          "at": "sydney"
+        },
+        {
+          "at": "hunter-valley"
+        },
+        {
+          "at": "sydney"
+        },
+        {
+          "at": "byron-bay"
+        },
+        {
+          "at": "byron-bay"
+        },
+        {
+          "at": "nimbin"
+        },
+        {
+          "at": "gold-coast"
+        },
+        {
+          "at": "gold-coast"
+        },
+        {
+          "at": "gold-coast"
+        },
+        {
+          "at": "gold-coast"
+        }
+      ],
+      "pitch": {
+        "mood": {
+          "headline": "Two towns, one coast, and nothing in between to organise.",
+          "body": "Sydney turns the year over in twenty-eight degrees, and a week later you are on a beach six hundred kilometres north where the main street runs out at the sand. One flight joins them. Everything else is walking."
+        },
+        "arguments": [
+          {
+            "headline": "The whole trip is two check-ins.",
+            "body": "Seven nights in Sydney, six on the northern beaches, and a single 90-minute hop between them. No trans-Tasman crossing, no rental car to drop in a different city, no internal leg longer than a lunch."
+          },
+          {
+            "headline": "It is the version that fits the budget.",
+            "body": "One internal flight instead of a multi-leg loop, and the northern beaches run cheaper per night than anywhere in Sydney. This is the shape that comes in under the cap without cutting the New Year."
+          },
+          {
+            "headline": "You still get the fireworks.",
+            "body": "Sydney is the whole point of going at New Year, and this keeps all seven nights of it — the harbour, the coastal walk, the mountains and the wine — before trading the city for the sand."
+          }
+        ],
+        "gem": {
+          "headline": "You can walk to the first place the sun touches the country.",
+          "body": "Cape Byron is the most easterly point of mainland Australia, and the path to it starts at the end of Byron’s main street — 3.7km round the headland, free, dolphins in the bay below most mornings. Be up for it once and the whole continent gets its light after you do.",
+          "label": "One more thing…"
+        }
+      },
+      "stops": [
+        {
+          "locationId": "sydney",
+          "nights": 7,
+          "arriveBy": "flight",
+          "stopType": "basecamp"
+        },
+        {
+          "locationId": "blue-mountains",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "sydney",
+          "stopType": "daytrip"
+        },
+        {
+          "locationId": "hunter-valley",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "sydney",
+          "stopType": "daytrip"
+        },
+        {
+          "locationId": "byron-bay",
+          "nights": 3,
+          "arriveBy": "flight",
+          "stopType": "basecamp"
+        },
+        {
+          "locationId": "nimbin",
+          "nights": 0,
+          "arriveBy": "surface",
+          "spur": true,
+          "spurFrom": "byron-bay",
+          "stopType": "daytrip"
+        },
+        {
+          "locationId": "gold-coast",
+          "nights": 3,
+          "arriveBy": "surface",
+          "stopType": "basecamp"
+        }
+      ],
+      "flightSearch": {
+        "legs": [
+          {
+            "from": "PAR",
+            "to": "SYD",
+            "dateFrom": "itineraryStart",
+            "label": "Out"
+          },
+          {
+            "from": "SYD",
+            "to": "BNK",
+            "date": "2027-01-06",
+            "label": "Sydney → Ballina"
+          },
+          {
+            "from": "OOL",
+            "to": "PAR",
+            "dateFrom": "itineraryEnd",
+            "label": "Home"
+          }
+        ],
+        "_note": "Open jaw into Sydney and out of the Gold Coast, with the Ballina hop in the middle. PAR is the search origin because two of the three of us start there — the ledger’s own dropdown is what re-prices the fare per person."
+      },
+      "_budgetNote": "Matches what the ledger itemises for the default departure city (Paris). Lyon adds ~100 and Antananarivo ~100-300 more — the dropdown above the list is what re-prices it.",
+      "fixed": [
+        {
+          "id": "flight-syd-bnk",
+          "label": "Vol Sydney → Ballina (Byron Bay)",
+          "eur": [
+            90,
+            180
+          ],
+          "locationId": "byron-bay"
+        }
+      ]
     }
   ],
   "budget": {
     "_readme": "v2 ledger model (final-call-v1-vs-v2-spec.md §2: 'ledger chronologique poste par poste'). Per person. No levers, no comfort-tier multiplier — src/js/data.js:buildLedger() groups each base stop's hotel (the 'budget'-tier stay × nights) with every thingsToDo entry for it and its spurs, plus any `fixed` line tagged to it via locationId. Food isn't tracked (spec: 'ledger exhaustif, hors nourriture').",
     "model": "ledger",
     "currency": "EUR",
-    "originLabel": "Antananarivo",
-    "fixed": [
+    "_fixedNote": "Internal flights live on each ITINERARY (itineraries[].fixed), not here: the same city is flown into on one variant and driven to on another, so a trip-level line keyed only by locationId bills a flight nobody takes. See buildLedger().",
+    "origins": [
       {
-        "id": "flights-intl",
-        "label": "Vols long-courriers (aller-retour, Antananarivo)",
+        "id": "paris",
+        "label": "Paris",
+        "iata": "PAR",
+        "eur": [
+          1200,
+          2100
+        ],
+        "note": "Qantas fly Paris–Sydney direct three times a week, about 22 hours. Peak-season pricing over New Year."
+      },
+      {
+        "id": "lyon",
+        "label": "Lyon",
+        "iata": "LYS",
+        "eur": [
+          1300,
+          2200
+        ],
+        "note": "A short hop to Paris and onto the same direct, or one stop with a Gulf carrier. Roughly a hundred euros on top of the Paris fare."
+      },
+      {
+        "id": "antananarivo",
+        "label": "Antananarivo",
+        "iata": "TNR",
         "eur": [
           1300,
           2400
         ],
-        "locationId": "sydney"
-      },
-      {
-        "id": "flights-domestic",
-        "label": "Vol domestique Sydney → Queenstown",
-        "eur": [
-          90,
-          180
-        ],
-        "locationId": "queenstown"
+        "note": "No direct route — two stops via Johannesburg or Nairobi, 20 to 25 hours. January is the priciest month on this one, so book early."
       }
     ],
-    "_fixedNote": "International leg via Johannesburg/Nairobi, January pricing — the priciest month on this route. Domestic hop is an Air NZ / Jetstar one-way economy estimate."
+    "defaultOriginId": "paris",
+    "originLocationId": "sydney",
+    "_originsNote": "The three of us leave from three different cities, so the long-haul fare is the one line in the ledger that depends on WHO is reading it. The dropdown above the list picks between them and the flight line re-prices; everything else is shared and identical. Ranges are peak-season (Dec/Jan) return economy estimates, not quotes — they are the least certain numbers on the page. originLocationId is the stop the line is filed under, i.e. the one you fly into."
   },
   "cta": {
     "headline": "So… are you in?",

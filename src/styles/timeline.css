@@ -36,7 +36,14 @@
 .map-timeline{
   --tl-span:4;
   --tl-start:2;
-  --tl-left:calc(var(--grid-margin) + (var(--tl-start) - 1) * (var(--grid-col) + var(--grid-gutter)));
+  /* #frame is capped at --artboard and centred, so past that width its own
+     left edge is already inset from the viewport — but --grid-margin is
+     measured in VIEWPORT coordinates. Subtract the inset or it is counted
+     twice and the card marches right, out of the composition every other
+     element holds. Zero at every width where #frame is still full-bleed,
+     so this only bites between 1440 and 1800 — see that block below. */
+  --tl-inset:0px;
+  --tl-left:calc(var(--grid-margin) + (var(--tl-start) - 1) * (var(--grid-col) + var(--grid-gutter)) - var(--tl-inset));
   --tl-width:calc(var(--tl-span) * var(--grid-col) + (var(--tl-span) - 1) * var(--grid-gutter));
 
   position:absolute;
@@ -75,8 +82,32 @@
        (see main.css): Figma has the card at page y 1066 at 1200 and 1063
        at 1440, so 943 → 940. It jumps to the base 1148 at 1800 because the
        band itself grows 192px there — the 2156 frame draws the card at
-       y 1271, 208px lower than the 1440 one does. */
+       y 1271, 208px lower than the 1440 one does.
+
+       The interpolation only governs 1024–1439, where the 1200 and 1440
+       frames genuinely differ; from 1440 the block below pins it, since
+       there is no frame past 1440 to interpolate towards. */
     top:calc(958px - 1.25vw);       /* 943 @1200 → 940 @1440 */
+  }
+}
+
+/* 1440–1799 — the 1440 frame (Figma node 169:1648) is the guideline for
+   this whole range: past 1440 the canvas has stopped growing and only the
+   paper around it does, so every element holds the place that frame draws
+   it in and simply recentres. Measured across the range, everything else
+   already does — the artwork, the hero lockup, the "Itineraire" heading,
+   the Google Maps pill, the Météo blocks and the ledger all move by
+   exactly (100vw − 1440) / 2. The card was the one exception, moving
+   twice that (180px adrift by 1799, which puts it on the flight route)
+   because its column offset is measured against the viewport while it is
+   positioned inside the 1440-capped #frame. --tl-inset cancels that. */
+@media (min-width:1440px) and (max-width:1799px){
+  .map-timeline{
+    --tl-inset:calc((100vw - var(--artboard)) / 2);
+    /* Figma puts the card at page y 1063 in the 1440 frame and the band's
+       top is 123, so 940 — and it stays there, because nothing about the
+       composition changes across this range. */
+    top:940px;
   }
 }
 
@@ -167,8 +198,12 @@
   width:23px;height:23px;
   border:0;
   background:var(--tl-link-icon) center / 100% 100% no-repeat;
-  cursor:default; /* full itinerary view is a later pass — see timeline.js */
+  cursor:pointer;
+  transition:transform .18s ease, opacity .18s ease;
 }
+.tl-link:hover{ transform:scale(1.12) }
+.tl-link:focus-visible{ outline:2px solid #1C2321; outline-offset:3px; border-radius:4px }
+@media (prefers-reduced-motion:reduce){ .tl-link{ transition:none } }
 .tl-city{
   margin:0;
   padding-right:31px;
@@ -181,7 +216,8 @@
 .tl-date{
   margin:0;
   font-family:var(--hand,cursive);
-  font-size:13px;
+  /* 16px in the revised component (node 175:2909) — it was 13. */
+  font-size:16px;
   line-height:1.3;
   color:#1C2321;
 }
@@ -196,8 +232,13 @@
   /* Figma's gauge row is only as tall as the RAIL — the dots, the fill and
      the handle are all absolute and overflow it — so the row is 7px with
      20px of air either side. Kept as 23px with 12px margins instead: same
-     47px overall, but a thumb-sized target to grab rather than a 7px line. */
-  margin:12px 4px;
+     47px overall, but a thumb-sized target to grab rather than a 7px line.
+
+     The card body gained an 8px gap between the text block and the gauge in
+     the revised component, so the top margin carries it: 20 + the rail's own
+     8px of centring = 28 from the date to the rail, which is the gap plus
+     the gauge's 20px of padding. The bottom stays 12. */
+  margin:20px 4px 12px;
   height:23px;
   cursor:grab;
   touch-action:none;
@@ -213,28 +254,21 @@
   background:#F5EFE4;
   border-radius:40px;
 }
+/* The whole colour walk is painted once, full width, as a gradient with a
+   hard stop at each leg boundary (Timeline.trackGradient) and revealed by
+   CLIPPING rather than by growing. Two things fall out of that: the colours
+   stay anchored to the legs they describe instead of stretching as the fill
+   grows, and a trip with four legs needs no more rules than one with two —
+   which the old fixed yellow-span-plus-green-span pair could not do. */
 .tl-track-fill{
   z-index:2;
   position:absolute;
   top:50%;left:0;
   height:7px;
-  width:0%;
+  width:100%;
+  clip-path:inset(0 100% 0 0);
   transform:translateY(-50%);
   background:var(--leg-1,#FDC816);
-  border-radius:40px;
-}
-/* the green portion of the fill (past the flight leg) — width/position
-   driven from JS via --green-left/--green-width */
-.tl-track::after{
-  content:'';
-  z-index:2;
-  position:absolute;
-  top:50%;
-  left:var(--green-left, 100%);
-  width:var(--green-width, 0%);
-  height:7px;
-  transform:translateY(-50%);
-  background:var(--leg-2,#00824B);
   border-radius:40px;
 }
 .tl-dots{ position:absolute; inset:0; z-index:1 }
@@ -257,13 +291,16 @@
 .tl-dot--end{ background:var(--leg-2,#00824B); border-color:var(--leg-2,#00824B) }
 
 /* The travelling handle is a ring now, not the kangaroo sticker: white
-   with a 4px ink stroke, 22px across (component node 176:2938). Drawn in
-   CSS rather than shipped as an asset — it's two colours and a radius. */
+   with a 4px ink stroke, 34px across (component node 176:2938 — it grew
+   from 22 in the revision; Figma moved it left 96->90 and top 12->6 at the
+   same time, which is the same CENTRE, so only the size changes here —
+   this is placed by its centre already). Drawn in CSS rather than shipped
+   as an asset — it's two colours and a radius. */
 .tl-marker{
   z-index:3;
   position:absolute;
   top:50%;left:0%;
-  width:22px;height:22px;
+  width:34px;height:34px;
   box-sizing:border-box;
   transform:translate(-50%,-50%);
   border-radius:50%;
