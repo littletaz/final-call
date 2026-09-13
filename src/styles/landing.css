@@ -105,8 +105,11 @@
 }
 .dep-row:last-child{margin-bottom:0}
 /* only a live trip is clickable — a past row is there to be read */
-.dep-row:not(.is-empty):not(.is-past){cursor:pointer}
-.dep-row:not(.is-empty):not(.is-past):hover{filter:brightness(1.3)}
+/* Only a boardable row invites a click. .is-past is a row with no trip behind
+   it; .is-shut is a real trip whose gate has closed — both are rendered as a
+   div rather than an <a> (see landing.js), and neither may look interactive. */
+.dep-row:not(.is-empty):not(.is-past):not(.is-shut){cursor:pointer}
+.dep-row:not(.is-empty):not(.is-past):not(.is-shut):hover{filter:brightness(1.3)}
 .dep-row:focus-visible{outline:2px solid #F7D100;outline-offset:-1px}
 
 /* ---- status colours, applied to a slot range by tint() ---- */

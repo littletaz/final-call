@@ -1,6 +1,6 @@
 {
   "_readme": "Registry of trips. Each `file` lives in its own folder and every asset path inside it is relative to that folder, so adding a trip is dropping in one directory. The departures board on the landing page uses `month`, `boardLabel` (short — one word reads best in the column) and `status` (boarding | ontime | closed).",
-  "defaultTripId": "japon-2026",
+  "defaultTripId": "australia-2027",
   "trips": [
     {
       "id": "japon-2026",
@@ -9,7 +9,7 @@
       "period": "29 Oct – 18 Nov 2026",
       "cover": "trips/japon-2026/map.png",
       "month": "OCT",
-      "status": "boarding",
+      "status": "closed",
       "boardLabel": "JAPAN"
     },
     {
@@ -18,7 +18,9 @@
       "file": "trips/australia-2027/trip.json",
       "period": "30 Dec 2026 – 18 Jan 2027",
       "cover": "trips/australia-2027/map.png",
-      "month": "DEC", "status": "ontime", "boardLabel": "AUSTRALIA"
+      "month": "DEC",
+      "status": "ontime",
+      "boardLabel": "AUSTRALIA"
     }
   ],
   "boardExtras": [
@@ -33,5 +35,6 @@
       "status": "closed"
     }
   ],
-  "_boardExtrasNote": "Rows shown above the real trips on the departures board. Trips that have been and gone, so they have no file and nothing to link to — set dressing that makes the board look like it has a history. They turn like any other row."
+  "_boardExtrasNote": "Rows shown above the real trips on the departures board. Trips that have been and gone, so they have no file and nothing to link to — set dressing that makes the board look like it has a history. They turn like any other row.",
+  "_defaultNote": "The trip loaded when trip.html is opened with no ?trip — it must be one that is still open, or the site opens on a shut gate."
 }

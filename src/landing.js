@@ -86,7 +86,9 @@ function rowsThatFit(){
   }
 
   /* Trips that have been and gone sit above the live ones — they turn like any
-     other row but have nothing to link to. */
+     other row but have nothing to link to. A CLOSED trip is the same thing
+     said a different way: the status column already tells you the gate has
+     shut, so the row must not then behave like one you can board. */
   const extras = (reg.boardExtras ?? []).map(x => ({ ...x, past: true }))
   const trips = [...extras, ...(reg.trips ?? [])]
 
@@ -100,9 +102,17 @@ function rowsThatFit(){
 
   const rows = Array.from({ length: total }, (_, i) => {
     const trip = trips[i]
-    const linkable = trip && !trip.past
+    /* `past` is a boardExtras row with no file behind it; `closed` is a real
+       trip whose gate has shut. Neither is boardable, so neither is a link —
+       an <a> that goes somewhere you were just told you cannot go is worse
+       than no link at all, and a div takes it out of the tab order too. */
+    const shut = trip && (trip.past || trip.status === 'closed')
+    const linkable = trip && !shut
     const el = document.createElement(linkable ? 'a' : 'div')
-    el.className = 'dep-row' + (trip ? (trip.past ? ' is-past' : '') : ' is-empty')
+    el.className = 'dep-row'
+      + (trip ? '' : ' is-empty')
+      + (trip?.past ? ' is-past' : '')
+      + (trip && !trip.past && trip.status === 'closed' ? ' is-shut' : '')
     if(linkable){
       el.href = `./trip.html?trip=${encodeURIComponent(trip.id)}`
       el.setAttribute('aria-label', `${trip.title}, ${trip.period}`)
