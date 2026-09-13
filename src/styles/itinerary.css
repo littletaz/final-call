@@ -20,6 +20,12 @@
   padding:40px 20px;
   pointer-events:none;
 }
+/* `display:grid` above outranks the UA stylesheet's [hidden]{display:none},
+   so without this the closed modal stays laid out over the middle of the
+   page — invisible, but with .im-panel's pointer-events:auto still eating
+   clicks on whatever is under it (the timeline's length tabs, for one).
+   Same fix as .hl-nav[hidden] and #pitch[hidden]. */
+#itin-modal[hidden]{ display:none }
 .im-panel{
   position:relative;
   width:min(680px, 100%);
